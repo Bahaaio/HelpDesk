@@ -1,4 +1,4 @@
-using HelpDesk.Api.Data.Configurations;
+using HelpDesk.Api.Data;
 using HelpDesk.Api.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;

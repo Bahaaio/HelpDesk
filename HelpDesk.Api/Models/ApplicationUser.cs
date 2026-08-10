@@ -4,4 +4,7 @@ namespace HelpDesk.Api.Models;
 
 public class ApplicationUser : IdentityUser<int>
 {
+    public ICollection<Ticket> CreatedTickets { get; set; } = [];
+    public ICollection<Vote> Votes { get; set; } = [];
+    public ICollection<Comment> Comments { get; set; } = [];
 }

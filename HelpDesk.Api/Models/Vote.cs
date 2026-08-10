@@ -1,9 +1,11 @@
+using HelpDesk.Api.Models.Enums;
+
 namespace HelpDesk.Api.Models;
 
 public class Vote
 {
     public int Id { get; set; }
-    public sbyte Value { get; set; } // 1 or -1
+    public VoteValue Value { get; set; } // 1 or -1
     public DateTime CreatedAt { get; set; }
 
     public int VoterId { get; set; }

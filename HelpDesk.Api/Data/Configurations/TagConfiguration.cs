@@ -1,0 +1,24 @@
+using HelpDesk.Api.Models;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace HelpDesk.Api.Data.Configurations;
+
+internal class TagConfiguration : IEntityTypeConfiguration<Tag>
+{
+    public void Configure(EntityTypeBuilder<Tag> builder)
+    {
+        builder.Property(t => t.Name)
+            .IsRequired()
+            .HasMaxLength(50);
+
+        builder.HasIndex(t => t.Name)
+            .IsUnique();
+
+        builder.Property(t => t.Description)
+            .HasMaxLength(2000);
+
+        builder.HasMany(t => t.Tickets)
+            .WithMany(t => t.Tags);
+    }
+}

@@ -10,8 +10,11 @@ public class Ticket
     public Status Status { get; set; }
 
     public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
-
     public int AuthorId { get; set; }
     public ApplicationUser Author { get; set; } = null!;
+
+    public ICollection<Attachment> Attachments { get; set; } = [];
+    public ICollection<Comment> Comments { get; set; } = [];
+    public ICollection<Vote> Votes { get; set; } = [];
+    public ICollection<Tag> Tags { get; set; } = [];
 }

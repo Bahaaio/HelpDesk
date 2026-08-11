@@ -1,7 +1,11 @@
+using System.Text;
 using HelpDesk.Api.Data;
 using HelpDesk.Api.Models;
+using HelpDesk.Api.Options;
+using HelpDesk.Api.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,15 +16,47 @@ builder.Services.AddOpenApi();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 
-builder.Services.AddIdentityCore<ApplicationUser>()
+builder.Services
+    .AddIdentityCore<ApplicationUser>(options =>
+    {
+        options.Password.RequireDigit = false;
+        options.Password.RequireLowercase = false;
+        options.Password.RequireUppercase = false;
+        options.Password.RequireNonAlphanumeric = false;
+        options.Password.RequiredLength = 8;
+    })
     .AddRoles<IdentityRole<int>>()
     .AddEntityFrameworkStores<AppDbContext>();
 
-builder.Services.AddAuthentication().AddJwtBearer(options =>
-{
-    // TODO
-});
+builder
+    .Services.AddOptions<JwtOptions>()
+    .BindConfiguration(JwtOptions.Key)
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+builder
+    .Services.AddAuthentication()
+    .AddJwtBearer(options =>
+    {
+        options.Audience = builder.Configuration["Jwt:Audience"];
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"]!)
+            )
+        };
+    });
+
 builder.Services.AddAuthorization();
+
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<JwtTokenService>();
+builder.Services.AddScoped<RefreshTokenService>();
 
 var app = builder.Build();
 

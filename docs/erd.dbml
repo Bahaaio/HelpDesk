@@ -1,0 +1,65 @@
+Table User {
+  Id int [pk, increment]
+  Email varchar
+  UserName varchar
+  PasswordHash varchar
+  Role varchar // 'Employee' | 'Technician'
+}
+
+Table Ticket {
+  Id int [pk, increment]
+  Title varchar
+  Description text
+  Status varchar // 'Open' | 'Closed'
+  CreatedAt datetime
+  UpdatedAt datetime
+
+  AuthorId int [ref: > User.Id]
+}
+
+Table Comment {
+  Id int [pk, increment]
+  Content text
+  CreatedAt datetime
+
+  AuthorId int [ref: > User.Id]
+  TicketId int [ref: > Ticket.Id]
+}
+
+Table Attachment {
+  Id UUID [pk]
+  FilePath varchar
+  UploadedAt datetime
+
+  UploaderId int [ref: > User.Id]
+  TicketId int [ref: > Ticket.Id]
+}
+
+Table Tag {
+  Id int [pk, increment]
+  Name varchar
+  Description varchar
+}
+
+Table TicketTag {
+  TicketId int [ref: > Ticket.Id]
+  TagId int [ref: > Tag.Id]
+}
+
+Table TicketVote {
+  Id int [pk, increment]
+  Value int // 1 for upvote, -1 for downvote
+  CreatedAt datetime
+
+  VoterId int [ref: > User.Id]
+  TicketId int [ref: > Ticket.Id]
+}
+
+Table RefreshToken {
+  Id int [pk, increment]
+  Hash varchar
+  ExpiresAt datetime
+  IsRevoked boolean
+
+  UserId int [ref: > User.Id]
+}

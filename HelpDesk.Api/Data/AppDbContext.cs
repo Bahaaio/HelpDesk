@@ -1,5 +1,4 @@
 using HelpDesk.Api.Models;
-using HelpDesk.Api.Models.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +14,9 @@ public class AppDbContext(DbContextOptions options)
     public DbSet<Vote> Votes { get; set; }
     public DbSet<Tag> Tags { get; set; }
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder) =>
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+    }
 }

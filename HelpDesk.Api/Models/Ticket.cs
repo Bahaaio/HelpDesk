@@ -10,7 +10,7 @@ public class Ticket
     public Status Status { get; set; }
 
     public DateTime CreatedAt { get; set; }
-    public int AuthorId { get; set; }
+    public required int AuthorId { get; set; }
     public ApplicationUser Author { get; set; } = null!;
 
     public ICollection<Attachment> Attachments { get; set; } = [];

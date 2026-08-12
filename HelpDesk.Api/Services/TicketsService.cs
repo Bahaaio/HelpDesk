@@ -104,7 +104,6 @@ public class TicketsService(AppDbContext db, IAuthorizationService authorization
 
         ticket.Title = request.Title;
         ticket.Description = request.Description;
-        ticket.Status = request.Status;
 
         await db.SaveChangesAsync();
 
@@ -120,5 +119,24 @@ public class TicketsService(AppDbContext db, IAuthorizationService authorization
             Attachments = ticket.Attachments.Select(a => a.Id).ToList(),
             VoteScore = ticket.Votes.Sum(v => (int)v.Value)
         };
+    }
+
+    public async Task UpdateStatus(int id, TicketStatusUpdateRequest request, ClaimsPrincipal user)
+    {
+        var ticket = await db.Tickets.FindAsync(id);
+        if (ticket is null)
+            throw new NotFoundException($"Ticket with id {id} not found");
+
+        var result = await authorizationService.AuthorizeAsync(
+            user,
+            ticket,
+            new TicketOwnerOrTechnicianRequirement()
+        );
+
+        if (!result.Succeeded)
+            throw new ForbiddenException("You are not authorized to update this ticket");
+
+        ticket.Status = request.Status;
+        await db.SaveChangesAsync();
     }
 }

@@ -1,8 +1,10 @@
 using System.Text;
+using HelpDesk.Api.Authorization.Handlers;
 using HelpDesk.Api.Data;
 using HelpDesk.Api.Models;
 using HelpDesk.Api.Options;
 using HelpDesk.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -57,6 +59,10 @@ builder.Services.AddAuthorization();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<RefreshTokenService>();
+
+builder.Services.AddScoped<TicketsService>();
+
+builder.Services.AddScoped<IAuthorizationHandler, TicketOwnerOrTechnicianHandler>();
 
 var app = builder.Build();
 

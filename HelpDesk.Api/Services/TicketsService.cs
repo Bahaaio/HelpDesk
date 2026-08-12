@@ -1,0 +1,123 @@
+using System.Security.Claims;
+using HelpDesk.Api.Authorization.Requirements;
+using HelpDesk.Api.Data;
+using HelpDesk.Api.Dtos.Requests;
+using HelpDesk.Api.Dtos.Responses;
+using HelpDesk.Api.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+
+namespace HelpDesk.Api.Services;
+
+public class TicketsService(AppDbContext db, IAuthorizationService authorizationService)
+{
+    public async Task<List<TicketDto>> GetAll()
+    {
+        return await db.Tickets
+            .AsNoTracking()
+            .Select(t => new TicketDto
+            {
+                Id = t.Id,
+                Title = t.Title,
+                Description = t.Description,
+                Status = t.Status,
+                CreatedAt = t.CreatedAt,
+                AuthorId = t.AuthorId,
+                Tags = t.Tags.Select(tag => tag.Name).ToList(),
+                Attachments = t.Attachments.Select(a => a.Id).ToList(),
+                VoteScore = t.Votes.Sum(v => (int)v.Value)
+            })
+            .ToListAsync();
+    }
+
+    public async Task<TicketDto?> GetById(int id)
+    {
+        return await db.Tickets
+            .AsNoTracking()
+            .Where(t => t.Id == id)
+            .Select(t => new TicketDto
+            {
+                Id = t.Id,
+                Title = t.Title,
+                Description = t.Description,
+                Status = t.Status,
+                CreatedAt = t.CreatedAt,
+                AuthorId = t.AuthorId,
+                Tags = t.Tags.Select(tag => tag.Name).ToList(),
+                Attachments = t.Attachments.Select(a => a.Id).ToList(),
+                VoteScore = t.Votes.Sum(v => (int)v.Value)
+            })
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<TicketDto> Create(CreateTicketRequest request, ClaimsPrincipal user)
+    {
+        var claim = user.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(claim, out var userId))
+            throw new Exception("Invalid user id");
+
+        var ticket = new Ticket
+        {
+            Title = request.Title,
+            Description = request.Description,
+            AuthorId = userId
+        };
+
+        await db.Tickets.AddAsync(ticket);
+        await db.SaveChangesAsync();
+
+        return new TicketDto
+        {
+            Id = ticket.Id,
+            Title = ticket.Title,
+            Description = ticket.Description,
+            Status = ticket.Status,
+            CreatedAt = ticket.CreatedAt,
+            AuthorId = ticket.AuthorId,
+            Tags = ticket.Tags.Select(tag => tag.Name).ToList(),
+            Attachments = ticket.Attachments.Select(a => a.Id).ToList(),
+            VoteScore = 0
+        };
+    }
+
+    public async Task<TicketDto> Update(int id, UpdateTicketRequest request, ClaimsPrincipal user)
+    {
+        var ticket = await db.Tickets
+            .Where(t => t.Id == id)
+            .Include(t => t.Tags)
+            .Include(t => t.Attachments)
+            .Include(t => t.Votes)
+            .FirstOrDefaultAsync();
+
+        if (ticket is null)
+            throw new Exception("Ticket not found");
+
+        var result = await authorizationService.AuthorizeAsync(
+            user,
+            ticket,
+            new TicketOwnerOrTechnicianRequirement()
+        );
+
+        if (!result.Succeeded)
+            throw new Exception("You are not authorized to update this ticket");
+
+        ticket.Title = request.Title;
+        ticket.Description = request.Description;
+        ticket.Status = request.Status;
+
+        await db.SaveChangesAsync();
+
+        return new TicketDto
+        {
+            Id = ticket.Id,
+            Title = ticket.Title,
+            Description = ticket.Description,
+            Status = ticket.Status,
+            CreatedAt = ticket.CreatedAt,
+            AuthorId = ticket.AuthorId,
+            Tags = ticket.Tags.Select(tag => tag.Name).ToList(),
+            Attachments = ticket.Attachments.Select(a => a.Id).ToList(),
+            VoteScore = ticket.Votes.Sum(v => (int)v.Value)
+        };
+    }
+}

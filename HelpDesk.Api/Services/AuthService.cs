@@ -30,7 +30,9 @@ public class AuthService(
             var result = await userManager.CreateAsync(user, registerRequest.Password);
 
             if (!result.Succeeded)
-                throw new BadRequestException(string.Join(", ", result.Errors.Select(e => e.Description)));
+                throw new BadRequestException(string.Join(", ",
+                    result.Errors.Select(e => e.Description))
+                );
 
             await userManager.AddToRoleAsync(user, Role.Employee);
 
@@ -73,5 +75,10 @@ public class AuthService(
         var accessToken = await jwtTokenService.GenerateAccessToken(token.User);
 
         return new AuthResult(accessToken, newRefreshToken);
+    }
+
+    public async Task Logout(string refreshToken)
+    {
+        await refreshTokenService.RevokeRefreshToken(refreshToken);
     }
 }

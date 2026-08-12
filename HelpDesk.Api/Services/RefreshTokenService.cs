@@ -35,6 +35,18 @@ public class RefreshTokenService(AppDbContext db)
         return await CreateRefreshTokenForUser(oldToken.User);
     }
 
+    public async Task RevokeRefreshToken(string refreshToken)
+    {
+        var hash = HashToken(refreshToken);
+        var token = await db.RefreshTokens.SingleOrDefaultAsync(r => r.Hash == hash);
+
+        if (token is not null)
+        {
+            token.IsRevoked = true;
+            await db.SaveChangesAsync();
+        }
+    }
+
     public async Task<RefreshToken> ValidateAndGetToken(string refreshToken)
     {
         var hash = HashToken(refreshToken);

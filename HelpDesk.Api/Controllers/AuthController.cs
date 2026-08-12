@@ -11,7 +11,6 @@ namespace HelpDesk.Api.Controllers;
 [Route("api/[controller]")]
 public class AuthController(AuthService authService) : ControllerBase
 {
-    // TODO: move to sepearate service
     private const string RefreshTokenCookieName = "refreshToken";
 
     [HttpPost("register")]
@@ -45,6 +44,19 @@ public class AuthController(AuthService authService) : ControllerBase
         return Ok(new AuthResponse(result.AccessToken));
     }
 
+    [HttpPost("logout")]
+    public async Task<ActionResult> Logout()
+    {
+        var refreshToken = Request.Cookies[RefreshTokenCookieName];
+        if (string.IsNullOrEmpty(refreshToken))
+            return Unauthorized();
+
+        await authService.Logout(refreshToken);
+        RemoveCookie();
+
+        return NoContent();
+    }
+
     private void SetCookie(string refreshToken)
     {
         var cookie = new CookieBuilder
@@ -54,5 +66,10 @@ public class AuthController(AuthService authService) : ControllerBase
         }.Build(HttpContext);
 
         Response.Cookies.Append(RefreshTokenCookieName, refreshToken, cookie);
+    }
+
+    private void RemoveCookie()
+    {
+        Response.Cookies.Delete(RefreshTokenCookieName);
     }
 }

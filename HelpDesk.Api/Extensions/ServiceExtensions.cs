@@ -21,6 +21,7 @@ public static class ServiceExtensions
             services.AddScoped<RefreshTokenService>();
 
             services.AddScoped<TicketsService>();
+            services.AddScoped<TagsService>();
         }
     }
 }

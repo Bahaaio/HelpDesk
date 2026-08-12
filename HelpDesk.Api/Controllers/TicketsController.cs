@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using HelpDesk.Api.Dtos.Requests;
 using HelpDesk.Api.Dtos.Responses;
 using HelpDesk.Api.Services;
@@ -28,17 +27,16 @@ public class TicketsController(TicketsService ticketsService) : ControllerBase
 
     [Authorize]
     [HttpPost]
-    public async Task<ActionResult> Create(CreateTicketRequest request, ClaimsPrincipal user)
+    public async Task<ActionResult> Create(CreateTicketRequest request)
     {
-        var ticket = await ticketsService.Create(request, user);
+        var ticket = await ticketsService.Create(request, User);
         return CreatedAtAction(nameof(GetById), new { id = ticket.Id }, ticket);
     }
 
     [Authorize]
     [HttpPut("{id}")]
-    public async Task<ActionResult> Update(int id, UpdateTicketRequest request,
-        ClaimsPrincipal user)
+    public async Task<ActionResult> Update(int id, UpdateTicketRequest request)
     {
-        return Ok(await ticketsService.Update(id, request, user));
+        return Ok(await ticketsService.Update(id, request, User));
     }
 }

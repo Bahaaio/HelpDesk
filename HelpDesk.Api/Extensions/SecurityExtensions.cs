@@ -49,7 +49,11 @@ public static class SecurityExtensions
 
         public void AddAuthorizationServices()
         {
-            services.AddAuthorization();
+            services.AddAuthorization(options =>
+            {
+                options.FallbackPolicy = new AuthorizationPolicyBuilder()
+                    .RequireAuthenticatedUser().Build();
+            });
 
             services.AddScoped<IAuthorizationHandler, TicketOwnerOrTechnicianHandler>();
         }

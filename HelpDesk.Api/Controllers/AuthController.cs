@@ -1,10 +1,12 @@
 using HelpDesk.Api.Dtos.Requests;
 using HelpDesk.Api.Dtos.Responses;
 using HelpDesk.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HelpDesk.Api.Controllers;
 
+[AllowAnonymous]
 [ApiController]
 [Route("api/[controller]")]
 public class AuthController(AuthService authService) : ControllerBase
@@ -43,7 +45,6 @@ public class AuthController(AuthService authService) : ControllerBase
         return Ok(new AuthResponse(result.AccessToken));
     }
 
-    [HttpPost]
     private void SetCookie(string refreshToken)
     {
         var cookie = new CookieBuilder

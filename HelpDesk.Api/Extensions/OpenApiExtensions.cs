@@ -11,7 +11,7 @@ public static class OpenApiExtensions
 
     public static void UseOpenApiUi(this WebApplication app)
     {
-        app.MapOpenApi();
-        app.MapScalarApiReference("/docs");
+        app.MapOpenApi().AllowAnonymous();
+        app.MapScalarApiReference("/docs").AllowAnonymous();
     }
 }

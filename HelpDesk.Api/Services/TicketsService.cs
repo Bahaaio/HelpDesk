@@ -3,6 +3,7 @@ using HelpDesk.Api.Authorization.Requirements;
 using HelpDesk.Api.Data;
 using HelpDesk.Api.Dtos.Requests;
 using HelpDesk.Api.Dtos.Responses;
+using HelpDesk.Api.Exceptions;
 using HelpDesk.Api.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -54,7 +55,7 @@ public class TicketsService(AppDbContext db, IAuthorizationService authorization
     {
         var claim = user.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!int.TryParse(claim, out var userId))
-            throw new Exception("Invalid user id");
+            throw new UnauthorizedException($"Invalid user id: {claim}");
 
         var ticket = new Ticket
         {
@@ -90,7 +91,7 @@ public class TicketsService(AppDbContext db, IAuthorizationService authorization
             .FirstOrDefaultAsync();
 
         if (ticket is null)
-            throw new Exception("Ticket not found");
+            throw new NotFoundException($"Ticket with id {id} not found");
 
         var result = await authorizationService.AuthorizeAsync(
             user,
@@ -99,7 +100,7 @@ public class TicketsService(AppDbContext db, IAuthorizationService authorization
         );
 
         if (!result.Succeeded)
-            throw new Exception("You are not authorized to update this ticket");
+            throw new ForbiddenException("You are not authorized to update this ticket");
 
         ticket.Title = request.Title;
         ticket.Description = request.Description;

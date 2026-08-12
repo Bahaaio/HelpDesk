@@ -1,7 +1,7 @@
-using System.Security.Authentication;
 using System.Security.Cryptography;
 using System.Text;
 using HelpDesk.Api.Data;
+using HelpDesk.Api.Exceptions;
 using HelpDesk.Api.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -45,10 +45,10 @@ public class RefreshTokenService(AppDbContext db)
             .SingleOrDefaultAsync();
 
         if (token is null)
-            throw new AuthenticationException("Invalid refresh token");
+            throw new UnauthorizedException("Invalid refresh token");
 
         if (token.ExpiresAt < DateTime.UtcNow)
-            throw new AuthenticationException("Refresh token expired");
+            throw new UnauthorizedException("Refresh token expired");
 
         return token;
     }

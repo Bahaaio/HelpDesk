@@ -1,7 +1,7 @@
-using System.Security.Authentication;
 using HelpDesk.Api.Data;
 using HelpDesk.Api.Dtos.Requests;
 using HelpDesk.Api.Dtos.Responses;
+using HelpDesk.Api.Exceptions;
 using HelpDesk.Api.Models;
 using HelpDesk.Api.Models.Enums;
 using Microsoft.AspNetCore.Identity;
@@ -30,7 +30,7 @@ public class AuthService(
             var result = await userManager.CreateAsync(user, registerRequest.Password);
 
             if (!result.Succeeded)
-                throw new AuthenticationException("Invalid username or password" + result.Errors);
+                throw new BadRequestException(string.Join(", ", result.Errors.Select(e => e.Description)));
 
             await userManager.AddToRoleAsync(user, Role.Employee);
 
@@ -52,12 +52,12 @@ public class AuthService(
         var user = await userManager.FindByNameAsync(loginRequest.Username);
 
         if (user is null)
-            throw new AuthenticationException("Invalid username or password");
+            throw new UnauthorizedException("Invalid username or password");
 
         var valid = await userManager.CheckPasswordAsync(user, loginRequest.Password);
 
         if (!valid)
-            throw new AuthenticationException("Invalid username or password");
+            throw new UnauthorizedException("Invalid username or password");
 
         var accessToken = await jwtTokenService.GenerateAccessToken(user);
         var refreshToken = await refreshTokenService.CreateRefreshTokenForUser(user);

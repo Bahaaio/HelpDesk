@@ -1,6 +1,7 @@
 using System.Text;
 using HelpDesk.Api.Authorization.Handlers;
 using HelpDesk.Api.Data;
+using HelpDesk.Api.Exceptions;
 using HelpDesk.Api.Models;
 using HelpDesk.Api.Options;
 using HelpDesk.Api.Services;
@@ -56,6 +57,9 @@ builder
 
 builder.Services.AddAuthorization();
 
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<RefreshTokenService>();
@@ -77,6 +81,7 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference("/docs");
 }
 
+app.UseExceptionHandler();
 app.UseAuthentication();
 app.UseAuthorization();
 

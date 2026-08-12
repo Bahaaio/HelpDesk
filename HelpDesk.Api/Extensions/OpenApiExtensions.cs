@@ -61,12 +61,11 @@ internal sealed class BearerSecuritySchemeTransformer(
             document.Components ??= new OpenApiComponents();
             document.Components.SecuritySchemes = new Dictionary<string, IOpenApiSecurityScheme>
             {
-                ["Bearer"] = new OpenApiSecurityScheme
+                ["CookieAuth"] = new OpenApiSecurityScheme
                 {
-                    Type = SecuritySchemeType.Http,
-                    Scheme = "bearer",
-                    In = ParameterLocation.Header,
-                    BearerFormat = "Json Web Token"
+                    Type = SecuritySchemeType.ApiKey,
+                    In = ParameterLocation.Cookie,
+                    Name = "HelpDesk.Auth"
                 }
             };
         }
@@ -90,7 +89,7 @@ internal sealed class AuthOperationTransformer : IOpenApiOperationTransformer
         operation.Security ??= [];
         operation.Security.Add(new OpenApiSecurityRequirement
             {
-                [new OpenApiSecuritySchemeReference("Bearer", context.Document)] = []
+                [new OpenApiSecuritySchemeReference("CookieAuth", context.Document)] = []
             }
         );
 

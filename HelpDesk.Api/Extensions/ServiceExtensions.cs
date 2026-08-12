@@ -17,9 +17,6 @@ public static class ServiceExtensions
         public void AddApplicationServices()
         {
             services.AddScoped<AuthService>();
-            services.AddScoped<JwtTokenService>();
-            services.AddScoped<RefreshTokenService>();
-
             services.AddScoped<TicketsService>();
             services.AddScoped<CommentsService>();
             services.AddScoped<TagsService>();

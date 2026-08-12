@@ -1,10 +1,8 @@
-using System.Text;
 using HelpDesk.Api.Authorization.Handlers;
 using HelpDesk.Api.Data;
 using HelpDesk.Api.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.IdentityModel.Tokens;
 
 namespace HelpDesk.Api.Extensions;
 
@@ -14,6 +12,8 @@ public static class SecurityExtensions
     {
         public void AddIdentityServices()
         {
+            services.AddAuthentication(IdentityConstants.ApplicationScheme).AddIdentityCookies();
+
             services.AddIdentityCore<ApplicationUser>(options =>
                 {
                     options.Password.RequireDigit = false;
@@ -25,25 +25,17 @@ public static class SecurityExtensions
                     options.User.RequireUniqueEmail = true;
                 })
                 .AddRoles<IdentityRole<int>>()
+                .AddSignInManager()
                 .AddEntityFrameworkStores<AppDbContext>();
-        }
 
-        public void AddJwtServices(IConfiguration configuration)
-        {
-            services.AddAuthentication().AddJwtBearer(options =>
+            services.ConfigureApplicationCookie(options =>
             {
-                options.Audience = configuration["Jwt:Audience"];
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = configuration["Jwt:Issuer"],
-                    ValidAudience = configuration["Jwt:Audience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(configuration["Jwt:SecretKey"]!)
-                    )
-                };
+                options.Cookie.Name = "HelpDesk.Auth";
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SameSite = SameSiteMode.Lax;
+
+                options.ExpireTimeSpan = TimeSpan.FromDays(7);
+                options.SlidingExpiration = true;
             });
         }
 

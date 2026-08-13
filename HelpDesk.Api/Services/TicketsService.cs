@@ -23,7 +23,7 @@ public class TicketsService(AppDbContext db, IAuthorizationService authorization
                 Description = t.Description,
                 Status = t.Status,
                 CreatedAt = t.CreatedAt,
-                AuthorId = t.AuthorId,
+                AuthorUsername = t.Author.UserName!,
                 Tags = t.Tags.Select(tag => tag.Name).ToList(),
                 Attachments = t.Attachments.Select(a => a.Id).ToList(),
                 VoteScore = t.Votes.Sum(v => (int)v.Value)
@@ -43,7 +43,7 @@ public class TicketsService(AppDbContext db, IAuthorizationService authorization
                 Description = t.Description,
                 Status = t.Status,
                 CreatedAt = t.CreatedAt,
-                AuthorId = t.AuthorId,
+                AuthorUsername = t.Author.UserName!,
                 Tags = t.Tags.Select(tag => tag.Name).ToList(),
                 Attachments = t.Attachments.Select(a => a.Id).ToList(),
                 VoteScore = t.Votes.Sum(v => (int)v.Value)
@@ -67,6 +67,8 @@ public class TicketsService(AppDbContext db, IAuthorizationService authorization
         await db.Tickets.AddAsync(ticket);
         await db.SaveChangesAsync();
 
+        var userName = user.FindFirstValue(ClaimTypes.Name)!;
+
         return new TicketDto
         {
             Id = ticket.Id,
@@ -74,7 +76,7 @@ public class TicketsService(AppDbContext db, IAuthorizationService authorization
             Description = ticket.Description,
             Status = ticket.Status,
             CreatedAt = ticket.CreatedAt,
-            AuthorId = ticket.AuthorId,
+            AuthorUsername = userName,
             Tags = ticket.Tags.Select(tag => tag.Name).ToList(),
             Attachments = ticket.Attachments.Select(a => a.Id).ToList(),
             VoteScore = 0
@@ -107,6 +109,8 @@ public class TicketsService(AppDbContext db, IAuthorizationService authorization
 
         await db.SaveChangesAsync();
 
+        var userName = user.FindFirstValue(ClaimTypes.Name)!;
+
         return new TicketDto
         {
             Id = ticket.Id,
@@ -114,7 +118,7 @@ public class TicketsService(AppDbContext db, IAuthorizationService authorization
             Description = ticket.Description,
             Status = ticket.Status,
             CreatedAt = ticket.CreatedAt,
-            AuthorId = ticket.AuthorId,
+            AuthorUsername = userName,
             Tags = ticket.Tags.Select(tag => tag.Name).ToList(),
             Attachments = ticket.Attachments.Select(a => a.Id).ToList(),
             VoteScore = ticket.Votes.Sum(v => (int)v.Value)

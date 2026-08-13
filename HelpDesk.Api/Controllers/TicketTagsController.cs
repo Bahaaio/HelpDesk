@@ -10,9 +10,9 @@ namespace HelpDesk.Api.Controllers;
 [Route("api/tickets/{ticketId:int}/tags")]
 public class TicketTagsController : ControllerBase
 {
-    private readonly TicketTagsService _ticketTagsService;
+    private readonly ITicketTagsService _ticketTagsService;
 
-    public TicketTagsController(TicketTagsService ticketTagsService)
+    public TicketTagsController(ITicketTagsService ticketTagsService)
     {
         _ticketTagsService = ticketTagsService;
     }

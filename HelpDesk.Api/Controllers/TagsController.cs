@@ -11,9 +11,9 @@ namespace HelpDesk.Api.Controllers;
 [Route("api/[controller]")]
 public class TagsController : ControllerBase
 {
-    private readonly TagsService _tagsService;
+    private readonly ITagsService _tagsService;
 
-    public TagsController(TagsService tagsService)
+    public TagsController(ITagsService tagsService)
     {
         _tagsService = tagsService;
     }

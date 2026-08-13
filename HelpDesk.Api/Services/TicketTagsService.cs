@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HelpDesk.Api.Services;
 
-public class TicketTagsService
+public class TicketTagsService : ITicketTagsService
 {
     private readonly AppDbContext _db;
 

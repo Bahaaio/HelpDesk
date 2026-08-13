@@ -7,15 +7,15 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace HelpDesk.Api.Services;
 
-public class AttachmentsService
+public class AttachmentsService : IAttachmentsService
 {
     private readonly IAuthorizationService _authorizationService;
     private readonly AppDbContext _db;
-    private readonly StorageService _storageService;
+    private readonly IStorageService _storageService;
     private readonly ICurrentUser _user;
 
     public AttachmentsService(
-        StorageService storageService,
+        IStorageService storageService,
         AppDbContext db,
         IAuthorizationService authorizationService,
         ICurrentUser user)

@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace HelpDesk.Api.Services;
 
-public class AuthService
+public class AuthService : IAuthService
 {
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly UserManager<ApplicationUser> _userManager;

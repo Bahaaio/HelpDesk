@@ -2,7 +2,7 @@ using HelpDesk.Api.Dtos.Responses;
 
 namespace HelpDesk.Api.Services;
 
-public class UsersService
+public class UsersService : IUsersService
 {
     private readonly ICurrentUser _user;
 

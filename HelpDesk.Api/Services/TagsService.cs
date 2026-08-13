@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HelpDesk.Api.Services;
 
-public class TagsService
+public class TagsService : ITagsService
 {
     private readonly AppDbContext _db;
 

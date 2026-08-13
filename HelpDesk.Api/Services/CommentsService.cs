@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HelpDesk.Api.Services;
 
-public class CommentsService
+public class CommentsService : ICommentsService
 {
     private readonly AppDbContext _db;
     private readonly ICurrentUser _user;

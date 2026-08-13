@@ -12,9 +12,9 @@ namespace HelpDesk.Api.Controllers;
 [Route("api/tickets/{ticketId:int}/[controller]")]
 public class VotesController : ControllerBase
 {
-    private readonly VotesService _votesService;
+    private readonly IVotesService _votesService;
 
-    public VotesController(VotesService votesService)
+    public VotesController(IVotesService votesService)
     {
         _votesService = votesService;
     }

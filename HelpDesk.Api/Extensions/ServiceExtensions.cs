@@ -16,15 +16,15 @@ public static class ServiceExtensions
 
         public void AddApplicationServices()
         {
-            services.AddScoped<AuthService>();
-            services.AddScoped<TicketsService>();
-            services.AddScoped<CommentsService>();
-            services.AddScoped<TagsService>();
-            services.AddScoped<TicketTagsService>();
-            services.AddScoped<VotesService>();
-            services.AddScoped<UsersService>();
-            services.AddScoped<StorageService>();
-            services.AddScoped<AttachmentsService>();
+            services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<ITicketsService, TicketsService>();
+            services.AddScoped<ICommentsService, CommentsService>();
+            services.AddScoped<ITagsService, TagsService>();
+            services.AddScoped<ITicketTagsService, TicketTagsService>();
+            services.AddScoped<IVotesService, VotesService>();
+            services.AddScoped<IUsersService, UsersService>();
+            services.AddScoped<IStorageService, LocalStorageService>();
+            services.AddScoped<IAttachmentsService, AttachmentsService>();
             services.AddScoped<ICurrentUser, CurrentUser>();
         }
     }

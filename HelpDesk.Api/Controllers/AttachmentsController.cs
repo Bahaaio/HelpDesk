@@ -7,9 +7,9 @@ namespace HelpDesk.Api.Controllers;
 [Route("api/[controller]")]
 public class AttachmentsController : ControllerBase
 {
-    private readonly AttachmentsService _attachmentsService;
+    private readonly IAttachmentsService _attachmentsService;
 
-    public AttachmentsController(AttachmentsService attachmentsService)
+    public AttachmentsController(IAttachmentsService attachmentsService)
     {
         _attachmentsService = attachmentsService;
     }

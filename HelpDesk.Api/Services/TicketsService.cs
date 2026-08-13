@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HelpDesk.Api.Services;
 
-public class TicketsService
+public class TicketsService : ITicketsService
 {
     private readonly IAuthorizationService _authorizationService;
     private readonly AppDbContext _db;

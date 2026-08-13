@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HelpDesk.Api.Services;
 
-public class VotesService
+public class VotesService : IVotesService
 {
     private readonly AppDbContext _db;
     private readonly ICurrentUser _user;

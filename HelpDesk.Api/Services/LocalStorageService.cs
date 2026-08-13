@@ -1,11 +1,11 @@
 namespace HelpDesk.Api.Services;
 
-public class StorageService
+public class LocalStorageService : IStorageService
 {
     private const string StorageFolder = "Uploads";
     private readonly string _storagePath;
 
-    public StorageService(IWebHostEnvironment environment)
+    public LocalStorageService(IWebHostEnvironment environment)
     {
         _storagePath = Path.Combine(environment.ContentRootPath, StorageFolder);
         Directory.CreateDirectory(_storagePath);

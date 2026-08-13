@@ -9,9 +9,9 @@ namespace HelpDesk.Api.Controllers;
 [Route("api/[controller]")]
 public class TicketsController : ControllerBase
 {
-    private readonly TicketsService _ticketsService;
+    private readonly ITicketsService _ticketsService;
 
-    public TicketsController(TicketsService ticketsService)
+    public TicketsController(ITicketsService ticketsService)
     {
         _ticketsService = ticketsService;
     }

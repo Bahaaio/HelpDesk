@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using HelpDesk.Api.Authorization.Requirements;
 using HelpDesk.Api.Data;
 using HelpDesk.Api.Dtos.Requests;
@@ -14,11 +13,14 @@ public class TicketsService
 {
     private readonly IAuthorizationService _authorizationService;
     private readonly AppDbContext _db;
+    private readonly ICurrentUser _user;
 
-    public TicketsService(AppDbContext db, IAuthorizationService authorizationService)
+    public TicketsService(AppDbContext db, IAuthorizationService authorizationService,
+        ICurrentUser user)
     {
         _db = db;
         _authorizationService = authorizationService;
+        _user = user;
     }
 
     public async Task<List<TicketDto>> GetAll(TicketQuery ticketQuery)
@@ -41,13 +43,11 @@ public class TicketsService
             .ToListAsync();
     }
 
-    public async Task<List<TicketDto>> GetCurrentUserTickets(TicketQuery ticketQuery,
-        ClaimsPrincipal user)
+    public async Task<List<TicketDto>> GetCurrentUserTickets(TicketQuery ticketQuery)
     {
         var query = GetTicketQuery(ticketQuery);
-        var userId = int.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        query = query.Where(t => t.AuthorId == userId);
+        query = query.Where(t => t.AuthorId == _user.Id);
 
         return await query
             .Select(t => new TicketDto
@@ -85,23 +85,17 @@ public class TicketsService
             .FirstOrDefaultAsync();
     }
 
-    public async Task<TicketDto> Create(CreateTicketRequest request, ClaimsPrincipal user)
+    public async Task<TicketDto> Create(CreateTicketRequest request)
     {
-        var claim = user.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!int.TryParse(claim, out var userId))
-            throw new UnauthorizedException($"Invalid user id: {claim}");
-
         var ticket = new Ticket
         {
             Title = request.Title,
             Description = request.Description,
-            AuthorId = userId
+            AuthorId = _user.Id
         };
 
         await _db.Tickets.AddAsync(ticket);
         await _db.SaveChangesAsync();
-
-        var userName = user.FindFirstValue(ClaimTypes.Name)!;
 
         return new TicketDto
         {
@@ -110,14 +104,14 @@ public class TicketsService
             Description = ticket.Description,
             Status = ticket.Status,
             CreatedAt = ticket.CreatedAt,
-            AuthorUsername = userName,
+            AuthorUsername = _user.UserName,
             Tags = ticket.Tags.Select(tag => tag.Name).ToList(),
             Attachments = ticket.Attachments.Select(a => a.Id).ToList(),
             VoteScore = 0
         };
     }
 
-    public async Task<TicketDto> Update(int id, UpdateTicketRequest request, ClaimsPrincipal user)
+    public async Task<TicketDto> Update(int id, UpdateTicketRequest request)
     {
         var ticket = await _db.Tickets
             .Where(t => t.Id == id)
@@ -130,7 +124,7 @@ public class TicketsService
             throw new NotFoundException($"Ticket with id {id} not found");
 
         var result = await _authorizationService.AuthorizeAsync(
-            user,
+            _user.Principal,
             ticket,
             new TicketOwnerOrTechnicianRequirement()
         );
@@ -143,8 +137,6 @@ public class TicketsService
 
         await _db.SaveChangesAsync();
 
-        var userName = user.FindFirstValue(ClaimTypes.Name)!;
-
         return new TicketDto
         {
             Id = ticket.Id,
@@ -152,21 +144,21 @@ public class TicketsService
             Description = ticket.Description,
             Status = ticket.Status,
             CreatedAt = ticket.CreatedAt,
-            AuthorUsername = userName,
+            AuthorUsername = _user.UserName,
             Tags = ticket.Tags.Select(tag => tag.Name).ToList(),
             Attachments = ticket.Attachments.Select(a => a.Id).ToList(),
             VoteScore = ticket.Votes.Sum(v => (int)v.Value)
         };
     }
 
-    public async Task UpdateStatus(int id, TicketStatusUpdateRequest request, ClaimsPrincipal user)
+    public async Task UpdateStatus(int id, TicketStatusUpdateRequest request)
     {
         var ticket = await _db.Tickets.FindAsync(id);
         if (ticket is null)
             throw new NotFoundException($"Ticket with id {id} not found");
 
         var result = await _authorizationService.AuthorizeAsync(
-            user,
+            _user.Principal,
             ticket,
             new TicketOwnerOrTechnicianRequirement()
         );

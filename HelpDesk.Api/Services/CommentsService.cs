@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using HelpDesk.Api.Data;
 using HelpDesk.Api.Dtos.Requests;
 using HelpDesk.Api.Dtos.Responses;
@@ -11,10 +10,12 @@ namespace HelpDesk.Api.Services;
 public class CommentsService
 {
     private readonly AppDbContext _db;
+    private readonly ICurrentUser _user;
 
-    public CommentsService(AppDbContext db)
+    public CommentsService(AppDbContext db, ICurrentUser user)
     {
         _db = db;
+        _user = user;
     }
 
     public async Task<List<CommentDto>> GetAll(int ticketId)
@@ -31,19 +32,17 @@ public class CommentsService
             .ToListAsync();
     }
 
-    public async Task<CommentDto> Create(int ticketId, CreateCommentRequest request,
-        ClaimsPrincipal user)
+    public async Task<CommentDto> Create(int ticketId, CreateCommentRequest request)
     {
         var ticket = await _db.Tickets.SingleOrDefaultAsync(t => t.Id == ticketId);
         if (ticket is null)
             throw new NotFoundException($"Ticket with id {ticketId} not found");
 
-        var userId = int.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
         var comment = new Comment
         {
             Content = request.Content,
             TicketId = ticketId,
-            AuthorId = userId
+            AuthorId = _user.Id
         };
 
         await _db.Comments.AddAsync(comment);

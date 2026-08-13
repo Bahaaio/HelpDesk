@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using HelpDesk.Api.Authorization.Requirements;
 using HelpDesk.Api.Data;
 using HelpDesk.Api.Dtos.Responses;
@@ -13,17 +12,21 @@ public class AttachmentsService
     private readonly IAuthorizationService _authorizationService;
     private readonly AppDbContext _db;
     private readonly StorageService _storageService;
+    private readonly ICurrentUser _user;
 
-    public AttachmentsService(StorageService storageService, AppDbContext db,
-        IAuthorizationService authorizationService)
+    public AttachmentsService(
+        StorageService storageService,
+        AppDbContext db,
+        IAuthorizationService authorizationService,
+        ICurrentUser user)
     {
         _storageService = storageService;
         _db = db;
         _authorizationService = authorizationService;
+        _user = user;
     }
 
-    public async Task<AttachmentResponse> AddAttachment(int ticketId, IFormFile file,
-        ClaimsPrincipal user)
+    public async Task<AttachmentResponse> AddAttachment(int ticketId, IFormFile file)
     {
         var ticket = await _db.Tickets.FindAsync(ticketId);
 
@@ -31,7 +34,7 @@ public class AttachmentsService
             throw new NotFoundException($"Ticket with id {ticketId} not found");
 
         var result = await _authorizationService.AuthorizeAsync(
-            user,
+            _user.Principal,
             ticket,
             new TicketOwnerOrTechnicianRequirement()
         );
@@ -41,7 +44,6 @@ public class AttachmentsService
                 "You are not authorized to add an attachment to this ticket");
 
         var guid = Guid.NewGuid();
-        var userId = int.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         await _storageService.Store(file, guid.ToString());
 
@@ -49,7 +51,7 @@ public class AttachmentsService
         {
             Id = guid,
             TicketId = ticketId,
-            UploaderId = userId
+            UploaderId = _user.Id
         };
 
         await _db.Attachments.AddAsync(attachment);
@@ -58,14 +60,14 @@ public class AttachmentsService
         return new AttachmentResponse(attachment.Id);
     }
 
-    public async Task DeleteAttachment(Guid attachmentId, ClaimsPrincipal user)
+    public async Task DeleteAttachment(Guid attachmentId)
     {
         var attachment = await _db.Attachments.FindAsync(attachmentId);
         if (attachment is null)
             throw new NotFoundException($"Attachment with id: {attachmentId} not found");
 
         var result = await _authorizationService.AuthorizeAsync(
-            user,
+            _user.Principal,
             attachment,
             new AttachmentUploaderOrTechnicianRequirement()
         );

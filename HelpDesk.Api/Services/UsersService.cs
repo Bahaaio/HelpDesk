@@ -1,15 +1,18 @@
-using System.Security.Claims;
 using HelpDesk.Api.Dtos.Responses;
 
 namespace HelpDesk.Api.Services;
 
 public class UsersService
 {
-    public UserDto GetCurrentUser(ClaimsPrincipal user)
-    {
-        var role = user.FindFirstValue(ClaimTypes.Role)!;
-        var userName = user.FindFirstValue(ClaimTypes.Name)!;
+    private readonly ICurrentUser _user;
 
-        return new UserDto(userName, role);
+    public UsersService(ICurrentUser user)
+    {
+        _user = user;
+    }
+
+    public UserDto GetCurrentUser()
+    {
+        return new UserDto(_user.UserName, _user.Role);
     }
 }

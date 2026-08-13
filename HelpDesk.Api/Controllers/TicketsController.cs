@@ -25,7 +25,7 @@ public class TicketsController : ControllerBase
     [HttpGet("mine")]
     public async Task<ActionResult<TicketDto>> GetMyTickets([FromQuery] TicketQuery query)
     {
-        return Ok(await _ticketsService.GetCurrentUserTickets(query, User));
+        return Ok(await _ticketsService.GetCurrentUserTickets(query));
     }
 
     [HttpGet("{id}")]
@@ -38,20 +38,20 @@ public class TicketsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult> Create(CreateTicketRequest request)
     {
-        var ticket = await _ticketsService.Create(request, User);
+        var ticket = await _ticketsService.Create(request);
         return CreatedAtAction(nameof(GetById), new { id = ticket.Id }, ticket);
     }
 
     [HttpPut("{id}")]
     public async Task<ActionResult> Update(int id, UpdateTicketRequest request)
     {
-        return Ok(await _ticketsService.Update(id, request, User));
+        return Ok(await _ticketsService.Update(id, request));
     }
 
     [HttpPatch("{id:int}/status")]
     public async Task<ActionResult> UpdateStatus(int id, TicketStatusUpdateRequest request)
     {
-        await _ticketsService.UpdateStatus(id, request, User);
+        await _ticketsService.UpdateStatus(id, request);
         return NoContent();
     }
 }

@@ -18,6 +18,6 @@ public class UsersController : ControllerBase
     [HttpGet("me")]
     public ActionResult<UserDto> GetCurrentUser()
     {
-        return Ok(_usersService.GetCurrentUser(User));
+        return Ok(_usersService.GetCurrentUser());
     }
 }

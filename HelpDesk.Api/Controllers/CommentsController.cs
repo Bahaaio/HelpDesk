@@ -25,7 +25,7 @@ public class CommentsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<CommentDto>> Create(int ticketId, CreateCommentRequest request)
     {
-        var comment = await _commentsService.Create(ticketId, request, User);
+        var comment = await _commentsService.Create(ticketId, request);
         return Created((string?)null, comment);
     }
 }

@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using HelpDesk.Api.Data;
 using HelpDesk.Api.Dtos.Requests;
 using HelpDesk.Api.Dtos.Responses;
@@ -12,13 +11,15 @@ namespace HelpDesk.Api.Services;
 public class VotesService
 {
     private readonly AppDbContext _db;
+    private readonly ICurrentUser _user;
 
-    public VotesService(AppDbContext db)
+    public VotesService(AppDbContext db, ICurrentUser user)
     {
         _db = db;
+        _user = user;
     }
 
-    public async Task Vote(int ticketId, VoteRequest request, ClaimsPrincipal user)
+    public async Task Vote(int ticketId, VoteRequest request)
     {
         var ticket = await _db.Tickets
             .Include(t => t.Votes)
@@ -27,16 +28,14 @@ public class VotesService
         if (ticket is null)
             throw new NotFoundException($"Ticket with id {ticketId} not found");
 
-        var userId = int.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
-
         var existingVote = await _db.Votes
-            .SingleOrDefaultAsync(v => v.VoterId == userId && v.TicketId == ticketId);
+            .SingleOrDefaultAsync(v => v.VoterId == _user.Id && v.TicketId == ticketId);
 
         if (existingVote is null)
             ticket.Votes.Add(new Vote
             {
                 Value = request.Vote,
-                VoterId = userId,
+                VoterId = _user.Id,
                 TicketId = ticketId
             });
         else
@@ -45,7 +44,7 @@ public class VotesService
         await _db.SaveChangesAsync();
     }
 
-    public async Task<VoteResponse> GetUserVote(int ticketId, ClaimsPrincipal user)
+    public async Task<VoteResponse> GetUserVote(int ticketId)
     {
         var ticket = await _db.Tickets
             .Include(t => t.Votes)
@@ -54,10 +53,8 @@ public class VotesService
         if (ticket is null)
             throw new NotFoundException($"Ticket with id {ticketId} not found");
 
-        var userId = int.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
-
         var vote = await _db.Votes
-            .Where(v => v.TicketId == ticketId && v.VoterId == userId)
+            .Where(v => v.TicketId == ticketId && v.VoterId == _user.Id)
             .SingleOrDefaultAsync();
 
         var value = vote?.Value ?? VoteValue.None;

@@ -22,13 +22,13 @@ public class VotesController : ControllerBase
     [HttpGet("mine")]
     public async Task<ActionResult<VoteResponse>> GetMyVote(int ticketId)
     {
-        return Ok(await _votesService.GetUserVote(ticketId, User));
+        return Ok(await _votesService.GetUserVote(ticketId));
     }
 
     [HttpPost]
     public async Task<ActionResult> Vote(int ticketId, VoteRequest request)
     {
-        await _votesService.Vote(ticketId, request, User);
+        await _votesService.Vote(ticketId, request);
         return NoContent();
     }
 }

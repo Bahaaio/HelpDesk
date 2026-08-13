@@ -21,13 +21,13 @@ public class TicketAttachmentsController : ControllerBase
         if (file.ContentType != "image/jpeg")
             throw new BadRequestException("Only jpeg files are allowed");
 
-        return Ok(await _attachmentsService.AddAttachment(ticketId, file, User));
+        return Ok(await _attachmentsService.AddAttachment(ticketId, file));
     }
 
     [HttpDelete("{AttachmentId:guid}")]
     public async Task<ActionResult> Delete(int ticketId, Guid attachmentId)
     {
-        await _attachmentsService.DeleteAttachment(attachmentId, User);
+        await _attachmentsService.DeleteAttachment(attachmentId);
         return NoContent();
     }
 }

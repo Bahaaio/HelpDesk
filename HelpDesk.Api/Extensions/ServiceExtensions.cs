@@ -22,6 +22,7 @@ public static class ServiceExtensions
             services.AddScoped<TagsService>();
             services.AddScoped<TicketTagsService>();
             services.AddScoped<VotesService>();
+            services.AddScoped<UsersService>();
         }
     }
 }

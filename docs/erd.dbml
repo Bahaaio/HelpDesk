@@ -54,12 +54,3 @@ Table TicketVote {
   VoterId int [ref: > User.Id]
   TicketId int [ref: > Ticket.Id]
 }
-
-Table RefreshToken {
-  Id int [pk, increment]
-  Hash varchar
-  ExpiresAt datetime
-  IsRevoked boolean
-
-  UserId int [ref: > User.Id]
-}

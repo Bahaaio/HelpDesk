@@ -3,8 +3,21 @@ using HelpDesk.Api.Dtos.Responses;
 
 namespace HelpDesk.Api.Services;
 
+/// <summary>
+///     Manages comments on helpdesk tickets.
+/// </summary>
 public interface ICommentsService
 {
+    /// <summary>
+    ///     Returns all comments for a given ticket, ordered by most recent.
+    /// </summary>
+    /// <param name="ticketId">The ID of the ticket to get comments for.</param>
     Task<List<CommentDto>> GetAll(int ticketId);
+
+    /// <summary>
+    ///     Adds a comment to a ticket as the current user.
+    /// </summary>
+    /// <param name="ticketId">The ID of the ticket to comment on.</param>
+    /// <param name="request">The comment content.</param>
     Task<CommentDto> Create(int ticketId, CreateCommentRequest request);
 }

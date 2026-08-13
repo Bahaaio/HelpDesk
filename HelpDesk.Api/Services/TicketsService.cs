@@ -14,26 +14,31 @@ public class TicketsService(AppDbContext db, IAuthorizationService authorization
 {
     public async Task<List<TicketDto>> GetAll(TicketQuery ticketQuery)
     {
-        var query = db.Tickets.AsNoTracking();
+        var query = GetTicketQuery(ticketQuery);
 
-        if (ticketQuery.Status is not null)
-            query = query.Where(t => t.Status == ticketQuery.Status);
+        return await query
+            .Select(t => new TicketDto
+            {
+                Id = t.Id,
+                Title = t.Title,
+                Description = t.Description,
+                Status = t.Status,
+                CreatedAt = t.CreatedAt,
+                AuthorUsername = t.Author.UserName!,
+                Tags = t.Tags.Select(tag => tag.Name).ToList(),
+                Attachments = t.Attachments.Select(a => a.Id).ToList(),
+                VoteScore = t.Votes.Sum(v => (int)v.Value)
+            })
+            .ToListAsync();
+    }
 
-        if (ticketQuery.Author is not null)
-            query = query.Where(t => t.Author.UserName!.ToLower() == ticketQuery.Author.ToLower());
+    public async Task<List<TicketDto>> GetCurrentUserTickets(TicketQuery ticketQuery,
+        ClaimsPrincipal user)
+    {
+        var query = GetTicketQuery(ticketQuery);
+        var userId = int.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        if (ticketQuery.Tag is not null)
-            query = query.Where(t =>
-                t.Tags.Any(tag =>
-                    tag.Name == ticketQuery.Tag.ToLower())
-            );
-
-        if (ticketQuery.Q is not null)
-            query = query.Where(t =>
-                t.Title.ToLower().Contains(ticketQuery.Q.ToLower()) ||
-                (t.Description != null &&
-                 t.Description.ToLower().Contains(ticketQuery.Q.ToLower()))
-            );
+        query = query.Where(t => t.AuthorId == userId);
 
         return await query
             .Select(t => new TicketDto
@@ -162,5 +167,32 @@ public class TicketsService(AppDbContext db, IAuthorizationService authorization
 
         ticket.Status = request.Status;
         await db.SaveChangesAsync();
+    }
+
+
+    private IQueryable<Ticket> GetTicketQuery(TicketQuery ticketQuery)
+    {
+        var query = db.Tickets.AsNoTracking();
+
+        if (ticketQuery.Status is not null)
+            query = query.Where(t => t.Status == ticketQuery.Status);
+
+        if (ticketQuery.Author is not null)
+            query = query.Where(t => t.Author.UserName!.ToLower() == ticketQuery.Author.ToLower());
+
+        if (ticketQuery.Tag is not null)
+            query = query.Where(t =>
+                t.Tags.Any(tag =>
+                    tag.Name == ticketQuery.Tag.ToLower())
+            );
+
+        if (ticketQuery.Q is not null)
+            query = query.Where(t =>
+                t.Title.ToLower().Contains(ticketQuery.Q.ToLower()) ||
+                (t.Description != null &&
+                 t.Description.ToLower().Contains(ticketQuery.Q.ToLower()))
+            );
+
+        return query;
     }
 }

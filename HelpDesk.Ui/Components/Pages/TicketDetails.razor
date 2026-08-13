@@ -1,0 +1,420 @@
+@page "/tickets/{Id:int}"
+@rendermode InteractiveServer
+@inject TicketService TicketService
+@inject VoteService VoteService
+@inject CommentService CommentService
+@inject TagService TagService
+@inject AttachmentService AttachmentService
+@inject AuthState AuthState
+@inject ISnackbar Snackbar
+
+<PageTitle>Ticket #@Id - HelpDesk</PageTitle>
+
+@if (_loading)
+{
+    <MudProgressCircular Indeterminate="true" Class="d-flex justify-center ma-8" />
+}
+else if (_ticket is null)
+{
+    <MudContainer Class="text-center pa-8">
+        <MudIcon Icon="@Icons.Material.Filled.ErrorOutline" Size="Size.Large" Color="Color.Error" />
+        <MudText Typo="Typo.h6" Class="mt-2">Ticket not found</MudText>
+        <MudButton Href="/tickets" Class="mt-4" Variant="Variant.Outlined">Back to Tickets</MudButton>
+    </MudContainer>
+}
+else
+{
+    <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-2">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Href="/tickets" />
+            <MudText Typo="Typo.h4">@_ticket.Title</MudText>
+            <MudSpacer />
+            @if (_canEdit)
+            {
+                <MudTooltip Text="Edit ticket">
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Inherit"
+                                   OnClick="OpenEditDialog" />
+                </MudTooltip>
+            }
+            @if (_ticket.Status == Status.Open)
+            {
+                <MudChip T="string" Color="Color.Success" Size="Size.Medium">Open</MudChip>
+            }
+            else
+            {
+                <MudChip T="string" Color="Color.Default" Size="Size.Medium">Closed</MudChip>
+            }
+        </MudStack>
+
+        <MudPaper Class="pa-4 mb-4">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
+                <MudAvatar Size="Size.Small" Color="Color.Primary">
+                    @(_ticket.AuthorUsername?[..1].ToUpper() ?? "?")
+                </MudAvatar>
+                <MudText Typo="Typo.body2">@_ticket.AuthorUsername</MudText>
+                <MudSpacer />
+                <MudText Typo="Typo.caption" Color="Color.Default">
+                    @_ticket.CreatedAt.ToString("MMM dd, yyyy HH:mm")
+                </MudText>
+            </MudStack>
+
+            @if (!string.IsNullOrEmpty(_ticket.Description))
+            {
+                <MudText Typo="Typo.body1" Class="mt-2">@_ticket.Description</MudText>
+            }
+
+            <MudStack Row="true" Class="mt-4" AlignItems="AlignItems.Center">
+                @foreach (var tag in _ticket.Tags)
+                {
+                    <MudChip T="string" Variant="Variant.Outlined" Size="Size.Small">@tag</MudChip>
+                }
+            </MudStack>
+        </MudPaper>
+
+        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+            <MudText Typo="Typo.h6">Status</MudText>
+            <MudSpacer />
+            @if (_canUpdateStatus)
+            {
+                <MudButtonGroup Variant="Variant.Outlined" Size="Size.Small">
+                    <MudButton OnClick="() => SetStatus(Status.Open)"
+                               Color="@(_ticket.Status == Status.Open ? Color.Success : Color.Default)"
+                               Disabled="_ticket.Status == Status.Open">
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Class="mr-1" />
+                        Open
+                    </MudButton>
+                    <MudButton OnClick="() => SetStatus(Status.Closed)"
+                               Color="@(_ticket.Status == Status.Closed ? Color.Error : Color.Default)"
+                               Disabled="_ticket.Status == Status.Closed">
+                        <MudIcon Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Class="mr-1" />
+                        Close
+                    </MudButton>
+                </MudButtonGroup>
+            }
+            else
+            {
+                <MudText Typo="Typo.body2" Color="Color.Default">
+                    @(_ticket.Status == Status.Open ? "Open" : "Closed")
+                </MudText>
+            }
+        </MudStack>
+
+        <MudDivider Class="mb-4" />
+
+        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
+            <MudText Typo="Typo.h6">Attachments (@_ticket.Attachments.Count)</MudText>
+            <MudSpacer />
+            @if (_canEdit)
+            {
+                <MudFileUpload T="IBrowserFile" FilesChanged="UploadAttachment" Accept="image/jpeg">
+                    <ActivatorContent>
+                        <MudButton Variant="Variant.Outlined" Size="Size.Small"
+                                   StartIcon="@Icons.Material.Filled.AttachFile">
+                            Upload
+                        </MudButton>
+                    </ActivatorContent>
+                </MudFileUpload>
+            }
+        </MudStack>
+
+        @if (_ticket.Attachments.Count > 0)
+        {
+            <MudGrid Class="mb-4">
+                @foreach (var attachmentId in _ticket.Attachments)
+                {
+                    <MudItem xs="6" sm="4" md="3">
+                        <MudPaper Class="pa-1 relative">
+                            <MudImage Src="@AttachmentService.GetImageUrl(attachmentId)"
+                                      Fluid="true" Class="rounded-lg"
+                                      Style="aspect-ratio: 1; object-fit: cover;" />
+                            @if (_canEdit)
+                            {
+                                <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
+                                               Color="Color.Error"
+                                               Style="position: absolute; top: 4px; right: 4px;"
+                                               OnClick="() => DeleteAttachment(attachmentId)" />
+                            }
+                        </MudPaper>
+                    </MudItem>
+                }
+            </MudGrid>
+        }
+
+        <MudDivider Class="mb-4" />
+
+        <MudText Typo="Typo.h6" Class="mb-2">Votes</MudText>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+            <MudTooltip Text="Upvote">
+                <MudIconButton Icon="@Icons.Material.Filled.ThumbUp"
+                               Color="@(_currentVote == VoteValue.Upvote ? Color.Success : Color.Default)"
+                               OnClick="() => VoteAsync(VoteValue.Upvote)"
+                               Disabled="!AuthState.IsAuthenticated" />
+            </MudTooltip>
+            <MudText Typo="Typo.h6" Class="mx-2">@_ticket.VoteScore</MudText>
+            <MudTooltip Text="Downvote">
+                <MudIconButton Icon="@Icons.Material.Filled.ThumbDown"
+                               Color="@(_currentVote == VoteValue.Downvote ? Color.Error : Color.Default)"
+                               OnClick="() => VoteAsync(VoteValue.Downvote)"
+                               Disabled="!AuthState.IsAuthenticated" />
+            </MudTooltip>
+        </MudStack>
+
+        <MudDivider Class="mb-4" />
+
+        <MudText Typo="Typo.h6" Class="mb-2">Comments (@_comments.Count)</MudText>
+
+        @if (_comments.Count == 0)
+        {
+            <MudPaper Class="pa-4 mb-4 text-center">
+                <MudText Typo="Typo.body2" Color="Color.Default">No comments yet</MudText>
+            </MudPaper>
+        }
+        else
+        {
+            @foreach (var comment in _comments)
+            {
+                <MudPaper Class="pa-3 mb-2">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-1">
+                        <MudAvatar Size="Size.Small" Color="Color.Primary">
+                            @comment.AuthorUsername[..1].ToUpper()
+                        </MudAvatar>
+                        <MudText Typo="Typo.subtitle2">@comment.AuthorUsername</MudText>
+                        <MudSpacer />
+                        <MudText Typo="Typo.caption" Color="Color.Default">
+                            @comment.CreatedAt.ToString("MMM dd, yyyy HH:mm")
+                        </MudText>
+                    </MudStack>
+                    <MudText Typo="Typo.body2" Class="ml-8">@comment.Content</MudText>
+                </MudPaper>
+            }
+        }
+
+        @if (AuthState.IsAuthenticated)
+        {
+            <MudPaper Class="pa-4 mt-4">
+                <MudTextField @bind-Value="_newComment" Label="Add a comment"
+                              Lines="3" MaxLength="2000" />
+                <MudButton OnClick="AddCommentAsync" Color="Color.Primary" Variant="Variant.Filled"
+                           Class="mt-2" Disabled="string.IsNullOrWhiteSpace(_newComment) || _submittingComment">
+                    @if (_submittingComment)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    }
+                    Post Comment
+                </MudButton>
+            </MudPaper>
+        }
+    </MudContainer>
+}
+
+<MudDialog @bind-Visible="_editDialogOpen" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Edit Ticket</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="_editTitle" Label="Title" Required="true" MaxLength="200"
+                      Class="mb-4" FullWidth="true" />
+        <MudTextField @bind-Value="_editDescription" Label="Description" Lines="5" MaxLength="2000"
+                      Class="mb-4" FullWidth="true" />
+        @if (AuthState.Role == "Technician")
+        {
+            <MudSelect T="string" Label="Tags" MultiSelection="true"
+                       SelectedValues="_editSelectedTags" SelectedValuesChanged="OnEditTagsChanged">
+                @foreach (var tag in _allTags)
+                {
+                    <MudSelectItem Value="@tag.Name">@tag.Name</MudSelectItem>
+                }
+            </MudSelect>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _editDialogOpen = false">Cancel</MudButton>
+        <MudButton OnClick="SaveEditAsync" Color="Color.Primary" Disabled="_savingEdit">
+            @if (_savingEdit)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+            }
+            Save
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private TicketDto? _ticket;
+    private List<CommentDto> _comments = new();
+    private VoteValue _currentVote = VoteValue.None;
+    private bool _loading = true;
+    private string _newComment = "";
+    private bool _submittingComment;
+    private bool _canUpdateStatus;
+    private bool _canEdit;
+
+    private bool _editDialogOpen;
+    private string _editTitle = "";
+    private string? _editDescription;
+    private bool _savingEdit;
+    private List<TagDto> _allTags = new();
+    private HashSet<string> _editSelectedTags = new();
+    private DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _ticket = await TicketService.GetByIdAsync(Id);
+            _comments = await CommentService.GetAllAsync(Id);
+
+            try
+            {
+                var voteResp = await VoteService.GetMyVoteAsync(Id);
+                _currentVote = voteResp.Vote;
+            }
+            catch { }
+
+            _canUpdateStatus = AuthState.IsAuthenticated
+                && (AuthState.Role == "Technician" || AuthState.Username == _ticket?.AuthorUsername);
+            _canEdit = AuthState.IsAuthenticated
+                && (AuthState.Role == "Technician" || AuthState.Username == _ticket?.AuthorUsername);
+
+            if (_canEdit && AuthState.Role == "Technician")
+            {
+                _allTags = await TagService.GetAllAsync();
+            }
+        }
+        catch { }
+
+        _loading = false;
+    }
+
+    private void OpenEditDialog()
+    {
+        if (_ticket is null) return;
+        _editTitle = _ticket.Title;
+        _editDescription = _ticket.Description;
+        _editSelectedTags = new HashSet<string>(_ticket.Tags);
+        _editDialogOpen = true;
+    }
+
+    private void OnEditTagsChanged(IEnumerable<string> values)
+    {
+        _editSelectedTags = new HashSet<string>(values);
+    }
+
+    private async Task SaveEditAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_editTitle) || _ticket is null) return;
+
+        _savingEdit = true;
+        try
+        {
+            var updated = await TicketService.UpdateAsync(Id, new UpdateTicketRequest
+            {
+                Title = _editTitle,
+                Description = _editDescription
+            });
+            _ticket = updated;
+
+            if (AuthState.Role == "Technician")
+            {
+                await TagService.UpdateTicketTagsAsync(Id, _editSelectedTags.ToList());
+                var refreshed = await TicketService.GetByIdAsync(Id);
+                if (refreshed is not null) _ticket = refreshed;
+            }
+
+            _editDialogOpen = false;
+            Snackbar.Add("Ticket updated", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _savingEdit = false;
+        }
+    }
+
+    private async Task UploadAttachment(IBrowserFile file)
+    {
+        try
+        {
+            await AttachmentService.UploadAsync(Id, file);
+            var refreshed = await TicketService.GetByIdAsync(Id);
+            if (refreshed is not null) _ticket = refreshed;
+            Snackbar.Add("Attachment uploaded", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task DeleteAttachment(Guid attachmentId)
+    {
+        try
+        {
+            await AttachmentService.DeleteAsync(Id, attachmentId);
+            var refreshed = await TicketService.GetByIdAsync(Id);
+            if (refreshed is not null) _ticket = refreshed;
+            Snackbar.Add("Attachment deleted", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task SetStatus(Status status)
+    {
+        try
+        {
+            await TicketService.UpdateStatusAsync(Id, status);
+            _ticket = _ticket! with { Status = status };
+            Snackbar.Add($"Ticket status changed to {status}", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task VoteAsync(VoteValue value)
+    {
+        try
+        {
+            var newValue = _currentVote == value ? VoteValue.None : value;
+            await VoteService.VoteAsync(Id, newValue);
+            _currentVote = newValue;
+
+            var updated = await TicketService.GetByIdAsync(Id);
+            if (updated is not null) _ticket = updated;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task AddCommentAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_newComment)) return;
+
+        _submittingComment = true;
+        try
+        {
+            var comment = await CommentService.CreateAsync(Id, new CreateCommentRequest(_newComment));
+            _comments.Add(comment);
+            _newComment = "";
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _submittingComment = false;
+        }
+    }
+}

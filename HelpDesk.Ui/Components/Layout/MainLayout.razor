@@ -1,0 +1,119 @@
+﻿@inherits LayoutComponentBase
+@inject NavigationManager Navigation
+@inject AuthState AuthState
+@inject IHttpClientFactory HttpClientFactory
+
+@if (!_initialized)
+{
+    <MudLayout>
+        <MudMainContent>
+            <MudContainer Class="d-flex justify-center align-center" Style="min-height: 80vh;">
+                <MudProgressCircular Size="Size.Large" Indeterminate="true" />
+            </MudContainer>
+        </MudMainContent>
+    </MudLayout>
+}
+else if (!AuthState.IsAuthenticated && !IsAuthPage)
+{
+    Navigation.NavigateTo("/login", true);
+}
+else
+{
+    <MudThemeProvider @bind-IsDarkMode="_isDarkMode" />
+    <MudPopoverProvider />
+    <MudLayout>
+        <MudAppBar Elevation="1">
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit"
+                           Edge="Edge.Start" OnClick="ToggleDrawer" />
+            <MudText Typo="Typo.h6" Class="cursor-pointer" @onclick='() => Navigation.NavigateTo("/tickets")'>
+                HelpDesk
+            </MudText>
+            <MudSpacer />
+
+            @if (AuthState.IsAuthenticated)
+            {
+                <MudText Typo="Typo.body2" Class="mr-2">@AuthState.Username</MudText>
+                <MudAvatar Size="Size.Small" Color="Color.Primary">
+                    @(_usernameInitial)
+                </MudAvatar>
+
+                <MudTooltip Text="Logout">
+                    <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit"
+                                   OnClick="LogoutAsync" />
+                </MudTooltip>
+            }
+        </MudAppBar>
+
+        <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Docked" Elevation="2">
+            <MudNavMenu>
+                <MudNavLink Href="/tickets" Icon="@Icons.Material.Filled.ConfirmationNumber"
+                             Match="NavLinkMatch.Prefix">
+                    All Tickets
+                </MudNavLink>
+                @if (AuthState.IsAuthenticated)
+                {
+                    <MudNavLink Href="/tickets/mine" Icon="@Icons.Material.Filled.Person"
+                                 Match="NavLinkMatch.Prefix">
+                        My Tickets
+                    </MudNavLink>
+                    <MudNavLink Href="/tickets/new" Icon="@Icons.Material.Filled.Add"
+                                 Match="NavLinkMatch.All">
+                        New Ticket
+                    </MudNavLink>
+                }
+                @if (AuthState.Role == "Technician")
+                {
+                    <MudNavLink Href="/tags" Icon="@Icons.Material.Filled.Label"
+                                 Match="NavLinkMatch.All">
+                        Tags
+                    </MudNavLink>
+                }
+            </MudNavMenu>
+        </MudDrawer>
+
+        <MudMainContent Class="px-4" Style="padding-top: calc(var(--mud-appbar-height) + 16px);">
+            @Body
+        </MudMainContent>
+    </MudLayout>
+}
+
+@code {
+    private bool _drawerOpen = true;
+    private bool _isDarkMode;
+    private bool _initialized;
+    private string _usernameInitial = "";
+
+    private bool IsAuthPage =>
+        Navigation.Uri.Contains("/login") || Navigation.Uri.Contains("/register");
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!IsAuthPage)
+        {
+            await AuthState.CheckAsync();
+        }
+
+        _initialized = true;
+        UpdateUsernameInitial();
+    }
+
+    private void UpdateUsernameInitial()
+    {
+        _usernameInitial = !string.IsNullOrEmpty(AuthState.Username)
+            ? AuthState.Username[..1].ToUpper()
+            : "?";
+    }
+
+    private void ToggleDrawer()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+    private async Task LogoutAsync()
+    {
+        var client = HttpClientFactory.CreateClient("api");
+        await client.PostAsync("/auth/logout", null);
+        AuthState.SetUnauthenticated();
+        Navigation.NavigateTo("/login", false);
+    }
+}

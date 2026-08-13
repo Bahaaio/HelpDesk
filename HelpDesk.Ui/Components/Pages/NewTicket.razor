@@ -1,0 +1,94 @@
+@page "/tickets/new"
+@rendermode InteractiveServer
+@inject TicketService TicketService
+@inject AttachmentService AttachmentService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<PageTitle>New Ticket - HelpDesk</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Href="/tickets" />
+        <MudText Typo="Typo.h4">Create Ticket</MudText>
+    </MudStack>
+
+    <MudPaper Class="pa-6">
+        <MudTextField @bind-Value="_title" Label="Title" Required="true" MaxLength="200"
+                      Class="mb-4" FullWidth="true" />
+
+        <MudTextField @bind-Value="_description" Label="Description" Lines="5" MaxLength="2000"
+                      Class="mb-4" FullWidth="true" />
+
+        <MudFileUpload T="IBrowserFile" FilesChanged="OnFilesChanged"
+                       Accept="image/jpeg" Class="mb-4">
+            <ActivatorContent>
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.AttachFile">
+                    Attach Images
+                </MudButton>
+            </ActivatorContent>
+        </MudFileUpload>
+
+        @if (_selectedFiles.Count > 0)
+        {
+            <MudText Typo="Typo.body2" Class="mb-2">@_selectedFiles.Count file(s) selected</MudText>
+        }
+
+        <MudStack Row="true" Justify="Justify.FlexEnd">
+            <MudButton Href="/tickets" Variant="Variant.Outlined" Class="mr-2">Cancel</MudButton>
+            <MudButton OnClick="CreateAsync" Color="Color.Primary" Variant="Variant.Filled"
+                       Disabled="_loading || string.IsNullOrWhiteSpace(_title)">
+                @if (_loading)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                }
+                Create
+            </MudButton>
+        </MudStack>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private string _title = "";
+    private string? _description;
+    private bool _loading;
+    private List<IBrowserFile> _selectedFiles = new();
+
+    private void OnFilesChanged(IBrowserFile? file)
+    {
+        if (file is not null)
+            _selectedFiles.Add(file);
+    }
+
+    private async Task CreateAsync()
+    {
+        _loading = true;
+        try
+        {
+            var ticket = await TicketService.CreateAsync(new CreateTicketRequest
+            {
+                Title = _title,
+                Description = _description
+            });
+
+            foreach (var file in _selectedFiles)
+            {
+                try
+                {
+                    await AttachmentService.UploadAsync(ticket.Id, file);
+                }
+                catch { }
+            }
+
+            Navigation.NavigateTo($"/tickets/{ticket.Id}");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

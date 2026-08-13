@@ -1,0 +1,123 @@
+@page "/register"
+@rendermode InteractiveServer
+@inject AuthState AuthState
+@inject NavigationManager Navigation
+
+<MudContainer Class="d-flex justify-center align-center" Style="min-height: 80vh;">
+    <MudPaper Class="d-flex flex-column align-center pa-6" Style="width: 380px;" Elevation="4">
+        <MudIcon Icon="@Icons.Material.Filled.PersonAdd" Size="Size.Large" Color="Color.Primary" Class="mb-2" />
+        <MudText Typo="Typo.h5" Class="mb-4">Create Account</MudText>
+
+        <MudTextField @bind-Value="_username" Label="Username" Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Person" Class="mb-3" FullWidth="true" />
+
+        <MudTextField @bind-Value="_email" Label="Email" InputType="InputType.Email"
+                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Email"
+                      Class="mb-3" FullWidth="true" />
+
+        <MudTextField @bind-Value="_password" Label="Password" InputType="InputType.Password"
+                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Key"
+                      Class="mb-3" FullWidth="true" />
+
+        <MudButton OnClick="RegisterAsync" Color="Color.Primary" Variant="Variant.Filled"
+                   FullWidth="true" Disabled="_loading" Size="Size.Large">
+            @if (_loading)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+            }
+            Register
+        </MudButton>
+
+        @if (!string.IsNullOrWhiteSpace(_error))
+        {
+            <MudAlert Severity="Severity.Error" Class="mt-4" Dense="true">@_error</MudAlert>
+        }
+
+        <MudText Class="mt-4">
+            Already have an account?
+            <MudLink Href="/login">Sign in</MudLink>
+        </MudText>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private string _username = "";
+    private string _email = "";
+    private string _password = "";
+    private bool _loading;
+    private string _error = "";
+
+    private async Task RegisterAsync()
+    {
+        _loading = true;
+        _error = "";
+        try
+        {
+            using var http = new HttpClient { BaseAddress = new Uri(Navigation.BaseUri) };
+            var resp = await http.PostAsJsonAsync("/auth/register", new
+            {
+                Username = _username,
+                Email = _email,
+                Password = _password
+            });
+
+            if (!resp.IsSuccessStatusCode)
+            {
+                var body = await resp.Content.ReadAsStringAsync();
+                _error = ParseError(body);
+                return;
+            }
+
+            var loginResp = await http.PostAsJsonAsync("/auth/login", new
+            {
+                Username = _username,
+                Password = _password,
+                RememberMe = false
+            });
+
+            if (!loginResp.IsSuccessStatusCode)
+            {
+                Navigation.NavigateTo("/login", false);
+                return;
+            }
+
+            await AuthState.CheckAsync();
+            Navigation.NavigateTo("/tickets", false);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static string ParseError(string body)
+    {
+        try
+        {
+            var doc = System.Text.Json.JsonDocument.Parse(body);
+
+            if (doc.RootElement.TryGetProperty("detail", out var detail))
+                return detail.GetString() ?? body;
+
+            if (doc.RootElement.TryGetProperty("errors", out var errors))
+            {
+                var messages = new List<string>();
+                foreach (var prop in errors.EnumerateObject())
+                {
+                    foreach (var err in prop.Value.EnumerateArray())
+                    {
+                        messages.Add(err.GetString() ?? "");
+                    }
+                }
+                if (messages.Count > 0)
+                    return string.Join("\n", messages);
+            }
+        }
+        catch { }
+        return body;
+    }
+}

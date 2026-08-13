@@ -1,0 +1,108 @@
+@page "/login"
+@rendermode InteractiveServer
+@inject AuthState AuthState
+@inject NavigationManager NavigationManager
+
+<MudContainer Class="d-flex justify-center align-center" Style="min-height: 80vh;">
+    <MudPaper Class="d-flex flex-column align-center pa-6" Style="width: 380px;" Elevation="4">
+        <MudIcon Icon="@Icons.Material.Filled.Lock" Size="Size.Large" Color="Color.Primary" Class="mb-2" />
+        <MudText Typo="Typo.h5" Class="mb-4">Sign in</MudText>
+
+        <MudTextField @bind-Value="_username" Label="Username" Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Person" Class="mb-3" FullWidth="true" />
+
+        <MudTextField @bind-Value="_password" Label="Password" InputType="InputType.Password"
+                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Key"
+                      Class="mb-3" FullWidth="true" />
+
+        <MudCheckBox @bind-Value="_rememberMe" Label="Remember me" Color="Color.Primary" Class="mb-3" />
+
+        <MudButton OnClick="LoginAsync" Color="Color.Primary" Variant="Variant.Filled"
+                   FullWidth="true" Disabled="_loading" Size="Size.Large">
+            @if (_loading)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+            }
+            Sign In
+        </MudButton>
+
+        @if (!string.IsNullOrWhiteSpace(_error))
+        {
+            <MudAlert Severity="Severity.Error" Class="mt-4" Dense="true">@_error</MudAlert>
+        }
+
+        <MudText Class="mt-4">
+            Don't have an account?
+            <MudLink Href="/register">Register</MudLink>
+        </MudText>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private string _username = "";
+    private string _password = "";
+    private bool _rememberMe;
+    private bool _loading;
+    private string _error = "";
+
+    private async Task LoginAsync()
+    {
+        _loading = true;
+        _error = "";
+        try
+        {
+            using var http = new HttpClient { BaseAddress = new Uri(NavigationManager.BaseUri) };
+            var resp = await http.PostAsJsonAsync("/auth/login", new
+            {
+                Username = _username,
+                Password = _password,
+                RememberMe = _rememberMe
+            });
+
+            if (!resp.IsSuccessStatusCode)
+            {
+                var body = await resp.Content.ReadAsStringAsync();
+                _error = ParseError(body);
+                return;
+            }
+
+            await AuthState.CheckAsync();
+            NavigationManager.NavigateTo("/tickets", false);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static string ParseError(string body)
+    {
+        try
+        {
+            var doc = System.Text.Json.JsonDocument.Parse(body);
+
+            if (doc.RootElement.TryGetProperty("detail", out var detail))
+                return detail.GetString() ?? body;
+
+            if (doc.RootElement.TryGetProperty("errors", out var errors))
+            {
+                var messages = new List<string>();
+                foreach (var prop in errors.EnumerateObject())
+                {
+                    foreach (var err in prop.Value.EnumerateArray())
+                    {
+                        messages.Add(err.GetString() ?? "");
+                    }
+                }
+                if (messages.Count > 0)
+                    return string.Join("\n", messages);
+            }
+        }
+        catch { }
+        return body;
+    }
+}

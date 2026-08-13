@@ -12,10 +12,30 @@ namespace HelpDesk.Api.Services;
 
 public class TicketsService(AppDbContext db, IAuthorizationService authorizationService)
 {
-    public async Task<List<TicketDto>> GetAll()
+    public async Task<List<TicketDto>> GetAll(TicketQuery ticketQuery)
     {
-        return await db.Tickets
-            .AsNoTracking()
+        var query = db.Tickets.AsNoTracking();
+
+        if (ticketQuery.Status is not null)
+            query = query.Where(t => t.Status == ticketQuery.Status);
+
+        if (ticketQuery.Author is not null)
+            query = query.Where(t => t.Author.UserName!.ToLower() == ticketQuery.Author.ToLower());
+
+        if (ticketQuery.Tag is not null)
+            query = query.Where(t =>
+                t.Tags.Any(tag =>
+                    tag.Name == ticketQuery.Tag.ToLower())
+            );
+
+        if (ticketQuery.Q is not null)
+            query = query.Where(t =>
+                t.Title.ToLower().Contains(ticketQuery.Q.ToLower()) ||
+                (t.Description != null &&
+                 t.Description.ToLower().Contains(ticketQuery.Q.ToLower()))
+            );
+
+        return await query
             .Select(t => new TicketDto
             {
                 Id = t.Id,

@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace HelpDesk.Api.Controllers;
 
-[Authorize(Roles = Role.Technician)]
 [ApiController]
 [Route("api/[controller]")]
 public class TagsController(TagsService tagsService) : ControllerBase
@@ -18,6 +17,7 @@ public class TagsController(TagsService tagsService) : ControllerBase
         return Ok(await tagsService.GetAll());
     }
 
+    [Authorize(Roles = Role.Technician)]
     [HttpPost]
     public async Task<ActionResult<TagDto>> Create(CreateTagRequest request)
     {
@@ -25,6 +25,7 @@ public class TagsController(TagsService tagsService) : ControllerBase
         return Created((string?)null, tag);
     }
 
+    [Authorize(Roles = Role.Technician)]
     [HttpPut("{name}")]
     public async Task<ActionResult<TagDto>> Update(string name, UpdateTagRequest request)
     {

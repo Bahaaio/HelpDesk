@@ -10,9 +10,9 @@ namespace HelpDesk.Api.Controllers;
 public class TicketsController(TicketsService ticketsService) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<TicketDto>> GetAll()
+    public async Task<ActionResult<TicketDto>> GetAll([FromQuery] TicketQuery query)
     {
-        return Ok(await ticketsService.GetAll());
+        return Ok(await ticketsService.GetAll(query));
     }
 
     [HttpGet("{id}")]

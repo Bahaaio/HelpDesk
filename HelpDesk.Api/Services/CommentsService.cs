@@ -8,15 +8,22 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HelpDesk.Api.Services;
 
-public class CommentsService(AppDbContext db)
+public class CommentsService
 {
+    private readonly AppDbContext _db;
+
+    public CommentsService(AppDbContext db)
+    {
+        _db = db;
+    }
+
     public async Task<List<CommentDto>> GetAll(int ticketId)
     {
-        var ticket = await db.Tickets.SingleOrDefaultAsync(t => t.Id == ticketId);
+        var ticket = await _db.Tickets.SingleOrDefaultAsync(t => t.Id == ticketId);
         if (ticket is null)
             throw new NotFoundException($"Ticket with id {ticketId} not found");
 
-        return await db.Comments
+        return await _db.Comments
             .AsNoTracking()
             .Where(c => c.TicketId == ticketId)
             .OrderByDescending(c => c.CreatedAt)
@@ -27,7 +34,7 @@ public class CommentsService(AppDbContext db)
     public async Task<CommentDto> Create(int ticketId, CreateCommentRequest request,
         ClaimsPrincipal user)
     {
-        var ticket = await db.Tickets.SingleOrDefaultAsync(t => t.Id == ticketId);
+        var ticket = await _db.Tickets.SingleOrDefaultAsync(t => t.Id == ticketId);
         if (ticket is null)
             throw new NotFoundException($"Ticket with id {ticketId} not found");
 
@@ -39,10 +46,10 @@ public class CommentsService(AppDbContext db)
             AuthorId = userId
         };
 
-        await db.Comments.AddAsync(comment);
-        await db.SaveChangesAsync();
+        await _db.Comments.AddAsync(comment);
+        await _db.SaveChangesAsync();
 
-        await db.Entry(comment).Reference(c => c.Author).LoadAsync();
+        await _db.Entry(comment).Reference(c => c.Author).LoadAsync();
 
         return new CommentDto(comment.Content, comment.CreatedAt, comment.Author.UserName!);
     }

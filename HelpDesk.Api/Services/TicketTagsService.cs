@@ -4,11 +4,18 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HelpDesk.Api.Services;
 
-public class TicketTagsService(AppDbContext db)
+public class TicketTagsService
 {
+    private readonly AppDbContext _db;
+
+    public TicketTagsService(AppDbContext db)
+    {
+        _db = db;
+    }
+
     public async Task<List<string>> UpdateTags(int ticketId, List<string> tags)
     {
-        var ticket = await db.Tickets
+        var ticket = await _db.Tickets
             .Include(t => t.Tags)
             .SingleOrDefaultAsync(t => t.Id == ticketId);
 
@@ -17,7 +24,7 @@ public class TicketTagsService(AppDbContext db)
 
         var lowerTags = tags.Select(n => n.ToLower());
 
-        var tagEntities = await db.Tags
+        var tagEntities = await _db.Tags
             .Where(t => lowerTags.Contains(t.Name))
             .ToListAsync();
 
@@ -26,7 +33,7 @@ public class TicketTagsService(AppDbContext db)
             throw new NotFoundException($"Tags {string.Join(", ", missing)} not found");
 
         ticket.Tags = tagEntities;
-        await db.SaveChangesAsync();
+        await _db.SaveChangesAsync();
 
         return ticket.Tags.Select(t => t.Name).ToList();
     }

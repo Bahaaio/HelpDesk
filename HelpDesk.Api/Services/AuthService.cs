@@ -6,10 +6,18 @@ using Microsoft.AspNetCore.Identity;
 
 namespace HelpDesk.Api.Services;
 
-public class AuthService(
-    UserManager<ApplicationUser> userManager,
-    SignInManager<ApplicationUser> signInManager)
+public class AuthService
 {
+    private readonly SignInManager<ApplicationUser> _signInManager;
+    private readonly UserManager<ApplicationUser> _userManager;
+
+    public AuthService(UserManager<ApplicationUser> userManager,
+        SignInManager<ApplicationUser> signInManager)
+    {
+        _userManager = userManager;
+        _signInManager = signInManager;
+    }
+
     public async Task Register(RegisterRequest request)
     {
         var user = new ApplicationUser
@@ -18,25 +26,25 @@ public class AuthService(
             Email = request.Email
         };
 
-        var result = await userManager.CreateAsync(user, request.Password);
+        var result = await _userManager.CreateAsync(user, request.Password);
 
         if (!result.Succeeded)
             throw new BadRequestException(string.Join(", ",
                 result.Errors.Select(e => e.Description))
             );
 
-        await userManager.AddToRoleAsync(user, Role.Employee);
-        await signInManager.SignInAsync(user, request.RememberMe);
+        await _userManager.AddToRoleAsync(user, Role.Employee);
+        await _signInManager.SignInAsync(user, request.RememberMe);
     }
 
     public async Task Login(LoginRequest request)
     {
-        var user = await userManager.FindByNameAsync(request.Username);
+        var user = await _userManager.FindByNameAsync(request.Username);
 
         if (user is null)
             throw new UnauthorizedException("Invalid username or password");
 
-        var result = await signInManager.PasswordSignInAsync(
+        var result = await _signInManager.PasswordSignInAsync(
             user,
             request.Password,
             request.RememberMe,
@@ -49,6 +57,6 @@ public class AuthService(
 
     public async Task Logout()
     {
-        await signInManager.SignOutAsync();
+        await _signInManager.SignOutAsync();
     }
 }

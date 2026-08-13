@@ -6,11 +6,18 @@ namespace HelpDesk.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class UsersController(UsersService usersService) : ControllerBase
+public class UsersController : ControllerBase
 {
+    private readonly UsersService _usersService;
+
+    public UsersController(UsersService usersService)
+    {
+        _usersService = usersService;
+    }
+
     [HttpGet("me")]
     public ActionResult<UserDto> GetCurrentUser()
     {
-        return Ok(usersService.GetCurrentUser(User));
+        return Ok(_usersService.GetCurrentUser(User));
     }
 }

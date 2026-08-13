@@ -43,10 +43,16 @@ internal sealed class ApiDocumentTransformer : IOpenApiDocumentTransformer
     }
 }
 
-internal sealed class BearerSecuritySchemeTransformer(
-    IAuthenticationSchemeProvider authenticationSchemeProvider
-) : IOpenApiDocumentTransformer
+internal sealed class BearerSecuritySchemeTransformer : IOpenApiDocumentTransformer
 {
+    private readonly IAuthenticationSchemeProvider _authenticationSchemeProvider;
+
+    public BearerSecuritySchemeTransformer(
+        IAuthenticationSchemeProvider authenticationSchemeProvider)
+    {
+        _authenticationSchemeProvider = authenticationSchemeProvider;
+    }
+
     public async Task TransformAsync(
         OpenApiDocument document,
         OpenApiDocumentTransformerContext context,
@@ -54,7 +60,7 @@ internal sealed class BearerSecuritySchemeTransformer(
     )
     {
         var authenticationSchemes =
-            await authenticationSchemeProvider.GetAllSchemesAsync();
+            await _authenticationSchemeProvider.GetAllSchemesAsync();
 
         if (authenticationSchemes.Any(authScheme => authScheme.Name == "Bearer"))
         {

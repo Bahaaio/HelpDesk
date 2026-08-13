@@ -9,19 +9,26 @@ namespace HelpDesk.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class TagsController(TagsService tagsService) : ControllerBase
+public class TagsController : ControllerBase
 {
+    private readonly TagsService _tagsService;
+
+    public TagsController(TagsService tagsService)
+    {
+        _tagsService = tagsService;
+    }
+
     [HttpGet]
     public async Task<ActionResult<List<TagDto>>> GetAll()
     {
-        return Ok(await tagsService.GetAll());
+        return Ok(await _tagsService.GetAll());
     }
 
     [Authorize(Roles = Role.Technician)]
     [HttpPost]
     public async Task<ActionResult<TagDto>> Create(CreateTagRequest request)
     {
-        var tag = await tagsService.Create(request);
+        var tag = await _tagsService.Create(request);
         return Created((string?)null, tag);
     }
 
@@ -29,6 +36,6 @@ public class TagsController(TagsService tagsService) : ControllerBase
     [HttpPut("{name}")]
     public async Task<ActionResult<TagDto>> Update(string name, UpdateTagRequest request)
     {
-        return Ok(await tagsService.Update(name, request));
+        return Ok(await _tagsService.Update(name, request));
     }
 }

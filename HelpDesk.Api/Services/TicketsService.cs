@@ -10,8 +10,17 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HelpDesk.Api.Services;
 
-public class TicketsService(AppDbContext db, IAuthorizationService authorizationService)
+public class TicketsService
 {
+    private readonly IAuthorizationService _authorizationService;
+    private readonly AppDbContext _db;
+
+    public TicketsService(AppDbContext db, IAuthorizationService authorizationService)
+    {
+        _db = db;
+        _authorizationService = authorizationService;
+    }
+
     public async Task<List<TicketDto>> GetAll(TicketQuery ticketQuery)
     {
         var query = GetTicketQuery(ticketQuery);
@@ -58,7 +67,7 @@ public class TicketsService(AppDbContext db, IAuthorizationService authorization
 
     public async Task<TicketDto?> GetById(int id)
     {
-        return await db.Tickets
+        return await _db.Tickets
             .AsNoTracking()
             .Where(t => t.Id == id)
             .Select(t => new TicketDto
@@ -89,8 +98,8 @@ public class TicketsService(AppDbContext db, IAuthorizationService authorization
             AuthorId = userId
         };
 
-        await db.Tickets.AddAsync(ticket);
-        await db.SaveChangesAsync();
+        await _db.Tickets.AddAsync(ticket);
+        await _db.SaveChangesAsync();
 
         var userName = user.FindFirstValue(ClaimTypes.Name)!;
 
@@ -110,7 +119,7 @@ public class TicketsService(AppDbContext db, IAuthorizationService authorization
 
     public async Task<TicketDto> Update(int id, UpdateTicketRequest request, ClaimsPrincipal user)
     {
-        var ticket = await db.Tickets
+        var ticket = await _db.Tickets
             .Where(t => t.Id == id)
             .Include(t => t.Tags)
             .Include(t => t.Attachments)
@@ -120,7 +129,7 @@ public class TicketsService(AppDbContext db, IAuthorizationService authorization
         if (ticket is null)
             throw new NotFoundException($"Ticket with id {id} not found");
 
-        var result = await authorizationService.AuthorizeAsync(
+        var result = await _authorizationService.AuthorizeAsync(
             user,
             ticket,
             new TicketOwnerOrTechnicianRequirement()
@@ -132,7 +141,7 @@ public class TicketsService(AppDbContext db, IAuthorizationService authorization
         ticket.Title = request.Title;
         ticket.Description = request.Description;
 
-        await db.SaveChangesAsync();
+        await _db.SaveChangesAsync();
 
         var userName = user.FindFirstValue(ClaimTypes.Name)!;
 
@@ -152,11 +161,11 @@ public class TicketsService(AppDbContext db, IAuthorizationService authorization
 
     public async Task UpdateStatus(int id, TicketStatusUpdateRequest request, ClaimsPrincipal user)
     {
-        var ticket = await db.Tickets.FindAsync(id);
+        var ticket = await _db.Tickets.FindAsync(id);
         if (ticket is null)
             throw new NotFoundException($"Ticket with id {id} not found");
 
-        var result = await authorizationService.AuthorizeAsync(
+        var result = await _authorizationService.AuthorizeAsync(
             user,
             ticket,
             new TicketOwnerOrTechnicianRequirement()
@@ -166,13 +175,12 @@ public class TicketsService(AppDbContext db, IAuthorizationService authorization
             throw new ForbiddenException("You are not authorized to update this ticket");
 
         ticket.Status = request.Status;
-        await db.SaveChangesAsync();
+        await _db.SaveChangesAsync();
     }
-
 
     private IQueryable<Ticket> GetTicketQuery(TicketQuery ticketQuery)
     {
-        var query = db.Tickets.AsNoTracking();
+        var query = _db.Tickets.AsNoTracking();
 
         if (ticketQuery.Status is not null)
             query = query.Where(t => t.Status == ticketQuery.Status);

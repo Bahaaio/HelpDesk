@@ -9,11 +9,18 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HelpDesk.Api.Services;
 
-public class VotesService(AppDbContext db)
+public class VotesService
 {
+    private readonly AppDbContext _db;
+
+    public VotesService(AppDbContext db)
+    {
+        _db = db;
+    }
+
     public async Task Vote(int ticketId, VoteRequest request, ClaimsPrincipal user)
     {
-        var ticket = await db.Tickets
+        var ticket = await _db.Tickets
             .Include(t => t.Votes)
             .SingleOrDefaultAsync(t => t.Id == ticketId);
 
@@ -22,7 +29,7 @@ public class VotesService(AppDbContext db)
 
         var userId = int.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        var existingVote = await db.Votes
+        var existingVote = await _db.Votes
             .SingleOrDefaultAsync(v => v.VoterId == userId && v.TicketId == ticketId);
 
         if (existingVote is null)
@@ -35,12 +42,12 @@ public class VotesService(AppDbContext db)
         else
             existingVote.Value = request.Vote;
 
-        await db.SaveChangesAsync();
+        await _db.SaveChangesAsync();
     }
 
     public async Task<VoteResponse> GetUserVote(int ticketId, ClaimsPrincipal user)
     {
-        var ticket = await db.Tickets
+        var ticket = await _db.Tickets
             .Include(t => t.Votes)
             .SingleOrDefaultAsync(t => t.Id == ticketId);
 
@@ -49,7 +56,7 @@ public class VotesService(AppDbContext db)
 
         var userId = int.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        var vote = await db.Votes
+        var vote = await _db.Votes
             .Where(v => v.TicketId == ticketId && v.VoterId == userId)
             .SingleOrDefaultAsync();
 

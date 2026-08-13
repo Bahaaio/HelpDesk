@@ -8,26 +8,33 @@ namespace HelpDesk.Api.Controllers;
 [AllowAnonymous]
 [ApiController]
 [Route("api/[controller]")]
-public class AuthController(AuthService authService) : ControllerBase
+public class AuthController : ControllerBase
 {
+    private readonly AuthService _authService;
+
+    public AuthController(AuthService authService)
+    {
+        _authService = authService;
+    }
+
     [HttpPost("register")]
     public async Task<ActionResult> Register(RegisterRequest registerRequest)
     {
-        await authService.Register(registerRequest);
+        await _authService.Register(registerRequest);
         return Created();
     }
 
     [HttpPost("login")]
     public async Task<ActionResult> Login(LoginRequest loginRequest)
     {
-        await authService.Login(loginRequest);
+        await _authService.Login(loginRequest);
         return Ok();
     }
 
     [HttpPost("logout")]
     public async Task<ActionResult> Logout()
     {
-        await authService.Logout();
+        await _authService.Logout();
         return NoContent();
     }
 }

@@ -5,12 +5,19 @@ namespace HelpDesk.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AttachmentsController(AttachmentsService attachmentsService) : ControllerBase
+public class AttachmentsController : ControllerBase
 {
+    private readonly AttachmentsService _attachmentsService;
+
+    public AttachmentsController(AttachmentsService attachmentsService)
+    {
+        _attachmentsService = attachmentsService;
+    }
+
     [HttpGet("{id}")]
     public async Task<ActionResult> Get(Guid id)
     {
-        var stream = await attachmentsService.GetAttachment(id);
+        var stream = await _attachmentsService.GetAttachment(id);
         return File(stream, "image/jpeg");
     }
 }

@@ -10,18 +10,25 @@ namespace HelpDesk.Api.Controllers;
 [Authorize(Roles = Role.Employee)]
 [ApiController]
 [Route("api/tickets/{ticketId:int}/[controller]")]
-public class VotesController(VotesService votesService) : ControllerBase
+public class VotesController : ControllerBase
 {
+    private readonly VotesService _votesService;
+
+    public VotesController(VotesService votesService)
+    {
+        _votesService = votesService;
+    }
+
     [HttpGet("mine")]
     public async Task<ActionResult<VoteResponse>> GetMyVote(int ticketId)
     {
-        return Ok(await votesService.GetUserVote(ticketId, User));
+        return Ok(await _votesService.GetUserVote(ticketId, User));
     }
 
     [HttpPost]
     public async Task<ActionResult> Vote(int ticketId, VoteRequest request)
     {
-        await votesService.Vote(ticketId, request, User);
+        await _votesService.Vote(ticketId, request, User);
         return NoContent();
     }
 }

@@ -8,10 +8,6 @@ public class AttachmentConfiguration : IEntityTypeConfiguration<Attachment>
 {
     public void Configure(EntityTypeBuilder<Attachment> builder)
     {
-        builder.Property(a => a.FilePath)
-            .HasMaxLength(64)
-            .IsRequired();
-
         builder.Property(a => a.CreatedAt)
             .IsRequired()
             .HasDefaultValueSql("CURRENT_TIMESTAMP");

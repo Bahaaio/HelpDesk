@@ -9,6 +9,7 @@
 
 .idea/
 *.DotSettings.user
+Uploads/
 
 # Build results
 [Dd]ebug/

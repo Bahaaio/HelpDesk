@@ -23,6 +23,8 @@ public static class ServiceExtensions
             services.AddScoped<TicketTagsService>();
             services.AddScoped<VotesService>();
             services.AddScoped<UsersService>();
+            services.AddScoped<StorageService>();
+            services.AddScoped<AttachmentsService>();
         }
     }
 }

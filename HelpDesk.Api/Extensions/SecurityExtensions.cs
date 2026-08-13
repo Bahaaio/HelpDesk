@@ -48,6 +48,7 @@ public static class SecurityExtensions
             });
 
             services.AddScoped<IAuthorizationHandler, TicketOwnerOrTechnicianHandler>();
+            services.AddScoped<IAuthorizationHandler, AttachmentUploaderOrTechnicianHandler>();
         }
     }
 }

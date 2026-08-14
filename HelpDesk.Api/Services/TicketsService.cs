@@ -3,6 +3,7 @@ using HelpDesk.Api.Data;
 using HelpDesk.Api.Dtos.Requests;
 using HelpDesk.Api.Dtos.Responses;
 using HelpDesk.Api.Exceptions;
+using HelpDesk.Api.Mappers;
 using HelpDesk.Api.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -28,18 +29,7 @@ public class TicketsService : ITicketsService
         var query = GetTicketQuery(ticketQuery);
 
         return await query
-            .Select(t => new TicketDto
-            {
-                Id = t.Id,
-                Title = t.Title,
-                Description = t.Description,
-                Status = t.Status,
-                CreatedAt = t.CreatedAt,
-                AuthorUsername = t.Author.UserName!,
-                Tags = t.Tags.Select(tag => tag.Name).ToList(),
-                Attachments = t.Attachments.Select(a => a.Id).ToList(),
-                VoteScore = t.Votes.Sum(v => (int)v.Value)
-            })
+            .Select(TicketMapper.ToDtoExpression)
             .ToListAsync();
     }
 
@@ -50,18 +40,7 @@ public class TicketsService : ITicketsService
         query = query.Where(t => t.AuthorId == _user.Id);
 
         return await query
-            .Select(t => new TicketDto
-            {
-                Id = t.Id,
-                Title = t.Title,
-                Description = t.Description,
-                Status = t.Status,
-                CreatedAt = t.CreatedAt,
-                AuthorUsername = t.Author.UserName!,
-                Tags = t.Tags.Select(tag => tag.Name).ToList(),
-                Attachments = t.Attachments.Select(a => a.Id).ToList(),
-                VoteScore = t.Votes.Sum(v => (int)v.Value)
-            })
+            .Select(TicketMapper.ToDtoExpression)
             .ToListAsync();
     }
 
@@ -70,18 +49,7 @@ public class TicketsService : ITicketsService
         return await _db.Tickets
             .AsNoTracking()
             .Where(t => t.Id == id)
-            .Select(t => new TicketDto
-            {
-                Id = t.Id,
-                Title = t.Title,
-                Description = t.Description,
-                Status = t.Status,
-                CreatedAt = t.CreatedAt,
-                AuthorUsername = t.Author.UserName!,
-                Tags = t.Tags.Select(tag => tag.Name).ToList(),
-                Attachments = t.Attachments.Select(a => a.Id).ToList(),
-                VoteScore = t.Votes.Sum(v => (int)v.Value)
-            })
+            .Select(TicketMapper.ToDtoExpression)
             .FirstOrDefaultAsync();
     }
 
@@ -97,24 +65,15 @@ public class TicketsService : ITicketsService
         await _db.Tickets.AddAsync(ticket);
         await _db.SaveChangesAsync();
 
-        return new TicketDto
-        {
-            Id = ticket.Id,
-            Title = ticket.Title,
-            Description = ticket.Description,
-            Status = ticket.Status,
-            CreatedAt = ticket.CreatedAt,
-            AuthorUsername = _user.UserName,
-            Tags = ticket.Tags.Select(tag => tag.Name).ToList(),
-            Attachments = ticket.Attachments.Select(a => a.Id).ToList(),
-            VoteScore = 0
-        };
+        await _db.Entry(ticket).Reference(t => t.Author).LoadAsync();
+        return ticket.ToDto();
     }
 
     public async Task<TicketDto> Update(int id, UpdateTicketRequest request)
     {
         var ticket = await _db.Tickets
             .Where(t => t.Id == id)
+            .Include(t => t.Author)
             .Include(t => t.Tags)
             .Include(t => t.Attachments)
             .Include(t => t.Votes)
@@ -136,19 +95,7 @@ public class TicketsService : ITicketsService
         ticket.Description = request.Description;
 
         await _db.SaveChangesAsync();
-
-        return new TicketDto
-        {
-            Id = ticket.Id,
-            Title = ticket.Title,
-            Description = ticket.Description,
-            Status = ticket.Status,
-            CreatedAt = ticket.CreatedAt,
-            AuthorUsername = _user.UserName,
-            Tags = ticket.Tags.Select(tag => tag.Name).ToList(),
-            Attachments = ticket.Attachments.Select(a => a.Id).ToList(),
-            VoteScore = ticket.Votes.Sum(v => (int)v.Value)
-        };
+        return ticket.ToDto();
     }
 
     public async Task UpdateStatus(int id, TicketStatusUpdateRequest request)

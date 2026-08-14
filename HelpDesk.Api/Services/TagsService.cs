@@ -2,6 +2,7 @@ using HelpDesk.Api.Data;
 using HelpDesk.Api.Dtos.Requests;
 using HelpDesk.Api.Dtos.Responses;
 using HelpDesk.Api.Exceptions;
+using HelpDesk.Api.Mappers;
 using HelpDesk.Api.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,13 +17,11 @@ public class TagsService : ITagsService
         _db = db;
     }
 
-    public async Task<List<TagDto>> GetAll()
-    {
-        return await _db.Tags
+    public async Task<List<TagDto>> GetAll() =>
+        await _db.Tags
             .AsNoTracking()
-            .Select(t => new TagDto(t.Name, t.Description))
+            .Select(TagMapper.ToDtoExpression)
             .ToListAsync();
-    }
 
     public async Task<TagDto> Create(CreateTagRequest request)
     {
@@ -39,7 +38,7 @@ public class TagsService : ITagsService
         await _db.Tags.AddAsync(tag);
         await _db.SaveChangesAsync();
 
-        return new TagDto(tag.Name, tag.Description);
+        return tag.ToDto();
     }
 
     public async Task<TagDto> Update(string name, UpdateTagRequest request)
@@ -51,6 +50,6 @@ public class TagsService : ITagsService
         tag.Description = request.Description;
 
         await _db.SaveChangesAsync();
-        return new TagDto(tag.Name, tag.Description);
+        return tag.ToDto();
     }
 }

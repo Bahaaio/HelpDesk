@@ -2,6 +2,7 @@ using HelpDesk.Api.Data;
 using HelpDesk.Api.Dtos.Requests;
 using HelpDesk.Api.Dtos.Responses;
 using HelpDesk.Api.Exceptions;
+using HelpDesk.Api.Mappers;
 using HelpDesk.Api.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,7 +29,7 @@ public class CommentsService : ICommentsService
             .AsNoTracking()
             .Where(c => c.TicketId == ticketId)
             .OrderByDescending(c => c.CreatedAt)
-            .Select(c => new CommentDto(c.Content, c.CreatedAt, c.Author.UserName!))
+            .Select(CommentMapper.ToDtoExpression)
             .ToListAsync();
     }
 
@@ -50,6 +51,6 @@ public class CommentsService : ICommentsService
 
         await _db.Entry(comment).Reference(c => c.Author).LoadAsync();
 
-        return new CommentDto(comment.Content, comment.CreatedAt, comment.Author.UserName!);
+        return comment.ToDto();
     }
 }

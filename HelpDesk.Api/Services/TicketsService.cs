@@ -42,13 +42,15 @@ public class TicketsService : ITicketsService
             .ToListAsync();
     }
 
-    public async Task<TicketDto?> GetById(int id)
+    public async Task<TicketDto> GetById(int id)
     {
-        return await _db.Tickets
+        var ticket = await _db.Tickets
             .AsNoTracking()
             .Where(t => t.Id == id)
             .Select(TicketMapper.ToDtoExpression)
             .FirstOrDefaultAsync();
+
+        return ticket ?? throw new NotFoundException($"Ticket with id {id} not found");
     }
 
     public async Task<TicketDto> Create(CreateTicketRequest request)

@@ -24,7 +24,7 @@ public interface ITicketsService
     ///     Returns a single ticket by its ID, or null if not found.
     /// </summary>
     /// <param name="id">The ticket ID.</param>
-    Task<TicketDto?> GetById(int id);
+    Task<TicketDto> GetById(int id);
 
     /// <summary>
     ///     Creates a new ticket assigned to the current user.

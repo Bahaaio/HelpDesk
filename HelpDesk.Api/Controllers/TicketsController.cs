@@ -17,23 +17,16 @@ public class TicketsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<TicketDto>> GetAll([FromQuery] TicketQuery query)
-    {
-        return Ok(await _ticketsService.GetAll(query));
-    }
+    public async Task<ActionResult<TicketDto>> GetAll([FromQuery] TicketQuery query) =>
+        Ok(await _ticketsService.GetAll(query));
 
     [HttpGet("mine")]
-    public async Task<ActionResult<TicketDto>> GetMyTickets([FromQuery] TicketQuery query)
-    {
-        return Ok(await _ticketsService.GetCurrentUserTickets(query));
-    }
+    public async Task<ActionResult<TicketDto>> GetMyTickets([FromQuery] TicketQuery query) =>
+        Ok(await _ticketsService.GetCurrentUserTickets(query));
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<TicketDto>> GetById(int id)
-    {
-        var ticket = await _ticketsService.GetById(id);
-        return ticket is null ? NotFound() : Ok(ticket);
-    }
+    public async Task<ActionResult<TicketDto>> GetById(int id) =>
+        Ok(await _ticketsService.GetById(id));
 
     [HttpPost]
     public async Task<ActionResult> Create(CreateTicketRequest request)
@@ -43,10 +36,8 @@ public class TicketsController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult> Update(int id, UpdateTicketRequest request)
-    {
-        return Ok(await _ticketsService.Update(id, request));
-    }
+    public async Task<ActionResult> Update(int id, UpdateTicketRequest request) =>
+        Ok(await _ticketsService.Update(id, request));
 
     [HttpPatch("{id:int}/status")]
     public async Task<ActionResult> UpdateStatus(int id, UpdateTicketStatusRequest request)

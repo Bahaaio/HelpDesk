@@ -46,9 +46,7 @@ public class VotesService : IVotesService
 
     public async Task<VoteResponse> GetUserVote(int ticketId)
     {
-        var ticket = await _db.Tickets
-            .Include(t => t.Votes)
-            .SingleOrDefaultAsync(t => t.Id == ticketId);
+        var ticket = await _db.Tickets.FindAsync(ticketId);
 
         if (ticket is null)
             throw new NotFoundException($"Ticket with id {ticketId} not found");

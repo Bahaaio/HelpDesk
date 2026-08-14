@@ -24,6 +24,9 @@ public class AttachmentsService : IAttachmentsService
 
     public async Task<AttachmentDto> AddAttachment(int ticketId, IFormFile file)
     {
+        if (file.ContentType != "image/jpeg")
+            throw new BadRequestException("Only jpeg files are allowed");
+
         var ticket = await _db.Tickets.FindAsync(ticketId);
 
         if (ticket is null)
@@ -32,7 +35,6 @@ public class AttachmentsService : IAttachmentsService
         await _authGuard.Authorize(ticket, new TicketOwnerOrTechnicianRequirement());
 
         var guid = Guid.NewGuid();
-
         await _storageService.Store(file, guid.ToString());
 
         var attachment = new Attachment
@@ -65,10 +67,6 @@ public class AttachmentsService : IAttachmentsService
     public async Task<Stream> GetAttachment(Guid attachmentId)
     {
         var stream = await _storageService.Load(attachmentId.ToString());
-
-        if (stream is null)
-            throw new NotFoundException($"Attachment with id: {attachmentId} not found");
-
-        return stream;
+        return stream ?? throw new NotFoundException($"Attachment with id: {attachmentId} not found");
     }
 }

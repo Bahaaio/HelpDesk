@@ -13,7 +13,7 @@ public interface IStorageService
     Task Store(IFormFile file, string key);
 
     /// <summary>
-    ///     Loads a file stream by key, or null if not found.
+    ///     Loads a file stream by key or null if not found.
     /// </summary>
     /// <param name="key">The unique key of the file to load.</param>
     Task<Stream?> Load(string key);

@@ -3,26 +3,22 @@ using HelpDesk.Api.Data;
 using HelpDesk.Api.Dtos.Responses;
 using HelpDesk.Api.Exceptions;
 using HelpDesk.Api.Models;
-using Microsoft.AspNetCore.Authorization;
 
 namespace HelpDesk.Api.Services;
 
 public class AttachmentsService : IAttachmentsService
 {
-    private readonly IAuthorizationService _authorizationService;
+    private readonly IAuthorizationGuard _authGuard;
     private readonly AppDbContext _db;
     private readonly IStorageService _storageService;
     private readonly ICurrentUser _user;
 
-    public AttachmentsService(
-        IStorageService storageService,
-        AppDbContext db,
-        IAuthorizationService authorizationService,
-        ICurrentUser user)
+    public AttachmentsService(IStorageService storageService, AppDbContext db, ICurrentUser user,
+        IAuthorizationGuard authGuard)
     {
         _storageService = storageService;
         _db = db;
-        _authorizationService = authorizationService;
+        _authGuard = authGuard;
         _user = user;
     }
 
@@ -33,15 +29,7 @@ public class AttachmentsService : IAttachmentsService
         if (ticket is null)
             throw new NotFoundException($"Ticket with id {ticketId} not found");
 
-        var result = await _authorizationService.AuthorizeAsync(
-            _user.Principal,
-            ticket,
-            new TicketOwnerOrTechnicianRequirement()
-        );
-
-        if (!result.Succeeded)
-            throw new ForbiddenException(
-                "You are not authorized to add an attachment to this ticket");
+        await _authGuard.Authorize(ticket, new TicketOwnerOrTechnicianRequirement());
 
         var guid = Guid.NewGuid();
 
@@ -66,14 +54,7 @@ public class AttachmentsService : IAttachmentsService
         if (attachment is null)
             throw new NotFoundException($"Attachment with id: {attachmentId} not found");
 
-        var result = await _authorizationService.AuthorizeAsync(
-            _user.Principal,
-            attachment,
-            new AttachmentUploaderOrTechnicianRequirement()
-        );
-
-        if (!result.Succeeded)
-            throw new ForbiddenException("You are not authorized to delete this attachment");
+        await _authGuard.Authorize(attachment, new AttachmentUploaderOrTechnicianRequirement());
 
         _db.Remove(attachment);
         await _storageService.DeleteFile(attachmentId.ToString());

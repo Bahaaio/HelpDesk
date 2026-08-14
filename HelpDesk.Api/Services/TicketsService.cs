@@ -5,23 +5,21 @@ using HelpDesk.Api.Dtos.Responses;
 using HelpDesk.Api.Exceptions;
 using HelpDesk.Api.Mappers;
 using HelpDesk.Api.Models;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 
 namespace HelpDesk.Api.Services;
 
 public class TicketsService : ITicketsService
 {
-    private readonly IAuthorizationService _authorizationService;
+    private readonly IAuthorizationGuard _authGuard;
     private readonly AppDbContext _db;
     private readonly ICurrentUser _user;
 
-    public TicketsService(AppDbContext db, IAuthorizationService authorizationService,
-        ICurrentUser user)
+    public TicketsService(AppDbContext db, ICurrentUser user, IAuthorizationGuard authGuard)
     {
         _db = db;
-        _authorizationService = authorizationService;
         _user = user;
+        _authGuard = authGuard;
     }
 
     public async Task<List<TicketDto>> GetAll(TicketQuery ticketQuery)
@@ -82,14 +80,7 @@ public class TicketsService : ITicketsService
         if (ticket is null)
             throw new NotFoundException($"Ticket with id {id} not found");
 
-        var result = await _authorizationService.AuthorizeAsync(
-            _user.Principal,
-            ticket,
-            new TicketOwnerOrTechnicianRequirement()
-        );
-
-        if (!result.Succeeded)
-            throw new ForbiddenException("You are not authorized to update this ticket");
+        await _authGuard.Authorize(ticket, new TicketOwnerOrTechnicianRequirement());
 
         ticket.Title = request.Title;
         ticket.Description = request.Description;
@@ -104,14 +95,7 @@ public class TicketsService : ITicketsService
         if (ticket is null)
             throw new NotFoundException($"Ticket with id {id} not found");
 
-        var result = await _authorizationService.AuthorizeAsync(
-            _user.Principal,
-            ticket,
-            new TicketOwnerOrTechnicianRequirement()
-        );
-
-        if (!result.Succeeded)
-            throw new ForbiddenException("You are not authorized to update this ticket");
+        await _authGuard.Authorize(ticket, new TicketOwnerOrTechnicianRequirement());
 
         ticket.Status = request.Status;
         await _db.SaveChangesAsync();

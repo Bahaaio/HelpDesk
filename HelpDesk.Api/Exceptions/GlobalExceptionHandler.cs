@@ -10,39 +10,20 @@ public class GlobalExceptionHandler : IExceptionHandler
         Exception exception,
         CancellationToken cancellationToken)
     {
-        var (statusCode, detail) = exception switch
-        {
-            NotFoundException => (StatusCodes.Status404NotFound, exception.Message),
-            UnauthorizedException => (StatusCodes.Status401Unauthorized, exception.Message),
-            ForbiddenException => (StatusCodes.Status403Forbidden, exception.Message),
-            BadRequestException => (StatusCodes.Status400BadRequest, exception.Message),
-            ConflictException => (StatusCodes.Status409Conflict, exception.Message),
-            _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred.")
-        };
+        // catch all
+        if (exception is not BaseException ex)
+            ex = new InternalServerErrorException("An unexpected error occurred.");
 
-        httpContext.Response.StatusCode = statusCode;
+        httpContext.Response.StatusCode = ex.StatusCode;
 
         await httpContext.Response.WriteAsJsonAsync(new ProblemDetails
         {
-            Status = statusCode,
-            Title = GetTitle(statusCode),
-            Detail = detail,
-            Type = $"https://httpstatuses.com/{statusCode}"
+            Status = ex.StatusCode,
+            Title = ex.Title,
+            Detail = ex.Message,
+            Type = $"https://httpstatuses.com/{ex.StatusCode}"
         }, cancellationToken);
 
         return true;
-    }
-
-    private static string GetTitle(int statusCode)
-    {
-        return statusCode switch
-        {
-            StatusCodes.Status400BadRequest => "Bad Request",
-            StatusCodes.Status401Unauthorized => "Unauthorized",
-            StatusCodes.Status403Forbidden => "Forbidden",
-            StatusCodes.Status404NotFound => "Not Found",
-            StatusCodes.Status409Conflict => "Conflict",
-            _ => "Internal Server Error"
-        };
     }
 }

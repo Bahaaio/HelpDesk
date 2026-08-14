@@ -51,7 +51,7 @@ public class TicketService
     public async Task UpdateStatusAsync(int id, Status status)
     {
         var resp = await Client.PatchAsJsonAsync($"/api/tickets/{id}/status",
-            new TicketStatusUpdateRequest(status));
+            new UpdateTicketStatusRequest(status));
         resp.EnsureSuccessStatusCode();
     }
 

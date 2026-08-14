@@ -22,7 +22,7 @@ public class AttachmentsService : IAttachmentsService
         _user = user;
     }
 
-    public async Task<AttachmentResponse> AddAttachment(int ticketId, IFormFile file)
+    public async Task<AttachmentDto> AddAttachment(int ticketId, IFormFile file)
     {
         var ticket = await _db.Tickets.FindAsync(ticketId);
 
@@ -45,7 +45,7 @@ public class AttachmentsService : IAttachmentsService
         await _db.Attachments.AddAsync(attachment);
         await _db.SaveChangesAsync();
 
-        return new AttachmentResponse(attachment.Id);
+        return new AttachmentDto(attachment.Id);
     }
 
     public async Task DeleteAttachment(Guid attachmentId)

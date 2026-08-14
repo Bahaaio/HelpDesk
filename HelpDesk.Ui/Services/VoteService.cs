@@ -16,10 +16,10 @@ public class VoteService
 
     private HttpClient Client => _httpClientFactory.CreateClient("api");
 
-    public async Task<VoteResponse> GetMyVoteAsync(int ticketId)
+    public async Task<VoteDto> GetMyVoteAsync(int ticketId)
     {
-        return await Client.GetFromJsonAsync<VoteResponse>(
-            $"/api/tickets/{ticketId}/votes/mine") ?? new VoteResponse(VoteValue.None);
+        return await Client.GetFromJsonAsync<VoteDto>(
+            $"/api/tickets/{ticketId}/votes/mine") ?? new VoteDto(VoteValue.None);
     }
 
     public async Task VoteAsync(int ticketId, VoteValue value)

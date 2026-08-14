@@ -12,7 +12,7 @@ public interface IAttachmentsService
     /// </summary>
     /// <param name="ticketId">The ID of the ticket to attach the file to.</param>
     /// <param name="file">The file to upload.</param>
-    Task<AttachmentResponse> AddAttachment(int ticketId, IFormFile file);
+    Task<AttachmentDto> AddAttachment(int ticketId, IFormFile file);
 
     /// <summary>
     ///     Deletes an attachment. Only the uploader or a technician may delete.

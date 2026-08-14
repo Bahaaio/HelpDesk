@@ -89,7 +89,7 @@ public class TicketsService : ITicketsService
         return ticket.ToDto();
     }
 
-    public async Task UpdateStatus(int id, TicketStatusUpdateRequest request)
+    public async Task UpdateStatus(int id, UpdateTicketStatusRequest request)
     {
         var ticket = await _db.Tickets.FindAsync(id);
         if (ticket is null)

@@ -49,7 +49,7 @@ public class TicketsController : ControllerBase
     }
 
     [HttpPatch("{id:int}/status")]
-    public async Task<ActionResult> UpdateStatus(int id, TicketStatusUpdateRequest request)
+    public async Task<ActionResult> UpdateStatus(int id, UpdateTicketStatusRequest request)
     {
         await _ticketsService.UpdateStatus(id, request);
         return NoContent();

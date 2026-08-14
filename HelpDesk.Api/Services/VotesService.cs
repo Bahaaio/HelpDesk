@@ -44,7 +44,7 @@ public class VotesService : IVotesService
         await _db.SaveChangesAsync();
     }
 
-    public async Task<VoteResponse> GetUserVote(int ticketId)
+    public async Task<VoteDto> GetUserVote(int ticketId)
     {
         var ticket = await _db.Tickets.FindAsync(ticketId);
 
@@ -56,6 +56,6 @@ public class VotesService : IVotesService
             .SingleOrDefaultAsync();
 
         var value = vote?.Value ?? VoteValue.None;
-        return new VoteResponse(value);
+        return new VoteDto(value);
     }
 }

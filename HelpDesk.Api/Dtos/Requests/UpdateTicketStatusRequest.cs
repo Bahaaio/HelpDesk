@@ -2,4 +2,4 @@ using HelpDesk.Api.Models.Enums;
 
 namespace HelpDesk.Api.Dtos.Requests;
 
-public record TicketStatusUpdateRequest(Status Status);
+public record UpdateTicketStatusRequest(Status Status);

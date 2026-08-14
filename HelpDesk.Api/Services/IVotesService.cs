@@ -19,5 +19,5 @@ public interface IVotesService
     ///     Returns the current user's vote on a ticket, or None if not voted.
     /// </summary>
     /// <param name="ticketId">The ID of the ticket to check the vote for.</param>
-    Task<VoteResponse> GetUserVote(int ticketId);
+    Task<VoteDto> GetUserVote(int ticketId);
 }

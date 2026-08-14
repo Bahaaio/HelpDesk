@@ -44,5 +44,5 @@ public interface ITicketsService
     /// </summary>
     /// <param name="id">The ticket ID.</param>
     /// <param name="request">The new status value.</param>
-    Task UpdateStatus(int id, TicketStatusUpdateRequest request);
+    Task UpdateStatus(int id, UpdateTicketStatusRequest request);
 }

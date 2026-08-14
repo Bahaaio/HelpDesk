@@ -20,7 +20,7 @@ public class VotesController : ControllerBase
     }
 
     [HttpGet("mine")]
-    public async Task<ActionResult<VoteResponse>> GetMyVote(int ticketId)
+    public async Task<ActionResult<VoteDto>> GetMyVote(int ticketId)
     {
         return Ok(await _votesService.GetUserVote(ticketId));
     }

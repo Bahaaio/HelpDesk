@@ -19,7 +19,7 @@ public class AttachmentService
         return $"{Client.BaseAddress}api/attachments/{attachmentId}";
     }
 
-    public async Task<AttachmentResponse> UploadAsync(int ticketId, IBrowserFile file)
+    public async Task<AttachmentDto> UploadAsync(int ticketId, IBrowserFile file)
     {
         using var content = new MultipartFormDataContent();
         using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
@@ -29,7 +29,7 @@ public class AttachmentService
 
         var resp = await Client.PostAsync($"/api/tickets/{ticketId}/attachments", content);
         resp.EnsureSuccessStatusCode();
-        return (await resp.Content.ReadFromJsonAsync<AttachmentResponse>())!;
+        return (await resp.Content.ReadFromJsonAsync<AttachmentDto>())!;
     }
 
     public async Task DeleteAsync(int ticketId, Guid attachmentId)

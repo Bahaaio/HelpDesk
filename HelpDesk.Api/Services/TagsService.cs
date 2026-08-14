@@ -11,10 +11,12 @@ namespace HelpDesk.Api.Services;
 public class TagsService : ITagsService
 {
     private readonly AppDbContext _db;
+    private readonly ILogger<TagsService> _logger;
 
-    public TagsService(AppDbContext db)
+    public TagsService(AppDbContext db, ILogger<TagsService> logger)
     {
         _db = db;
+        _logger = logger;
     }
 
     public async Task<List<TagDto>> GetAll() =>
@@ -37,6 +39,8 @@ public class TagsService : ITagsService
 
         await _db.Tags.AddAsync(tag);
         await _db.SaveChangesAsync();
+
+        _logger.LogInformation("Created tag {tagName}", tag.Name);
 
         return tag.ToDto();
     }

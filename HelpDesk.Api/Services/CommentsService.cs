@@ -11,12 +11,14 @@ namespace HelpDesk.Api.Services;
 public class CommentsService : ICommentsService
 {
     private readonly AppDbContext _db;
+    private readonly ILogger<CommentsService> _logger;
     private readonly ICurrentUser _user;
 
-    public CommentsService(AppDbContext db, ICurrentUser user)
+    public CommentsService(AppDbContext db, ICurrentUser user, ILogger<CommentsService> logger)
     {
         _db = db;
         _user = user;
+        _logger = logger;
     }
 
     public async Task<List<CommentDto>> GetAll(int ticketId)
@@ -48,6 +50,9 @@ public class CommentsService : ICommentsService
 
         await _db.Comments.AddAsync(comment);
         await _db.SaveChangesAsync();
+
+        _logger.LogInformation("User {userId} created comment {commentId} on ticket {ticketId}",
+            _user.Id, comment.Id, ticketId);
 
         await _db.Entry(comment).Reference(c => c.Author).LoadAsync();
 

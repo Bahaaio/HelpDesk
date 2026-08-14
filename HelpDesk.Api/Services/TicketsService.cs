@@ -13,13 +13,16 @@ public class TicketsService : ITicketsService
 {
     private readonly IAuthorizationGuard _authGuard;
     private readonly AppDbContext _db;
+    private readonly ILogger<TicketsService> _logger;
     private readonly ICurrentUser _user;
 
-    public TicketsService(AppDbContext db, ICurrentUser user, IAuthorizationGuard authGuard)
+    public TicketsService(AppDbContext db, ICurrentUser user, IAuthorizationGuard authGuard,
+        ILogger<TicketsService> logger)
     {
         _db = db;
         _user = user;
         _authGuard = authGuard;
+        _logger = logger;
     }
 
     public async Task<List<TicketDto>> GetAll(TicketQuery ticketQuery)
@@ -65,6 +68,8 @@ public class TicketsService : ITicketsService
         await _db.Tickets.AddAsync(ticket);
         await _db.SaveChangesAsync();
 
+        _logger.LogInformation("User {userId} created ticket {ticketId}", _user.Id, ticket.Id);
+
         await _db.Entry(ticket).Reference(t => t.Author).LoadAsync();
         return ticket.ToDto();
     }
@@ -99,7 +104,13 @@ public class TicketsService : ITicketsService
 
         await _authGuard.Authorize(ticket, new TicketOwnerOrTechnicianRequirement());
 
+        if (ticket.Status == request.Status)
+            return;
+
         ticket.Status = request.Status;
+        _logger.LogInformation("User {userId} updated ticket {ticketId} status to {status}",
+            _user.Id, ticket.Id, ticket.Status);
+
         await _db.SaveChangesAsync();
     }
 

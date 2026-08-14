@@ -10,15 +10,17 @@ public class AttachmentsService : IAttachmentsService
 {
     private readonly IAuthorizationGuard _authGuard;
     private readonly AppDbContext _db;
+    private readonly ILogger<AttachmentsService> _logger;
     private readonly IStorageService _storageService;
     private readonly ICurrentUser _user;
 
     public AttachmentsService(IStorageService storageService, AppDbContext db, ICurrentUser user,
-        IAuthorizationGuard authGuard)
+        IAuthorizationGuard authGuard, ILogger<AttachmentsService> logger)
     {
         _storageService = storageService;
         _db = db;
         _authGuard = authGuard;
+        _logger = logger;
         _user = user;
     }
 
@@ -47,6 +49,9 @@ public class AttachmentsService : IAttachmentsService
         await _db.Attachments.AddAsync(attachment);
         await _db.SaveChangesAsync();
 
+        _logger.LogInformation("User {userId} added attachment {attachmentId} to ticket {ticketId}",
+            _user.Id, attachment.Id, ticketId);
+
         return new AttachmentDto(attachment.Id);
     }
 
@@ -61,12 +66,17 @@ public class AttachmentsService : IAttachmentsService
         _db.Remove(attachment);
         await _storageService.DeleteFile(attachmentId.ToString());
 
+        _logger.LogInformation("User {userId} deleted attachment {attachmentId}",
+            _user.Id, attachmentId);
+
         await _db.SaveChangesAsync();
     }
 
     public async Task<Stream> GetAttachment(Guid attachmentId)
     {
         var stream = await _storageService.Load(attachmentId.ToString());
-        return stream ?? throw new NotFoundException($"Attachment with id: {attachmentId} not found");
+
+        return stream ??
+               throw new NotFoundException($"Attachment with id: {attachmentId} not found");
     }
 }

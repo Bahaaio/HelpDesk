@@ -25,6 +25,7 @@ public static class ServiceExtensions
             services.AddScoped<IUsersService, UsersService>();
             services.AddScoped<IStorageService, LocalStorageService>();
             services.AddScoped<IAttachmentsService, AttachmentsService>();
+            services.AddScoped<IAttachmentValidationService, AttachmentValidationService>();
             services.AddScoped<ICurrentUser, CurrentUser>();
             services.AddScoped<IAuthorizationGuard, AuthorizationGuard>();
         }

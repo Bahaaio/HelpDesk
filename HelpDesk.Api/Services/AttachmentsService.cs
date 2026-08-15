@@ -3,11 +3,13 @@ using HelpDesk.Api.Data;
 using HelpDesk.Api.Dtos.Responses;
 using HelpDesk.Api.Exceptions;
 using HelpDesk.Api.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace HelpDesk.Api.Services;
 
 public class AttachmentsService : IAttachmentsService
 {
+    private readonly IAttachmentValidationService _attachmentValidationService;
     private readonly IAuthorizationGuard _authGuard;
     private readonly AppDbContext _db;
     private readonly ILogger<AttachmentsService> _logger;
@@ -15,26 +17,29 @@ public class AttachmentsService : IAttachmentsService
     private readonly ICurrentUser _user;
 
     public AttachmentsService(IStorageService storageService, AppDbContext db, ICurrentUser user,
-        IAuthorizationGuard authGuard, ILogger<AttachmentsService> logger)
+        IAuthorizationGuard authGuard, ILogger<AttachmentsService> logger,
+        IAttachmentValidationService attachmentValidationService)
     {
         _storageService = storageService;
         _db = db;
         _authGuard = authGuard;
         _logger = logger;
+        _attachmentValidationService = attachmentValidationService;
         _user = user;
     }
 
     public async Task<AttachmentDto> AddAttachment(int ticketId, IFormFile file)
     {
-        if (file.ContentType != "image/jpeg")
-            throw new BadRequestException("Only jpeg files are allowed");
-
         var ticket = await _db.Tickets.FindAsync(ticketId);
-
         if (ticket is null)
             throw new NotFoundException($"Ticket with id {ticketId} not found");
 
         await _authGuard.Authorize(ticket, new TicketOwnerOrTechnicianRequirement());
+
+        _attachmentValidationService.Validate(file);
+
+        var count = await _db.Attachments.CountAsync(a => a.TicketId == ticketId);
+        _attachmentValidationService.ValidateCount(count);
 
         var guid = Guid.NewGuid();
         await _storageService.Store(file, guid.ToString());
@@ -46,7 +51,7 @@ public class AttachmentsService : IAttachmentsService
             UploaderId = _user.Id
         };
 
-        await _db.Attachments.AddAsync(attachment);
+        _db.Attachments.Add(attachment);
         await _db.SaveChangesAsync();
 
         _logger.LogInformation("User {userId} added attachment {attachmentId} to ticket {ticketId}",

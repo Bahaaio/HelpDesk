@@ -51,7 +51,7 @@ public class TicketsService : ITicketsService
             .AsNoTracking()
             .Where(t => t.Id == id)
             .Select(TicketMapper.ToDtoExpression)
-            .FirstOrDefaultAsync();
+            .SingleOrDefaultAsync();
 
         return ticket ?? throw new NotFoundException($"Ticket with id {id} not found");
     }
@@ -82,7 +82,7 @@ public class TicketsService : ITicketsService
             .Include(t => t.Tags)
             .Include(t => t.Attachments)
             .Include(t => t.Votes)
-            .FirstOrDefaultAsync();
+            .SingleOrDefaultAsync();
 
         if (ticket is null)
             throw new NotFoundException($"Ticket with id {id} not found");
@@ -108,10 +108,10 @@ public class TicketsService : ITicketsService
             return;
 
         ticket.Status = request.Status;
+        await _db.SaveChangesAsync();
+
         _logger.LogInformation("User {userId} updated ticket {ticketId} status to {status}",
             _user.Id, ticket.Id, ticket.Status);
-
-        await _db.SaveChangesAsync();
     }
 
     private IQueryable<Ticket> GetTicketQuery(TicketQuery ticketQuery)

@@ -27,7 +27,7 @@ public class TagsService : ITagsService
 
     public async Task<TagDto> Create(CreateTagRequest request)
     {
-        var existingTag = await _db.Tags.FirstOrDefaultAsync(t => t.Name == request.Name);
+        var existingTag = await _db.Tags.SingleOrDefaultAsync(t => t.Name == request.Name);
         if (existingTag is not null)
             throw new ConflictException($"Tag with name {request.Name} already exists");
 
@@ -47,7 +47,7 @@ public class TagsService : ITagsService
 
     public async Task<TagDto> Update(string name, UpdateTagRequest request)
     {
-        var tag = await _db.Tags.FirstOrDefaultAsync(t =>
+        var tag = await _db.Tags.SingleOrDefaultAsync(t =>
             EF.Functions.ILike(t.Name, name));
 
         if (tag is null)

@@ -23,7 +23,7 @@ public class CommentsService : ICommentsService
 
     public async Task<List<CommentDto>> GetAll(int ticketId)
     {
-        var ticket = await _db.Tickets.SingleOrDefaultAsync(t => t.Id == ticketId);
+        var ticket = await _db.Tickets.FindAsync(ticketId);
         if (ticket is null)
             throw new NotFoundException($"Ticket with id {ticketId} not found");
 
@@ -37,7 +37,7 @@ public class CommentsService : ICommentsService
 
     public async Task<CommentDto> Create(int ticketId, CreateCommentRequest request)
     {
-        var ticket = await _db.Tickets.SingleOrDefaultAsync(t => t.Id == ticketId);
+        var ticket = await _db.Tickets.FindAsync(ticketId);
         if (ticket is null)
             throw new NotFoundException($"Ticket with id {ticketId} not found");
 

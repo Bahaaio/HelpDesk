@@ -65,11 +65,10 @@ public class AttachmentsService : IAttachmentsService
 
         _db.Remove(attachment);
         await _storageService.DeleteFile(attachmentId.ToString());
+        await _db.SaveChangesAsync();
 
         _logger.LogInformation("User {userId} deleted attachment {attachmentId}",
             _user.Id, attachmentId);
-
-        await _db.SaveChangesAsync();
     }
 
     public async Task<Stream> GetAttachment(Guid attachmentId)

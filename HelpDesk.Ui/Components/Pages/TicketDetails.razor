@@ -244,7 +244,7 @@ else
 
     private TicketDto? _ticket;
     private List<CommentDto> _comments = new();
-    private VoteValue _currentVote = VoteValue.None;
+    private VoteValue? _currentVote;
     private bool _loading = true;
     private string _newComment = "";
     private bool _submittingComment;
@@ -268,8 +268,7 @@ else
 
             try
             {
-                var voteResp = await VoteService.GetMyVoteAsync(Id);
-                _currentVote = voteResp.Vote;
+                _currentVote = await VoteService.GetMyVoteAsync(Id);
             }
             catch { }
 
@@ -384,9 +383,16 @@ else
     {
         try
         {
-            var newValue = _currentVote == value ? VoteValue.None : value;
-            await VoteService.VoteAsync(Id, newValue);
-            _currentVote = newValue;
+            if (_currentVote == value)
+            {
+                await VoteService.DeleteVoteAsync(Id);
+                _currentVote = null;
+            }
+            else
+            {
+                await VoteService.VoteAsync(Id, value);
+                _currentVote = value;
+            }
 
             var updated = await TicketService.GetByIdAsync(Id);
             if (updated is not null) _ticket = updated;

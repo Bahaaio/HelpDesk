@@ -16,16 +16,23 @@ public class VoteService
 
     private HttpClient Client => _httpClientFactory.CreateClient("api");
 
-    public async Task<VoteDto> GetMyVoteAsync(int ticketId)
+    public async Task<VoteValue?> GetMyVoteAsync(int ticketId)
     {
-        return await Client.GetFromJsonAsync<VoteDto>(
-            $"/api/tickets/{ticketId}/votes/mine") ?? new VoteDto(VoteValue.None);
+        var dto = await Client.GetFromJsonAsync<VoteDto>(
+            $"/api/tickets/{ticketId}/votes/mine");
+        return dto?.Vote;
     }
 
     public async Task VoteAsync(int ticketId, VoteValue value)
     {
         var resp = await Client.PostAsJsonAsync($"/api/tickets/{ticketId}/votes",
             new VoteRequest(value));
+        resp.EnsureSuccessStatusCode();
+    }
+
+    public async Task DeleteVoteAsync(int ticketId)
+    {
+        var resp = await Client.DeleteAsync($"/api/tickets/{ticketId}/votes/mine");
         resp.EnsureSuccessStatusCode();
     }
 }

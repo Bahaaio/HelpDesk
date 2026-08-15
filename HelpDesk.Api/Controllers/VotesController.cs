@@ -20,9 +20,14 @@ public class VotesController : ControllerBase
     }
 
     [HttpGet("mine")]
-    public async Task<ActionResult<VoteDto>> GetMyVote(int ticketId)
+    public async Task<ActionResult<VoteDto>> GetMyVote(int ticketId) =>
+        Ok(await _votesService.GetUserVote(ticketId));
+
+    [HttpDelete("mine")]
+    public async Task<ActionResult> DeleteMyVote(int ticketId)
     {
-        return Ok(await _votesService.GetUserVote(ticketId));
+        await _votesService.DeleteUserVote(ticketId);
+        return NoContent();
     }
 
     [HttpPost]

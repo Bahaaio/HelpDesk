@@ -4,7 +4,6 @@ namespace HelpDesk.Api.Models;
 
 public class Vote
 {
-    public int Id { get; set; }
     public required VoteValue Value { get; set; } // 1 or -1
     public DateTime CreatedAt { get; set; }
 

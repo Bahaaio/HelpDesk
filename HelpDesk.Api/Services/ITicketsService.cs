@@ -1,5 +1,6 @@
 using HelpDesk.Api.Dtos.Requests;
 using HelpDesk.Api.Dtos.Responses;
+using HelpDesk.Api.Exceptions;
 
 namespace HelpDesk.Api.Services;
 
@@ -21,9 +22,10 @@ public interface ITicketsService
     Task<List<TicketDto>> GetCurrentUserTickets(TicketQuery ticketQuery);
 
     /// <summary>
-    ///     Returns a single ticket by its ID, or null if not found.
+    ///     Returns a single ticket by its ID.
     /// </summary>
     /// <param name="id">The ticket ID.</param>
+    /// <exception cref="NotFoundException">Thrown if the ticket does not exist.</exception>
     Task<TicketDto> GetById(int id);
 
     /// <summary>

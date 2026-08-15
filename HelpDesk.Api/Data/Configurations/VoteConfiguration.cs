@@ -8,6 +8,8 @@ public class VoteConfiguration : IEntityTypeConfiguration<Vote>
 {
     public void Configure(EntityTypeBuilder<Vote> builder)
     {
+        builder.HasKey(v => new { v.TicketId, v.VoterId });
+
         builder.Property(v => v.Value)
             .IsRequired();
 
@@ -23,7 +25,5 @@ public class VoteConfiguration : IEntityTypeConfiguration<Vote>
         builder.HasOne(v => v.Voter)
             .WithMany(u => u.Votes)
             .HasForeignKey(v => v.VoterId);
-
-        builder.HasIndex(v => new { v.TicketId, v.VoterId });
     }
 }

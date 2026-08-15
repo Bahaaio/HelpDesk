@@ -6,6 +6,5 @@ namespace HelpDesk.Api.Models.Enums;
 public enum VoteValue
 {
     Downvote = -1,
-    None = 0,
     Upvote = 1
 }

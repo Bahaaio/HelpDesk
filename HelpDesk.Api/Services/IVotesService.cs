@@ -16,7 +16,13 @@ public interface IVotesService
     Task Vote(int ticketId, VoteRequest request);
 
     /// <summary>
-    ///     Returns the current user's vote on a ticket, or None if not voted.
+    ///     Deletes the current user's vote on a ticket.
+    /// </summary>
+    /// <param name="ticketId">The ID of the ticket to delete the vote for.</param>
+    Task DeleteUserVote(int ticketId);
+
+    /// <summary>
+    ///     Returns the current user's vote on a ticket, if any.
     /// </summary>
     /// <param name="ticketId">The ID of the ticket to check the vote for.</param>
     Task<VoteDto> GetUserVote(int ticketId);

@@ -3,7 +3,6 @@ using HelpDesk.Api.Dtos.Requests;
 using HelpDesk.Api.Dtos.Responses;
 using HelpDesk.Api.Exceptions;
 using HelpDesk.Api.Models;
-using HelpDesk.Api.Models.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace HelpDesk.Api.Services;
@@ -21,15 +20,12 @@ public class VotesService : IVotesService
 
     public async Task Vote(int ticketId, VoteRequest request)
     {
-        var ticket = await _db.Tickets
-            .Include(t => t.Votes)
-            .SingleOrDefaultAsync(t => t.Id == ticketId);
+        var ticket = await _db.Tickets.FindAsync(ticketId);
 
         if (ticket is null)
             throw new NotFoundException($"Ticket with id {ticketId} not found");
 
-        var existingVote = await _db.Votes
-            .SingleOrDefaultAsync(v => v.VoterId == _user.Id && v.TicketId == ticketId);
+        var existingVote = await _db.Votes.FindAsync(ticketId, _user.Id);
 
         if (existingVote is null)
             ticket.Votes.Add(new Vote
@@ -38,24 +34,28 @@ public class VotesService : IVotesService
                 VoterId = _user.Id,
                 TicketId = ticketId
             });
+
         else
             existingVote.Value = request.Vote;
 
         await _db.SaveChangesAsync();
     }
 
+    public async Task DeleteUserVote(int ticketId)
+    {
+        await _db.Votes
+            .Where(v => v.TicketId == ticketId && v.VoterId == _user.Id)
+            .ExecuteDeleteAsync();
+    }
+
     public async Task<VoteDto> GetUserVote(int ticketId)
     {
         var ticket = await _db.Tickets.FindAsync(ticketId);
-
         if (ticket is null)
             throw new NotFoundException($"Ticket with id {ticketId} not found");
 
-        var vote = await _db.Votes
-            .Where(v => v.TicketId == ticketId && v.VoterId == _user.Id)
-            .SingleOrDefaultAsync();
+        var vote = await _db.Votes.FindAsync(ticketId, _user.Id);
 
-        var value = vote?.Value ?? VoteValue.None;
-        return new VoteDto(value);
+        return new VoteDto(vote?.Value);
     }
 }

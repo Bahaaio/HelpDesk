@@ -122,20 +122,24 @@ public class TicketsService : ITicketsService
             query = query.Where(t => t.Status == ticketQuery.Status);
 
         if (ticketQuery.Author is not null)
-            query = query.Where(t => t.Author.UserName!.ToLower() == ticketQuery.Author.ToLower());
+            query = query.Where(t =>
+                EF.Functions.ILike(t.Author.UserName!, ticketQuery.Author)
+            );
 
         if (ticketQuery.Tag is not null)
             query = query.Where(t =>
                 t.Tags.Any(tag =>
-                    tag.Name == ticketQuery.Tag.ToLower())
+                    EF.Functions.ILike(tag.Name, ticketQuery.Tag))
             );
 
         if (ticketQuery.Q is not null)
+        {
+            var pattern = $"%{ticketQuery.Q}%";
             query = query.Where(t =>
-                t.Title.ToLower().Contains(ticketQuery.Q.ToLower()) ||
-                (t.Description != null &&
-                 t.Description.ToLower().Contains(ticketQuery.Q.ToLower()))
+                EF.Functions.ILike(t.Title, pattern) ||
+                (t.Description != null && EF.Functions.ILike(t.Description, pattern))
             );
+        }
 
         return query;
     }

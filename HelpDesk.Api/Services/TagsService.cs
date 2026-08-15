@@ -47,7 +47,9 @@ public class TagsService : ITagsService
 
     public async Task<TagDto> Update(string name, UpdateTagRequest request)
     {
-        var tag = await _db.Tags.FirstOrDefaultAsync(t => t.Name == name.ToLower());
+        var tag = await _db.Tags.FirstOrDefaultAsync(t =>
+            EF.Functions.ILike(t.Name, name));
+
         if (tag is null)
             throw new NotFoundException($"Tag with name {name} doesn't exist");
 

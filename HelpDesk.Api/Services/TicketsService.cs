@@ -132,9 +132,9 @@ public class TicketsService : ITicketsService
                     EF.Functions.ILike(tag.Name, ticketQuery.Tag))
             );
 
-        if (ticketQuery.Q is not null)
+        if (ticketQuery.Query is not null)
         {
-            var pattern = $"%{ticketQuery.Q}%";
+            var pattern = $"%{ticketQuery.Query}%";
             query = query.Where(t =>
                 EF.Functions.ILike(t.Title, pattern) ||
                 (t.Description != null && EF.Functions.ILike(t.Description, pattern))

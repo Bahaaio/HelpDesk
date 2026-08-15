@@ -7,5 +7,5 @@ public record TicketQuery(
     Status? Status,
     string? Tag,
     string? Author,
-    string? Q
+    string? Query
 );

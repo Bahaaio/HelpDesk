@@ -111,7 +111,7 @@
                 Status: _selectedStatus != "all" ? Enum.Parse<Status>(_selectedStatus) : null,
                 Tag: null,
                 Author: null,
-                Q: string.IsNullOrWhiteSpace(_searchText) ? null : _searchText
+                Query: string.IsNullOrWhiteSpace(_searchText) ? null : _searchText
             );
 
             var allTickets = await TicketService.GetMyTicketsAsync(query);

@@ -1,8 +1,8 @@
-using HelpDesk.Api.Authorization.Requirements;
 using HelpDesk.Api.Data;
 using HelpDesk.Api.Dtos.Requests;
 using HelpDesk.Api.Dtos.Responses;
 using HelpDesk.Api.Exceptions;
+using HelpDesk.Api.Extensions;
 using HelpDesk.Api.Mappers;
 using HelpDesk.Api.Models;
 using Microsoft.EntityFrameworkCore;
@@ -69,7 +69,7 @@ public class CommentsService : ICommentsService
         if (comment is null)
             throw new NotFoundException($"Comment with id {commentId} not found");
 
-        await _authGuard.Authorize(comment, new OwnerOrTechnicianRequirement());
+        await _authGuard.AuthorizeOwnerOrTechnician(comment);
 
         _db.Remove(comment);
         await _db.SaveChangesAsync();

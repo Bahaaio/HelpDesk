@@ -1,7 +1,7 @@
-using HelpDesk.Api.Authorization.Requirements;
 using HelpDesk.Api.Data;
 using HelpDesk.Api.Dtos.Responses;
 using HelpDesk.Api.Exceptions;
+using HelpDesk.Api.Extensions;
 using HelpDesk.Api.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -34,7 +34,7 @@ public class AttachmentsService : IAttachmentsService
         if (ticket is null)
             throw new NotFoundException($"Ticket with id {ticketId} not found");
 
-        await _authGuard.Authorize(ticket, new OwnerOrTechnicianRequirement());
+        await _authGuard.AuthorizeOwnerOrTechnician(ticket);
 
         _attachmentValidationService.Validate(file);
 
@@ -68,7 +68,7 @@ public class AttachmentsService : IAttachmentsService
         if (attachment is null)
             throw new NotFoundException($"Attachment with id: {attachmentId} not found");
 
-        await _authGuard.Authorize(attachment, new OwnerOrTechnicianRequirement());
+        await _authGuard.AuthorizeOwnerOrTechnician(attachment);
 
         _db.Remove(attachment);
         await _storageService.DeleteFile(attachmentId.ToString());

@@ -1,8 +1,8 @@
-using HelpDesk.Api.Authorization.Requirements;
 using HelpDesk.Api.Data;
 using HelpDesk.Api.Dtos.Requests;
 using HelpDesk.Api.Dtos.Responses;
 using HelpDesk.Api.Exceptions;
+using HelpDesk.Api.Extensions;
 using HelpDesk.Api.Mappers;
 using HelpDesk.Api.Models;
 using Microsoft.EntityFrameworkCore;
@@ -87,7 +87,7 @@ public class TicketsService : ITicketsService
         if (ticket is null)
             throw new NotFoundException($"Ticket with id {id} not found");
 
-        await _authGuard.Authorize(ticket, new OwnerOrTechnicianRequirement());
+        await _authGuard.AuthorizeOwnerOrTechnician(ticket);
 
         ticket.Title = request.Title;
         ticket.Description = request.Description;
@@ -102,7 +102,7 @@ public class TicketsService : ITicketsService
         if (ticket is null)
             throw new NotFoundException($"Ticket with id {id} not found");
 
-        await _authGuard.Authorize(ticket, new OwnerOrTechnicianRequirement());
+        await _authGuard.AuthorizeOwnerOrTechnician(ticket);
 
         if (ticket.Status == request.Status)
             return;

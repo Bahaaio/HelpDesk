@@ -11,18 +11,20 @@ namespace HelpDesk.Api.Services;
 
 public class TicketsService : ITicketsService
 {
+    private readonly IAttachmentsService _attachmentsService;
     private readonly IAuthorizationGuard _authGuard;
     private readonly AppDbContext _db;
     private readonly ILogger<TicketsService> _logger;
     private readonly ICurrentUser _user;
 
     public TicketsService(AppDbContext db, ICurrentUser user, IAuthorizationGuard authGuard,
-        ILogger<TicketsService> logger)
+        ILogger<TicketsService> logger, IAttachmentsService attachmentsService)
     {
         _db = db;
         _user = user;
         _authGuard = authGuard;
         _logger = logger;
+        _attachmentsService = attachmentsService;
     }
 
     public async Task<List<TicketDto>> GetAll(TicketQuery ticketQuery)
@@ -112,6 +114,22 @@ public class TicketsService : ITicketsService
 
         _logger.LogInformation("User {userId} updated ticket {ticketId} status to {status}",
             _user.Id, ticket.Id, ticket.Status);
+    }
+
+    public async Task Delete(int id)
+    {
+        var ticket = await _db.Tickets.FindAsync(id);
+        if (ticket is null)
+            throw new NotFoundException($"Ticket with id {id} not found");
+
+        await _authGuard.AuthorizeOwnerOrTechnician(ticket);
+
+        await _attachmentsService.DeleteAttachmentsForTicket(id);
+
+        _db.Remove(ticket);
+        await _db.SaveChangesAsync();
+
+        _logger.LogInformation("User {userId} deleted ticket {ticketId}", _user.Id, id);
     }
 
     private IQueryable<Ticket> GetTicketQuery(TicketQuery ticketQuery)

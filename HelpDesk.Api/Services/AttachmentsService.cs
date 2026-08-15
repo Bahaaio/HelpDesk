@@ -92,4 +92,19 @@ public class AttachmentsService : IAttachmentsService
 
         return new AttachmentResult(stream, attachment.ContentType, attachment.OriginalFileName);
     }
+
+    public async Task DeleteAttachmentsForTicket(int ticketId)
+    {
+        var attachmentIds = await _db.Attachments
+            .Where(a => a.TicketId == ticketId)
+            .Select(a => a.Id.ToString())
+            .ToListAsync();
+
+        foreach (var id in attachmentIds)
+            await _storageService.DeleteFile(id);
+
+        await _db.Attachments
+            .Where(a => a.TicketId == ticketId)
+            .ExecuteDeleteAsync();
+    }
 }

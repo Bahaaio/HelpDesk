@@ -47,4 +47,10 @@ public interface ITicketsService
     /// <param name="id">The ticket ID.</param>
     /// <param name="request">The new status value.</param>
     Task UpdateStatus(int id, UpdateTicketStatusRequest request);
+
+    /// <summary>
+    ///     Deletes a ticket and its attachments from storage. Only the ticket author or a technician may delete.
+    /// </summary>
+    /// <param name="id">The ticket ID.</param>
+    Task Delete(int id);
 }

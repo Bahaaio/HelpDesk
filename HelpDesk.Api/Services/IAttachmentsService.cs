@@ -25,4 +25,10 @@ public interface IAttachmentsService
     /// </summary>
     /// <param name="attachmentId">The unique ID of the attachment to retrieve.</param>
     Task<AttachmentResult> GetAttachment(Guid attachmentId);
+
+    /// <summary>
+    ///     Deletes all attachments for a ticket, including files from storage.
+    /// </summary>
+    /// <param name="ticketId">The ticket ID whose attachments to delete.</param>
+    Task DeleteAttachmentsForTicket(int ticketId);
 }

@@ -45,4 +45,11 @@ public class TicketsController : ControllerBase
         await _ticketsService.UpdateStatus(id, request);
         return NoContent();
     }
+
+    [HttpDelete("{id}")]
+    public async Task<ActionResult> Delete(int id)
+    {
+        await _ticketsService.Delete(id);
+        return NoContent();
+    }
 }

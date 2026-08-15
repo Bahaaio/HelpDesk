@@ -55,6 +55,12 @@ public class TicketService
         resp.EnsureSuccessStatusCode();
     }
 
+    public async Task DeleteAsync(int id)
+    {
+        var resp = await Client.DeleteAsync($"/api/tickets/{id}");
+        resp.EnsureSuccessStatusCode();
+    }
+
     private static string BuildUrl(string path, TicketQuery? query)
     {
         if (query is null) return path;

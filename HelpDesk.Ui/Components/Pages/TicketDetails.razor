@@ -7,6 +7,7 @@
 @inject AttachmentService AttachmentService
 @inject AuthState AuthState
 @inject ISnackbar Snackbar
+@inject NavigationManager Navigation
 
 <PageTitle>Ticket #@Id - HelpDesk</PageTitle>
 
@@ -34,6 +35,10 @@ else
                 <MudTooltip Text="Edit ticket">
                     <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Inherit"
                                    OnClick="OpenEditDialog" />
+                </MudTooltip>
+                <MudTooltip Text="Delete ticket">
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                                   OnClick="() => _deleteDialogVisible = true" />
                 </MudTooltip>
             }
             @if (_ticket.Status == Status.Open)
@@ -247,6 +252,25 @@ else
     </DialogActions>
 </MudDialog>
 
+<MudDialog @bind-Visible="_deleteDialogVisible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Delete Ticket</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText>Are you sure you want to delete <strong>@_ticket?.Title</strong>? This action cannot be undone.</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _deleteDialogVisible = false">Cancel</MudButton>
+        <MudButton OnClick="DeleteTicketAsync" Color="Color.Error" Disabled="_deleting">
+            @if (_deleting)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+            }
+            Delete
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
 @code {
     [Parameter] public int Id { get; set; }
 
@@ -266,6 +290,9 @@ else
     private List<TagDto> _allTags = new();
     private HashSet<string> _editSelectedTags = new();
     private DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+    private bool _deleteDialogVisible;
+    private bool _deleting;
 
     protected override async Task OnInitializedAsync()
     {
@@ -442,6 +469,25 @@ else
         catch (Exception ex)
         {
             Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task DeleteTicketAsync()
+    {
+        _deleting = true;
+        try
+        {
+            await TicketService.DeleteAsync(Id);
+            Snackbar.Add("Ticket deleted", Severity.Success);
+            Navigation.NavigateTo("/tickets");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _deleting = false;
         }
     }
 }

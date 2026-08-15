@@ -8,20 +8,31 @@ namespace HelpDesk.Api.Services;
 
 public class AuthService : IAuthService
 {
+    private readonly IInvitesService _invitesService;
     private readonly ILogger<AuthService> _logger;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly UserManager<ApplicationUser> _userManager;
 
     public AuthService(UserManager<ApplicationUser> userManager,
-        SignInManager<ApplicationUser> signInManager, ILogger<AuthService> logger)
+        SignInManager<ApplicationUser> signInManager, ILogger<AuthService> logger,
+        IInvitesService invitesService)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _logger = logger;
+        _invitesService = invitesService;
     }
 
     public async Task Register(RegisterRequest request)
     {
+        var role = Role.Employee;
+
+        if (request.Code is not null)
+        {
+            await _invitesService.ValidateAndConsume(request.Code);
+            role = Role.Technician;
+        }
+
         var user = new ApplicationUser
         {
             UserName = request.Username,
@@ -36,7 +47,7 @@ public class AuthService : IAuthService
 
         _logger.LogInformation("User created: {username}", user.UserName);
 
-        await _userManager.AddToRoleAsync(user, Role.Employee);
+        await _userManager.AddToRoleAsync(user, role);
         await _signInManager.SignInAsync(user, request.RememberMe);
     }
 

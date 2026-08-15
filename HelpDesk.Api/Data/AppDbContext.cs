@@ -13,6 +13,7 @@ public class AppDbContext(DbContextOptions options)
     public DbSet<Comment> Comments { get; set; }
     public DbSet<Vote> Votes { get; set; }
     public DbSet<Tag> Tags { get; set; }
+    public DbSet<InviteCode> InviteCodes { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

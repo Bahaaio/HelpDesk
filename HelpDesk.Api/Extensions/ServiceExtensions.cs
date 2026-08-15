@@ -28,6 +28,8 @@ public static class ServiceExtensions
             services.AddScoped<IAttachmentValidationService, AttachmentValidationService>();
             services.AddScoped<ICurrentUser, CurrentUser>();
             services.AddScoped<IAuthorizationGuard, AuthorizationGuard>();
+            services.AddSingleton<ITokensService, TokensService>();
+            services.AddScoped<IInvitesService, InvitesService>();
         }
     }
 }

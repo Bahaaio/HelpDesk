@@ -37,7 +37,7 @@ public class TagsService : ITagsService
             Description = request.Description
         };
 
-        await _db.Tags.AddAsync(tag);
+        _db.Tags.Add(tag);
         await _db.SaveChangesAsync();
 
         _logger.LogInformation("Created tag {tagName}", tag.Name);

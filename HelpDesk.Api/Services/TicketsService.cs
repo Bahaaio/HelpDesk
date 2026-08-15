@@ -65,7 +65,7 @@ public class TicketsService : ITicketsService
             AuthorId = _user.Id
         };
 
-        await _db.Tickets.AddAsync(ticket);
+        _db.Tickets.Add(ticket);
         await _db.SaveChangesAsync();
 
         _logger.LogInformation("User {userId} created ticket {ticketId}", _user.Id, ticket.Id);

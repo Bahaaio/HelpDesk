@@ -48,7 +48,7 @@ public class CommentsService : ICommentsService
             AuthorId = _user.Id
         };
 
-        await _db.Comments.AddAsync(comment);
+        _db.Comments.Add(comment);
         await _db.SaveChangesAsync();
 
         _logger.LogInformation("User {userId} created comment {commentId} on ticket {ticketId}",

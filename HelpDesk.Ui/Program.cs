@@ -25,7 +25,8 @@ builder.Services.AddScoped<TicketService>();
 builder.Services.AddScoped<TagService>();
 builder.Services.AddScoped<CommentService>();
 builder.Services.AddScoped<VoteService>();
-builder.Services.AddScoped<AttachmentService>();
+    builder.Services.AddScoped<AttachmentService>();
+    builder.Services.AddScoped<InviteService>();
 
 var app = builder.Build();
 

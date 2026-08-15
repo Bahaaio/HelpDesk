@@ -6,7 +6,16 @@
 <MudContainer Class="d-flex justify-center align-center" Style="min-height: 80vh;">
     <MudPaper Class="d-flex flex-column align-center pa-6" Style="width: 380px;" Elevation="4">
         <MudIcon Icon="@Icons.Material.Filled.PersonAdd" Size="Size.Large" Color="Color.Primary" Class="mb-2" />
-        <MudText Typo="Typo.h5" Class="mb-4">Create Account</MudText>
+        <MudText Typo="Typo.h5" Class="mb-4">
+            @(_isInvite ? "Create Technician Account" : "Create Account")
+        </MudText>
+
+        @if (_isInvite)
+        {
+            <MudAlert Severity="Severity.Info" Class="mb-4" Dense="true">
+                You've been invited to register as a technician.
+            </MudAlert>
+        }
 
         <MudTextField @bind-Value="_username" Label="Username" Adornment="Adornment.Start"
                       AdornmentIcon="@Icons.Material.Filled.Person" Class="mb-3" FullWidth="true" />
@@ -46,6 +55,19 @@
     private string _password = "";
     private bool _loading;
     private string _error = "";
+    private string? _code;
+    private bool _isInvite;
+
+    protected override void OnInitialized()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        if (Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query)
+            .TryGetValue("code", out var code))
+        {
+            _code = code;
+            _isInvite = true;
+        }
+    }
 
     private async Task RegisterAsync()
     {
@@ -58,7 +80,8 @@
             {
                 Username = _username,
                 Email = _email,
-                Password = _password
+                Password = _password,
+                Code = _code
             });
 
             if (!resp.IsSuccessStatusCode)

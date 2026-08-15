@@ -183,6 +183,14 @@ else
                         <MudText Typo="Typo.caption" Color="Color.Default">
                             @comment.CreatedAt.ToString("MMM dd, yyyy HH:mm")
                         </MudText>
+                        @if (AuthState.Username == comment.AuthorUsername || AuthState.Role == "Technician")
+                        {
+                            <MudTooltip Text="Delete">
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                               Color="Color.Error"
+                                               OnClick="() => DeleteComment(comment.Id)" />
+                            </MudTooltip>
+                        }
                     </MudStack>
                     <MudText Typo="Typo.body2" Class="ml-8">@comment.Content</MudText>
                 </MudPaper>
@@ -421,6 +429,19 @@ else
         finally
         {
             _submittingComment = false;
+        }
+    }
+
+    private async Task DeleteComment(int commentId)
+    {
+        try
+        {
+            await CommentService.DeleteAsync(Id, commentId);
+            _comments.RemoveAll(c => c.Id == commentId);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
         }
     }
 }

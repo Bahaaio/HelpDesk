@@ -27,4 +27,10 @@ public class CommentService
         resp.EnsureSuccessStatusCode();
         return (await resp.Content.ReadFromJsonAsync<CommentDto>())!;
     }
+
+    public async Task DeleteAsync(int ticketId, int commentId)
+    {
+        var resp = await Client.DeleteAsync($"/api/tickets/{ticketId}/comments/{commentId}");
+        resp.EnsureSuccessStatusCode();
+    }
 }

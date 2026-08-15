@@ -25,4 +25,10 @@ public interface ITagsService
     /// <param name="name">The name of the tag to update.</param>
     /// <param name="request">The updated description.</param>
     Task<TagDto> Update(string name, UpdateTagRequest request);
+
+    /// <summary>
+    ///     Deletes a tag by name. Requires technician role.
+    /// </summary>
+    /// <param name="name">The name of the tag to delete.</param>
+    Task Delete(string name);
 }

@@ -58,4 +58,14 @@ public class TagsService : ITagsService
         await _db.SaveChangesAsync();
         return tag.ToDto();
     }
+
+    public async Task Delete(string name)
+    {
+        var deleted = await _db.Tags
+            .Where(t => EF.Functions.ILike(t.Name, name))
+            .ExecuteDeleteAsync();
+
+        if (deleted > 0)
+            _logger.LogInformation("Deleted tag {tagName}", name);
+    }
 }

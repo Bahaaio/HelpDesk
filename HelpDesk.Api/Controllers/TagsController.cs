@@ -38,4 +38,12 @@ public class TagsController : ControllerBase
     {
         return Ok(await _tagsService.Update(name, request));
     }
+
+    [Authorize(Roles = Role.Technician)]
+    [HttpDelete("{name}")]
+    public async Task<ActionResult> Delete(string name)
+    {
+        await _tagsService.Delete(name);
+        return NoContent();
+    }
 }

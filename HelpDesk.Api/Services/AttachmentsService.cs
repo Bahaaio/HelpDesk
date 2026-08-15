@@ -47,6 +47,8 @@ public class AttachmentsService : IAttachmentsService
         var attachment = new Attachment
         {
             Id = guid,
+            ContentType = file.ContentType,
+            OriginalFileName = file.FileName,
             TicketId = ticketId,
             UploaderId = _user.Id
         };
@@ -57,7 +59,7 @@ public class AttachmentsService : IAttachmentsService
         _logger.LogInformation("User {userId} added attachment {attachmentId} to ticket {ticketId}",
             _user.Id, attachment.Id, ticketId);
 
-        return new AttachmentDto(attachment.Id);
+        return new AttachmentDto(attachment.Id, file.ContentType, file.FileName);
     }
 
     public async Task DeleteAttachment(Guid attachmentId)
@@ -76,11 +78,18 @@ public class AttachmentsService : IAttachmentsService
             _user.Id, attachmentId);
     }
 
-    public async Task<Stream> GetAttachment(Guid attachmentId)
+    public async Task<AttachmentResult> GetAttachment(Guid attachmentId)
     {
         var stream = await _storageService.Load(attachmentId.ToString());
 
-        return stream ??
-               throw new NotFoundException($"Attachment with id: {attachmentId} not found");
+        var attachment = await _db.Attachments
+            .Where(a => a.Id == attachmentId)
+            .Select(a => new { a.ContentType, a.OriginalFileName })
+            .SingleOrDefaultAsync();
+
+        if (stream is null || attachment is null)
+            throw new NotFoundException($"Attachment with id: {attachmentId} not found");
+
+        return new AttachmentResult(stream, attachment.ContentType, attachment.OriginalFileName);
     }
 }

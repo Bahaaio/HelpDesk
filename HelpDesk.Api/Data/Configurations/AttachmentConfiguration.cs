@@ -12,6 +12,14 @@ public class AttachmentConfiguration : IEntityTypeConfiguration<Attachment>
             .IsRequired()
             .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
+        builder.Property(a => a.ContentType)
+            .IsRequired()
+            .HasMaxLength(128);
+
+        builder.Property(a => a.OriginalFileName)
+            .IsRequired()
+            .HasMaxLength(255);
+
         builder.HasOne(a => a.Ticket)
             .WithMany(t => t.Attachments)
             .HasForeignKey(a => a.TicketId)

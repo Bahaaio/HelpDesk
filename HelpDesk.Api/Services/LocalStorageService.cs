@@ -42,6 +42,6 @@ public class LocalStorageService : IStorageService
 
     private string GetFilePath(string key)
     {
-        return Path.Combine(_storagePath, $"{key}.jpg");
+        return Path.Combine(_storagePath, key);
     }
 }

@@ -21,8 +21,8 @@ public interface IAttachmentsService
     Task DeleteAttachment(Guid attachmentId);
 
     /// <summary>
-    ///     Returns the file stream for an attachment.
+    ///     Returns the file stream, content type, and original file name for a given attachment.
     /// </summary>
     /// <param name="attachmentId">The unique ID of the attachment to retrieve.</param>
-    Task<Stream> GetAttachment(Guid attachmentId);
+    Task<AttachmentResult> GetAttachment(Guid attachmentId);
 }

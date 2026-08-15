@@ -17,7 +17,7 @@ public class AttachmentsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult> Get(Guid id)
     {
-        var stream = await _attachmentsService.GetAttachment(id);
-        return File(stream, "image/jpeg");
+        var result = await _attachmentsService.GetAttachment(id);
+        return File(result.Stream, result.ContentType, result.OriginalFileName);
     }
 }

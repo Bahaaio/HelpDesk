@@ -1,3 +1,4 @@
+using HelpDesk.Api.Authorization.Requirements;
 using HelpDesk.Api.Data;
 using HelpDesk.Api.Dtos.Requests;
 using HelpDesk.Api.Dtos.Responses;
@@ -10,12 +11,15 @@ namespace HelpDesk.Api.Services;
 
 public class CommentsService : ICommentsService
 {
+    private readonly IAuthorizationGuard _authGuard;
     private readonly AppDbContext _db;
     private readonly ILogger<CommentsService> _logger;
     private readonly ICurrentUser _user;
 
-    public CommentsService(AppDbContext db, ICurrentUser user, ILogger<CommentsService> logger)
+    public CommentsService(AppDbContext db, ICurrentUser user, ILogger<CommentsService> logger,
+        IAuthorizationGuard authGuard)
     {
+        _authGuard = authGuard;
         _db = db;
         _user = user;
         _logger = logger;
@@ -57,5 +61,20 @@ public class CommentsService : ICommentsService
         await _db.Entry(comment).Reference(c => c.Author).LoadAsync();
 
         return comment.ToDto();
+    }
+
+    public async Task Delete(int commentId)
+    {
+        var comment = await _db.Comments.FindAsync(commentId);
+        if (comment is null)
+            throw new NotFoundException($"Comment with id {commentId} not found");
+
+        await _authGuard.Authorize(comment, new CommentAuthorOrTechnicianRequirement());
+
+        _db.Remove(comment);
+        await _db.SaveChangesAsync();
+
+        _logger.LogInformation("User {userId} deleted comment {commentId}",
+            _user.Id, commentId);
     }
 }

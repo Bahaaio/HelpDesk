@@ -28,4 +28,11 @@ public class CommentsController : ControllerBase
         var comment = await _commentsService.Create(ticketId, request);
         return Created((string?)null, comment);
     }
+
+    [HttpDelete("{commentId:int}")]
+    public async Task<ActionResult> Delete(int ticketId, int commentId)
+    {
+        await _commentsService.Delete(commentId);
+        return NoContent();
+    }
 }

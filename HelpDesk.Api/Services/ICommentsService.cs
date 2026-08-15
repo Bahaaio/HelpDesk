@@ -20,4 +20,10 @@ public interface ICommentsService
     /// <param name="ticketId">The ID of the ticket to comment on.</param>
     /// <param name="request">The comment content.</param>
     Task<CommentDto> Create(int ticketId, CreateCommentRequest request);
+
+    /// <summary>
+    ///     Deletes a comment. Only the author or a technician may delete.
+    /// </summary>
+    /// <param name="commentId">The ID of the comment to delete.</param>
+    Task Delete(int commentId);
 }

@@ -30,9 +30,7 @@ public class AttachmentsService : IAttachmentsService
 
     public async Task<AttachmentDto> AddAttachment(int ticketId, IFormFile file)
     {
-        var ticket = await _db.Tickets.FindAsync(ticketId);
-        if (ticket is null)
-            throw new NotFoundException($"Ticket with id {ticketId} not found");
+        var ticket = await _db.Tickets.FindOrThrowAsync(ticketId);
 
         await _authGuard.AuthorizeOwnerOrTechnician(ticket);
 
@@ -64,9 +62,7 @@ public class AttachmentsService : IAttachmentsService
 
     public async Task DeleteAttachment(Guid attachmentId)
     {
-        var attachment = await _db.Attachments.FindAsync(attachmentId);
-        if (attachment is null)
-            throw new NotFoundException($"Attachment with id: {attachmentId} not found");
+        var attachment = await _db.Attachments.FindOrThrowAsync(attachmentId);
 
         await _authGuard.AuthorizeOwnerOrTechnician(attachment);
 

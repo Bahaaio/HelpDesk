@@ -1,7 +1,6 @@
 using HelpDesk.Api.Data;
 using HelpDesk.Api.Dtos.Requests;
 using HelpDesk.Api.Dtos.Responses;
-using HelpDesk.Api.Exceptions;
 using HelpDesk.Api.Extensions;
 using HelpDesk.Api.Mappers;
 using HelpDesk.Api.Models;
@@ -27,9 +26,7 @@ public class CommentsService : ICommentsService
 
     public async Task<List<CommentDto>> GetAll(int ticketId)
     {
-        var ticket = await _db.Tickets.FindAsync(ticketId);
-        if (ticket is null)
-            throw new NotFoundException($"Ticket with id {ticketId} not found");
+        await _db.Tickets.ExistsOrThrowAsync(ticketId);
 
         return await _db.Comments
             .AsNoTracking()
@@ -41,9 +38,7 @@ public class CommentsService : ICommentsService
 
     public async Task<CommentDto> Create(int ticketId, CreateCommentRequest request)
     {
-        var ticket = await _db.Tickets.FindAsync(ticketId);
-        if (ticket is null)
-            throw new NotFoundException($"Ticket with id {ticketId} not found");
+        await _db.Tickets.ExistsOrThrowAsync(ticketId);
 
         var comment = new Comment
         {
@@ -65,9 +60,7 @@ public class CommentsService : ICommentsService
 
     public async Task Delete(int commentId)
     {
-        var comment = await _db.Comments.FindAsync(commentId);
-        if (comment is null)
-            throw new NotFoundException($"Comment with id {commentId} not found");
+        var comment = await _db.Comments.FindOrThrowAsync(commentId);
 
         await _authGuard.AuthorizeOwnerOrTechnician(comment);
 

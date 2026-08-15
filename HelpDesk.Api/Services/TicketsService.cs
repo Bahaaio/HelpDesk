@@ -38,9 +38,8 @@ public class TicketsService : ITicketsService
 
     public async Task<List<TicketDto>> GetCurrentUserTickets(TicketQuery ticketQuery)
     {
-        var query = GetTicketQuery(ticketQuery);
-
-        query = query.Where(t => t.AuthorId == _user.Id);
+        var query = GetTicketQuery(ticketQuery)
+            .Where(t => t.AuthorId == _user.Id);
 
         return await query
             .Select(TicketMapper.ToDtoExpression)
@@ -100,9 +99,7 @@ public class TicketsService : ITicketsService
 
     public async Task UpdateStatus(int id, UpdateTicketStatusRequest request)
     {
-        var ticket = await _db.Tickets.FindAsync(id);
-        if (ticket is null)
-            throw new NotFoundException($"Ticket with id {id} not found");
+        var ticket = await _db.Tickets.FindOrThrowAsync(id);
 
         await _authGuard.AuthorizeOwnerOrTechnician(ticket);
 
@@ -118,9 +115,7 @@ public class TicketsService : ITicketsService
 
     public async Task Delete(int id)
     {
-        var ticket = await _db.Tickets.FindAsync(id);
-        if (ticket is null)
-            throw new NotFoundException($"Ticket with id {id} not found");
+        var ticket = await _db.Tickets.FindOrThrowAsync(id);
 
         await _authGuard.AuthorizeOwnerOrTechnician(ticket);
 

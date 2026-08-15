@@ -1,7 +1,7 @@
 using HelpDesk.Api.Data;
 using HelpDesk.Api.Dtos.Requests;
 using HelpDesk.Api.Dtos.Responses;
-using HelpDesk.Api.Exceptions;
+using HelpDesk.Api.Extensions;
 using HelpDesk.Api.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,10 +20,7 @@ public class VotesService : IVotesService
 
     public async Task Vote(int ticketId, VoteRequest request)
     {
-        var ticket = await _db.Tickets.FindAsync(ticketId);
-
-        if (ticket is null)
-            throw new NotFoundException($"Ticket with id {ticketId} not found");
+        var ticket = await _db.Tickets.FindOrThrowAsync(ticketId);
 
         var existingVote = await _db.Votes.FindAsync(ticketId, _user.Id);
 
@@ -50,9 +47,7 @@ public class VotesService : IVotesService
 
     public async Task<VoteDto> GetUserVote(int ticketId)
     {
-        var ticket = await _db.Tickets.FindAsync(ticketId);
-        if (ticket is null)
-            throw new NotFoundException($"Ticket with id {ticketId} not found");
+        await _db.Tickets.ExistsOrThrowAsync(ticketId);
 
         var vote = await _db.Votes.FindAsync(ticketId, _user.Id);
 

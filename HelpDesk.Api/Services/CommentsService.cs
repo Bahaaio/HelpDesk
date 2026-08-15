@@ -69,7 +69,7 @@ public class CommentsService : ICommentsService
         if (comment is null)
             throw new NotFoundException($"Comment with id {commentId} not found");
 
-        await _authGuard.Authorize(comment, new CommentAuthorOrTechnicianRequirement());
+        await _authGuard.Authorize(comment, new OwnerOrTechnicianRequirement());
 
         _db.Remove(comment);
         await _db.SaveChangesAsync();

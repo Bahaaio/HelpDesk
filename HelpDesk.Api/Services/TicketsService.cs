@@ -87,7 +87,7 @@ public class TicketsService : ITicketsService
         if (ticket is null)
             throw new NotFoundException($"Ticket with id {id} not found");
 
-        await _authGuard.Authorize(ticket, new TicketOwnerOrTechnicianRequirement());
+        await _authGuard.Authorize(ticket, new OwnerOrTechnicianRequirement());
 
         ticket.Title = request.Title;
         ticket.Description = request.Description;
@@ -102,7 +102,7 @@ public class TicketsService : ITicketsService
         if (ticket is null)
             throw new NotFoundException($"Ticket with id {id} not found");
 
-        await _authGuard.Authorize(ticket, new TicketOwnerOrTechnicianRequirement());
+        await _authGuard.Authorize(ticket, new OwnerOrTechnicianRequirement());
 
         if (ticket.Status == request.Status)
             return;

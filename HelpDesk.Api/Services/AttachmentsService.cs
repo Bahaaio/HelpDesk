@@ -34,7 +34,7 @@ public class AttachmentsService : IAttachmentsService
         if (ticket is null)
             throw new NotFoundException($"Ticket with id {ticketId} not found");
 
-        await _authGuard.Authorize(ticket, new TicketOwnerOrTechnicianRequirement());
+        await _authGuard.Authorize(ticket, new OwnerOrTechnicianRequirement());
 
         _attachmentValidationService.Validate(file);
 
@@ -68,7 +68,7 @@ public class AttachmentsService : IAttachmentsService
         if (attachment is null)
             throw new NotFoundException($"Attachment with id: {attachmentId} not found");
 
-        await _authGuard.Authorize(attachment, new AttachmentUploaderOrTechnicianRequirement());
+        await _authGuard.Authorize(attachment, new OwnerOrTechnicianRequirement());
 
         _db.Remove(attachment);
         await _storageService.DeleteFile(attachmentId.ToString());

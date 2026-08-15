@@ -1,6 +1,8 @@
+using HelpDesk.Api.Authorization;
+
 namespace HelpDesk.Api.Models;
 
-public class Attachment
+public class Attachment : IOwnedByUser
 {
     public Guid Id { get; set; }
     public DateTime CreatedAt { get; set; }
@@ -12,4 +14,6 @@ public class Attachment
 
     public required int UploaderId { get; set; }
     public ApplicationUser Uploader { get; set; } = null!;
+
+    public int OwnerId => UploaderId;
 }

@@ -47,9 +47,7 @@ public static class SecurityExtensions
                     .RequireAuthenticatedUser().Build();
             });
 
-            services.AddScoped<IAuthorizationHandler, TicketOwnerOrTechnicianHandler>();
-            services.AddScoped<IAuthorizationHandler, AttachmentUploaderOrTechnicianHandler>();
-            services.AddScoped<IAuthorizationHandler, CommentAuthorOrTechnicianHandler>();
+            services.AddScoped<IAuthorizationHandler, OwnerOrTechnicianHandler>();
         }
     }
 }

@@ -1,8 +1,9 @@
+using HelpDesk.Api.Authorization;
 using HelpDesk.Api.Models.Enums;
 
 namespace HelpDesk.Api.Models;
 
-public class Vote
+public class Vote : IOwnedByUser
 {
     public required VoteValue Value { get; set; } // 1 or -1
     public DateTime CreatedAt { get; set; }
@@ -12,4 +13,6 @@ public class Vote
 
     public required int TicketId { get; set; }
     public Ticket Ticket { get; set; } = null!;
+
+    public int OwnerId => VoterId;
 }

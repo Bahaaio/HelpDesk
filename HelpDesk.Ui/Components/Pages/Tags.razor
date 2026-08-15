@@ -35,14 +35,19 @@
     }
     else
     {
-        <MudDataGrid Items="_tags" Hover="true" Dense="true" Striped="true" EditMode="DataGridEditMode.Inline">
+        <MudDataGrid Items="_tags" Hover="true" Dense="true" Striped="true">
             <Columns>
-                <PropertyColumn Property="x => x.Name" Title="Name" IsEditable="false" />
+                <PropertyColumn Property="x => x.Name" Title="Name" />
                 <PropertyColumn Property="x => x.Description" Title="Description" />
-                <TemplateColumn Title="Actions" Sortable="false" Filterable="false" IsEditable="false">
+                <TemplateColumn Title="Actions" Sortable="false" Filterable="false">
                     <CellTemplate>
-                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                       OnClick="() => StartEdit(context.Item)" />
+                        <div @onclick:stopPropagation>
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                           OnClick="() => StartEdit(context.Item)" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                           Color="Color.Error"
+                                           OnClick="() => ConfirmDelete(context.Item)" />
+                        </div>
                     </CellTemplate>
                 </TemplateColumn>
             </Columns>
@@ -61,6 +66,19 @@
             <MudButton OnClick="SaveTagAsync" Color="Color.Primary" Disabled="_savingTag">Save</MudButton>
         </DialogActions>
     </MudDialog>
+
+    <MudDialog @bind-Visible="_deleteDialogVisible" Options="_dialogOptions">
+        <TitleContent>
+            <MudText Typo="Typo.h6">Delete Tag</MudText>
+        </TitleContent>
+        <DialogContent>
+            <MudText>Are you sure you want to delete <strong>@_deletingTag?.Name</strong>?</MudText>
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="() => _deleteDialogVisible = false">Cancel</MudButton>
+            <MudButton OnClick="DeleteTagAsync" Color="Color.Error" Disabled="_deletingTag_loading">Delete</MudButton>
+        </DialogActions>
+    </MudDialog>
 </MudContainer>
 
 @code {
@@ -74,6 +92,10 @@
     private string? _editDescription;
     private bool _savingTag;
     private DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
+
+    private bool _deleteDialogVisible;
+    private TagDto? _deletingTag;
+    private bool _deletingTag_loading;
 
     protected override async Task OnInitializedAsync()
     {
@@ -138,6 +160,34 @@
         finally
         {
             _savingTag = false;
+        }
+    }
+
+    private void ConfirmDelete(TagDto tag)
+    {
+        _deletingTag = tag;
+        _deleteDialogVisible = true;
+    }
+
+    private async Task DeleteTagAsync()
+    {
+        if (_deletingTag is null) return;
+
+        _deletingTag_loading = true;
+        try
+        {
+            await TagService.DeleteAsync(_deletingTag.Name);
+            _deleteDialogVisible = false;
+            Snackbar.Add("Tag deleted", Severity.Success);
+            await LoadTags();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _deletingTag_loading = false;
         }
     }
 }

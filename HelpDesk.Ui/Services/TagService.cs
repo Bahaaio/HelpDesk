@@ -40,4 +40,10 @@ public class TagService
         resp.EnsureSuccessStatusCode();
         return (await resp.Content.ReadFromJsonAsync<List<string>>()) ?? new();
     }
+
+    public async Task DeleteAsync(string name)
+    {
+        var resp = await Client.DeleteAsync($"/api/tags/{name}");
+        resp.EnsureSuccessStatusCode();
+    }
 }

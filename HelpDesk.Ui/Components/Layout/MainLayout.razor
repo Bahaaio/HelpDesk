@@ -21,6 +21,8 @@ else
 {
     <MudThemeProvider @bind-IsDarkMode="_isDarkMode" />
     <MudPopoverProvider />
+    <MudDialogProvider />
+    <MudSnackbarProvider />
     <MudLayout>
         <MudAppBar Elevation="1">
             <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit"
@@ -55,10 +57,6 @@ else
                     <MudNavLink Href="/tickets/mine" Icon="@Icons.Material.Filled.Person"
                                  Match="NavLinkMatch.Prefix">
                         My Tickets
-                    </MudNavLink>
-                    <MudNavLink Href="/tickets/new" Icon="@Icons.Material.Filled.Add"
-                                 Match="NavLinkMatch.All">
-                        New Ticket
                     </MudNavLink>
                 }
                 @if (AuthState.Role == "Technician")

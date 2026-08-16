@@ -37,7 +37,7 @@ public class AttachmentsService : IAttachmentsService
         _attachmentValidationService.Validate(file);
 
         var count = await _db.Attachments.CountAsync(a => a.TicketId == ticketId);
-        _attachmentValidationService.ValidateCount(count);
+        _attachmentValidationService.ValidateCount(count + 1);
 
         var guid = Guid.NewGuid();
         await _storageService.Store(file, guid.ToString());

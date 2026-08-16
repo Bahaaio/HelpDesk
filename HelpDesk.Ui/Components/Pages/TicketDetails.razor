@@ -204,7 +204,34 @@ else
                             </MudTooltip>
                         }
                     </MudStack>
-                    <MudText Typo="Typo.body2" Class="ml-8">@comment.Content</MudText>
+                    <div Class="ml-8" style="line-height: 1.6;">
+                        @foreach (var seg in ParseComment(comment.Content))
+                        {
+                            @if (seg.IsReference && _referencedTickets.TryGetValue(seg.TicketId, out var refTicket))
+                            {
+                                <MudLink Href="@($"/tickets/{seg.TicketId}")" Target="_blank"
+                                         Style="vertical-align: middle; text-decoration: none;">
+                                    <MudChip T="string" Size="Size.Small"
+                                             Color="@(refTicket.Status == Status.Open ? Color.Success : Color.Default)"
+                                             Variant="Variant.Outlined"
+                                             Style="height: 20px; font-size: 0.7rem; vertical-align: middle; pointer-events: none;">
+                                        @(refTicket.Status == Status.Open ? "Open" : "Closed")
+                                    </MudChip>
+                                    <span style="font-size: 0.875rem;">
+                                        #@seg.TicketId @(refTicket.Title.Length > 30 ? refTicket.Title[..30] + "..." : refTicket.Title)
+                                    </span>
+                                </MudLink>
+                            }
+                            else if (seg.IsReference)
+                            {
+                                <span style="font-size: 0.875rem;"><strong>@seg.Text</strong></span>
+                            }
+                            else
+                            {
+                                <span style="font-size: 0.875rem;">@seg.Text</span>
+                            }
+                        }
+                    </div>
                 </MudPaper>
             }
         }
@@ -301,6 +328,9 @@ else
     private bool _deleteDialogVisible;
     private bool _deleting;
 
+    private Dictionary<int, TicketDto> _referencedTickets = new();
+    private static readonly System.Text.RegularExpressions.Regex _ticketRefRegex = new(@"#(\d+)", System.Text.RegularExpressions.RegexOptions.Compiled);
+
     protected override async Task OnInitializedAsync()
     {
         try
@@ -323,6 +353,8 @@ else
             {
                 _allTags = await TagService.GetAllAsync();
             }
+
+            await LoadReferencedTickets();
         }
         catch { }
 
@@ -455,6 +487,7 @@ else
             var comment = await CommentService.CreateAsync(Id, new CreateCommentRequest(_newComment));
             _comments.Add(comment);
             _newComment = "";
+            await LoadReferencedTickets();
         }
         catch (Exception ex)
         {
@@ -478,6 +511,55 @@ else
             Snackbar.Add(ex.Message, Severity.Error);
         }
     }
+
+    private async Task LoadReferencedTickets()
+    {
+        var ids = new HashSet<int>();
+        foreach (var comment in _comments)
+        {
+            foreach (System.Text.RegularExpressions.Match m in _ticketRefRegex.Matches(comment.Content))
+            {
+                if (int.TryParse(m.Groups[1].Value, out var tid) && tid != Id)
+                    ids.Add(tid);
+            }
+        }
+
+        foreach (var tid in ids)
+        {
+            if (!_referencedTickets.ContainsKey(tid))
+            {
+                try
+                {
+                    var t = await TicketService.GetByIdAsync(tid);
+                    if (t is not null) _referencedTickets[tid] = t;
+                }
+                catch { }
+            }
+        }
+    }
+
+    private List<CommentSegment> ParseComment(string content)
+    {
+        var segments = new List<CommentSegment>();
+        var lastEnd = 0;
+        foreach (System.Text.RegularExpressions.Match m in _ticketRefRegex.Matches(content))
+        {
+            if (m.Index > lastEnd)
+                segments.Add(new CommentSegment(false, content[lastEnd..m.Index], 0));
+
+            if (int.TryParse(m.Groups[1].Value, out var tid))
+                segments.Add(new CommentSegment(true, m.Value, tid));
+
+            lastEnd = m.Index + m.Length;
+        }
+
+        if (lastEnd < content.Length)
+            segments.Add(new CommentSegment(false, content[lastEnd..], 0));
+
+        return segments;
+    }
+
+    private record CommentSegment(bool IsReference, string Text, int TicketId);
 
     private async Task DeleteTicketAsync()
     {

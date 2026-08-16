@@ -1,4 +1,5 @@
 using HelpDesk.Api.Dtos.Requests;
+using HelpDesk.Api.Exceptions;
 using HelpDesk.Api.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -32,6 +33,20 @@ public static class TicketQueryExtensions
                     (t.Description != null && EF.Functions.ILike(t.Description, pattern))
                 );
             }
+
+            query = ticketQuery.Sort switch
+            {
+                TicketSort.Latest => query.OrderByDescending(t => t.CreatedAt),
+                TicketSort.Oldest => query.OrderBy(t => t.CreatedAt),
+
+                TicketSort.HighestScore => query.OrderByDescending(t =>
+                    t.Votes.Sum(v => (int)v.Value)),
+
+                TicketSort.LowestScore => query.OrderBy(t =>
+                    t.Votes.Sum(v => (int)v.Value)),
+
+                _ => throw new BadRequestException("Invalid sort parameter")
+            };
 
             return query;
         }

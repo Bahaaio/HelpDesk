@@ -6,5 +6,6 @@ public record TicketQuery(
     Status? Status,
     string? Tag,
     string? Author,
-    string? Q
+    string? Q,
+    TicketSort Sort = TicketSort.Latest
 );

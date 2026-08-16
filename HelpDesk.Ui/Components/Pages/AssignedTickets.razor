@@ -1,0 +1,128 @@
+@page "/tickets/assigned"
+@rendermode InteractiveServer
+@inject AssignmentService AssignmentService
+@inject NavigationManager Navigation
+
+<PageTitle>Assigned Tickets - HelpDesk</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+        <MudText Typo="Typo.h4">Assigned Tickets</MudText>
+    </MudStack>
+
+    <MudStack Row="true" Class="mb-4" AlignItems="AlignItems.Center">
+        <MudTextField @bind-Value="_searchText" Placeholder="Search tickets..."
+                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                      Style="max-width: 300px;" Immediate="true"
+                      DebounceInterval="300" OnDebounceIntervalClicked="LoadTickets" />
+
+        <MudSelect T="string" @bind-Value="_selectedStatus" Label="Status" Style="width: 150px;"
+                   SelectedValuesChanged="_ => LoadTickets()">
+            <MudSelectItem Value="@("all")">All</MudSelectItem>
+            <MudSelectItem Value="@("Open")">Open</MudSelectItem>
+            <MudSelectItem Value="@("Closed")">Closed</MudSelectItem>
+        </MudSelect>
+
+        <MudSelect T="string" @bind-Value="_sortBy" Label="Sort by" Style="width: 180px;"
+                   SelectedValuesChanged="_ => LoadTickets()">
+            <MudSelectItem Value="@("newest")">Newest first</MudSelectItem>
+            <MudSelectItem Value="@("oldest")">Oldest first</MudSelectItem>
+            <MudSelectItem Value="@("score_desc")">Highest score</MudSelectItem>
+            <MudSelectItem Value="@("score_asc")">Lowest score</MudSelectItem>
+        </MudSelect>
+    </MudStack>
+
+    @if (_loading)
+    {
+        <MudProgressCircular Indeterminate="true" Class="d-flex justify-center ma-8" />
+    }
+    else if (_tickets.Count == 0)
+    {
+        <MudPaper Class="pa-8 text-center">
+            <MudIcon Icon="@Icons.Material.Filled.Inbox" Size="Size.Large" Color="Color.Default" />
+            <MudText Typo="Typo.h6" Class="mt-2">No assigned tickets</MudText>
+        </MudPaper>
+    }
+    else
+    {
+        <MudTable Items="_tickets" Hover="true" Dense="true" Striped="true">
+            <HeaderContent>
+                <MudTh>Title</MudTh>
+                <MudTh>Status</MudTh>
+                <MudTh>Tags</MudTh>
+                <MudTh>Score</MudTh>
+                <MudTh>Created</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Title">
+                    <MudLink Href="@($"/tickets/{context.Id}")">
+                        <span style="opacity: 0.5;">#@context.Id</span> @context.Title
+                    </MudLink>
+                </MudTd>
+                <MudTd DataLabel="Status">
+                    @if (context.Status == Status.Open)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Success">Open</MudChip>
+                    }
+                    else
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Default">Closed</MudChip>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Tags">
+                    @foreach (var tag in context.Tags)
+                    {
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Class="mr-1">@tag</MudChip>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Score">
+                    <MudIcon Icon="@Icons.Material.Filled.ThumbUp" Size="Size.Small" Class="mr-1" />
+                    @context.VoteScore
+                </MudTd>
+                <MudTd DataLabel="Created">@context.CreatedAt.ToString("MMM dd, yyyy")</MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+</MudContainer>
+
+@code {
+    private List<TicketDto> _tickets = new();
+    private bool _loading = true;
+    private string _searchText = "";
+    private string _selectedStatus = "all";
+    private string _sortBy = "newest";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTickets();
+    }
+
+    private async Task LoadTickets()
+    {
+        _loading = true;
+        StateHasChanged();
+
+        try
+        {
+            var query = new TicketQuery(
+                Status: _selectedStatus != "all" ? Enum.Parse<Status>(_selectedStatus) : null,
+                Tag: null,
+                Author: null,
+                Query: string.IsNullOrWhiteSpace(_searchText) ? null : _searchText
+            );
+
+            var allTickets = await AssignmentService.GetAssignedTicketsAsync(query);
+
+            _tickets = _sortBy switch
+            {
+                "oldest" => allTickets.OrderBy(t => t.CreatedAt).ToList(),
+                "score_desc" => allTickets.OrderByDescending(t => t.VoteScore).ToList(),
+                "score_asc" => allTickets.OrderBy(t => t.VoteScore).ToList(),
+                _ => allTickets.OrderByDescending(t => t.CreatedAt).ToList()
+            };
+        }
+        catch { }
+
+        _loading = false;
+    }
+}

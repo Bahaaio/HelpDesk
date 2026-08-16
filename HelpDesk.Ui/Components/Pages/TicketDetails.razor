@@ -5,6 +5,7 @@
 @inject CommentService CommentService
 @inject TagService TagService
 @inject AttachmentService AttachmentService
+@inject AssignmentService AssignmentService
 @inject AuthState AuthState
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
@@ -106,6 +107,46 @@ else
                 </MudText>
             }
         </MudStack>
+
+        @if (!string.IsNullOrEmpty(_ticket.AssignedToUsername) || AuthState.Role == "Technician")
+        {
+            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+                <MudText Typo="Typo.h6">Assigned to</MudText>
+                <MudSpacer />
+                @if (!string.IsNullOrEmpty(_ticket.AssignedToUsername))
+                {
+                    <MudStack Row="true" AlignItems="AlignItems.Center">
+                        <MudAvatar Size="Size.Small" Color="Color.Primary">
+                            @(_ticket.AssignedToUsername?[..1].ToUpper() ?? "?")
+                        </MudAvatar>
+                        <MudText Typo="Typo.body2">@_ticket.AssignedToUsername</MudText>
+                        @if (AuthState.Role == "Technician" && _isAssignedToCurrentUser && _ticket.Status == Status.Open)
+                        {
+                            <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error"
+                                       OnClick="UnassignAsync" Disabled="_assigning"
+                                       StartIcon="@Icons.Material.Filled.PersonRemove">
+                                Unassign
+                            </MudButton>
+                        }
+                    </MudStack>
+                }
+                else
+                {
+                    @if (AuthState.Role == "Technician" && _ticket.Status == Status.Open)
+                    {
+                        <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Primary"
+                                   OnClick="AssignAsync" Disabled="_assigning"
+                                   StartIcon="@Icons.Material.Filled.PersonAdd">
+                            Self Assign
+                        </MudButton>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2" Color="Color.Default">Unassigned</MudText>
+                    }
+                }
+            </MudStack>
+        }
 
         <MudDivider Class="mb-4" />
 
@@ -329,6 +370,8 @@ else
     private bool _submittingComment;
     private bool _canUpdateStatus;
     private bool _canEdit;
+    private bool _isAssignedToCurrentUser;
+    private bool _assigning;
 
     private bool _editDialogOpen;
     private string _editTitle = "";
@@ -362,6 +405,8 @@ else
                 && (AuthState.Role == "Technician" || AuthState.Username == _ticket?.AuthorUsername);
             _canEdit = AuthState.IsAuthenticated
                 && (AuthState.Role == "Technician" || AuthState.Username == _ticket?.AuthorUsername);
+            _isAssignedToCurrentUser = AuthState.IsAuthenticated
+                && _ticket?.AssignedToUsername == AuthState.Username;
 
             if (_canEdit && AuthState.Role == "Technician")
             {
@@ -465,6 +510,48 @@ else
         catch (Exception ex)
         {
             Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task AssignAsync()
+    {
+        _assigning = true;
+        try
+        {
+            await AssignmentService.AssignAsync(Id);
+            var refreshed = await TicketService.GetByIdAsync(Id);
+            if (refreshed is not null) _ticket = refreshed;
+            _isAssignedToCurrentUser = _ticket?.AssignedToUsername == AuthState.Username;
+            Snackbar.Add("Ticket assigned to you", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _assigning = false;
+        }
+    }
+
+    private async Task UnassignAsync()
+    {
+        _assigning = true;
+        try
+        {
+            await AssignmentService.UnassignAsync(Id);
+            var refreshed = await TicketService.GetByIdAsync(Id);
+            if (refreshed is not null) _ticket = refreshed;
+            _isAssignedToCurrentUser = false;
+            Snackbar.Add("Ticket unassigned", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _assigning = false;
         }
     }
 

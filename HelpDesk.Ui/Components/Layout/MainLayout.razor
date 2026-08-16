@@ -61,6 +61,10 @@ else
                 }
                 @if (AuthState.Role == "Technician")
                 {
+                    <MudNavLink Href="/tickets/assigned" Icon="@Icons.Material.Filled.Assignment"
+                                 Match="NavLinkMatch.Prefix">
+                        Assigned Tickets
+                    </MudNavLink>
                     <MudNavLink Href="/tags" Icon="@Icons.Material.Filled.Label"
                                  Match="NavLinkMatch.All">
                         Tags

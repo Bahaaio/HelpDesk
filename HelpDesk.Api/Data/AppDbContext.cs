@@ -14,6 +14,7 @@ public class AppDbContext(DbContextOptions options)
     public DbSet<Vote> Votes { get; set; }
     public DbSet<Tag> Tags { get; set; }
     public DbSet<InviteCode> InviteCodes { get; set; }
+    public DbSet<TicketStatusChange> TicketStatusChanges { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

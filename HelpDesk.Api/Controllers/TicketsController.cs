@@ -9,11 +9,14 @@ namespace HelpDesk.Api.Controllers;
 [Route("api/[controller]")]
 public class TicketsController : ControllerBase
 {
+    private readonly ITicketStatusHistoryService _ticketStatusHistoryService;
     private readonly ITicketsService _ticketsService;
 
-    public TicketsController(ITicketsService ticketsService)
+    public TicketsController(ITicketsService ticketsService,
+        ITicketStatusHistoryService ticketStatusHistoryService)
     {
         _ticketsService = ticketsService;
+        _ticketStatusHistoryService = ticketStatusHistoryService;
     }
 
     [HttpGet]
@@ -48,4 +51,8 @@ public class TicketsController : ControllerBase
         await _ticketsService.Delete(id);
         return NoContent();
     }
+
+    [HttpGet("{id:int}/status-history")]
+    public async Task<ActionResult<List<StatusChangeDto>>> GetStatusHistory(int id) =>
+        Ok(await _ticketStatusHistoryService.GetStatusHistory(id));
 }

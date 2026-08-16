@@ -21,6 +21,7 @@ public class Ticket : IOwnedByUser
     public ICollection<Comment> Comments { get; set; } = [];
     public ICollection<Vote> Votes { get; set; } = [];
     public ICollection<Tag> Tags { get; set; } = [];
+    public ICollection<TicketStatusChange> StatusChanges { get; set; } = [];
 
     public int OwnerId => AuthorId;
 }

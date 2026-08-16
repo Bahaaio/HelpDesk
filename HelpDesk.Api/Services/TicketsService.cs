@@ -108,11 +108,21 @@ public class TicketsService : ITicketsService
         if (ticket.Status == request.Status)
             return;
 
+        var statusChange = new TicketStatusChange
+        {
+            TicketId = id,
+            FromStatus = ticket.Status,
+            ToStatus = request.Status,
+            ChangedByUserId = _user.Id
+        };
+
         ticket.Status = request.Status;
+        _db.TicketStatusChanges.Add(statusChange);
+
         await _db.SaveChangesAsync();
 
-        _logger.LogInformation("User {userId} updated ticket {ticketId} status to {status}",
-            _user.Id, ticket.Id, ticket.Status);
+        _logger.LogInformation("User {userId} updated ticket {ticketId} status from {from} to {to}",
+            _user.Id, ticket.Id, statusChange.FromStatus, statusChange.ToStatus);
     }
 
     public async Task Delete(int id)

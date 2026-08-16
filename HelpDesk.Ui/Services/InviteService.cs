@@ -15,7 +15,7 @@ public class InviteService
 
     public async Task<InviteDto> InviteAsync(int validDays = 7)
     {
-        var resp = await Client.PostAsJsonAsync("/api/invite", new { ValidDays = validDays });
+        var resp = await Client.PostAsJsonAsync("/api/invites", new { ValidDays = validDays });
         resp.EnsureSuccessStatusCode();
         return (await resp.Content.ReadFromJsonAsync<InviteDto>())!;
     }

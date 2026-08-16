@@ -17,10 +17,10 @@
     </MudStack>
 
     <MudStack Row="true" Class="mb-4" AlignItems="AlignItems.Center">
-        <MudTextField @bind-Value="_searchText" Placeholder="Search tickets..."
+        <MudTextField Value="_searchText" ValueChanged="(string v) => OnSearchInput(v)"
+                      Placeholder="Search tickets..."
                       Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
-                      Style="max-width: 300px;" Immediate="true"
-                      DebounceInterval="300" OnDebounceIntervalClicked="LoadTickets" />
+                      Style="max-width: 300px;" Immediate="true" />
 
         <MudSelect T="string" @bind-Value="_selectedStatus" Label="Status" Style="width: 150px;"
                    SelectedValuesChanged="_ => LoadTickets()">
@@ -106,6 +106,7 @@
     private string _selectedStatus = "all";
     private string _selectedTag = "all";
     private string _sortBy = "newest";
+    private CancellationTokenSource? _searchCts;
 
     protected override async Task OnInitializedAsync()
     {
@@ -116,6 +117,21 @@
         catch { }
 
         await LoadTickets();
+    }
+
+    private async Task OnSearchInput(string value)
+    {
+        _searchText = value;
+        _searchCts?.Cancel();
+        _searchCts = new CancellationTokenSource();
+        var token = _searchCts.Token;
+        try
+        {
+            await Task.Delay(300, token);
+            if (!token.IsCancellationRequested)
+                await LoadTickets();
+        }
+        catch (TaskCanceledException) { }
     }
 
     private async Task LoadTickets()

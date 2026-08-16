@@ -10,11 +10,11 @@ namespace HelpDesk.Api.Controllers;
 [Authorize(Roles = Role.Technician)]
 [ApiController]
 [Route("api/[controller]")]
-public class InviteController : ControllerBase
+public class InvitesController : ControllerBase
 {
     private readonly IInvitesService _invitesService;
 
-    public InviteController(IInvitesService invitesService)
+    public InvitesController(IInvitesService invitesService)
     {
         _invitesService = invitesService;
     }

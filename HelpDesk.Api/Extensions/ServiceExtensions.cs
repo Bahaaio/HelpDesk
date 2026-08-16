@@ -18,9 +18,10 @@ public static class ServiceExtensions
         {
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<ITicketsService, TicketsService>();
+            services.AddScoped<ITicketTagsService, TicketTagsService>();
+            services.AddScoped<ITicketAssignmentsService, TicketAssignmentsService>();
             services.AddScoped<ICommentsService, CommentsService>();
             services.AddScoped<ITagsService, TagsService>();
-            services.AddScoped<ITicketTagsService, TicketTagsService>();
             services.AddScoped<IVotesService, VotesService>();
             services.AddScoped<IUsersService, UsersService>();
             services.AddScoped<IStorageService, LocalStorageService>();

@@ -20,10 +20,6 @@ public class TicketsController : ControllerBase
     public async Task<ActionResult<TicketDto>> GetAll([FromQuery] TicketQuery query) =>
         Ok(await _ticketsService.GetAll(query));
 
-    [HttpGet("mine")]
-    public async Task<ActionResult<TicketDto>> GetMyTickets([FromQuery] TicketQuery query) =>
-        Ok(await _ticketsService.GetCurrentUserTickets(query));
-
     [HttpGet("{id}")]
     public async Task<ActionResult<TicketDto>> GetById(int id) =>
         Ok(await _ticketsService.GetById(id));

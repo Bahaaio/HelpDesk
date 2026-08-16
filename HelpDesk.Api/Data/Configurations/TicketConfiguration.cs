@@ -26,5 +26,12 @@ public class TicketConfiguration : IEntityTypeConfiguration<Ticket>
         builder.HasOne(t => t.Author)
             .WithMany(a => a.CreatedTickets)
             .HasForeignKey(t => t.AuthorId);
+
+        builder.HasOne(t => t.AssignedTo)
+            .WithMany(u => u.AssignedTickets)
+            .HasForeignKey(t => t.AssignedToId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasIndex(t => t.AssignedToId);
     }
 }

@@ -29,7 +29,7 @@ public class TicketsService : ITicketsService
 
     public async Task<List<TicketDto>> GetAll(TicketQuery ticketQuery)
     {
-        var query = GetTicketQuery(ticketQuery);
+        var query = _db.Tickets.AsNoTracking().ApplyFilters(ticketQuery);
 
         return await query
             .Select(TicketMapper.ToDtoExpression)
@@ -38,7 +38,7 @@ public class TicketsService : ITicketsService
 
     public async Task<List<TicketDto>> GetCurrentUserTickets(TicketQuery ticketQuery)
     {
-        var query = GetTicketQuery(ticketQuery)
+        var query = _db.Tickets.AsNoTracking().ApplyFilters(ticketQuery)
             .Where(t => t.AuthorId == _user.Id);
 
         return await query
@@ -80,6 +80,7 @@ public class TicketsService : ITicketsService
         var ticket = await _db.Tickets
             .Where(t => t.Id == id)
             .Include(t => t.Author)
+            .Include(t => t.AssignedTo)
             .Include(t => t.Tags)
             .Include(t => t.Attachments)
             .Include(t => t.Votes)
@@ -125,35 +126,5 @@ public class TicketsService : ITicketsService
         await _db.SaveChangesAsync();
 
         _logger.LogInformation("User {userId} deleted ticket {ticketId}", _user.Id, id);
-    }
-
-    private IQueryable<Ticket> GetTicketQuery(TicketQuery ticketQuery)
-    {
-        var query = _db.Tickets.AsNoTracking();
-
-        if (ticketQuery.Status is not null)
-            query = query.Where(t => t.Status == ticketQuery.Status);
-
-        if (ticketQuery.Author is not null)
-            query = query.Where(t =>
-                EF.Functions.ILike(t.Author.UserName!, ticketQuery.Author)
-            );
-
-        if (ticketQuery.Tag is not null)
-            query = query.Where(t =>
-                t.Tags.Any(tag =>
-                    EF.Functions.ILike(tag.Name, ticketQuery.Tag))
-            );
-
-        if (ticketQuery.Query is not null)
-        {
-            var pattern = $"%{ticketQuery.Query}%";
-            query = query.Where(t =>
-                EF.Functions.ILike(t.Title, pattern) ||
-                (t.Description != null && EF.Functions.ILike(t.Description, pattern))
-            );
-        }
-
-        return query;
     }
 }

@@ -38,4 +38,19 @@ public class AttachmentService
         var resp = await Client.DeleteAsync($"/api/tickets/{ticketId}/attachments/{attachmentId}");
         resp.EnsureSuccessStatusCode();
     }
+
+    public async Task<string?> GetFileNameAsync(Guid attachmentId)
+    {
+        try
+        {
+            using var resp = await Client.GetAsync($"/api/attachments/{attachmentId}", HttpCompletionOption.ResponseHeadersRead);
+            var cd = resp.Content.Headers.ContentDisposition;
+            if (cd?.FileNameStar is { Length: > 0 } nameStar)
+                return nameStar;
+            if (cd?.FileName is { Length: > 0 } name)
+                return name.Trim('"');
+        }
+        catch { }
+        return null;
+    }
 }

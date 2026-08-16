@@ -138,8 +138,15 @@ else
                                      alt="Attachment"
                                      style="width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; display: block;"
                                      onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
-                                <div style="display: none; width: 100%; aspect-ratio: 1; align-items: center; justify-content: center; background: var(--mud-palette-surface); border-radius: 8px;">
+                                <div style="display: none; width: 100%; aspect-ratio: 1; align-items: center; justify-content: center; flex-direction: column; background: var(--mud-palette-surface); border-radius: 8px; padding: 8px;">
                                     <MudIcon Icon="@Icons.Material.Filled.InsertDriveFile" Size="Size.Large" Color="Color.Default" />
+                                    @if (_attachmentNames.TryGetValue(attachmentId, out var fileName))
+                                    {
+                                        <MudText Typo="Typo.caption" Align="Align.Center" Class="mt-1"
+                                                 Style="word-break: break-all; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                                            @fileName
+                                        </MudText>
+                                    }
                                 </div>
                             </MudLink>
                             @if (_canEdit)
@@ -336,6 +343,7 @@ else
 
     private Dictionary<int, TicketDto> _referencedTickets = new();
     private static readonly System.Text.RegularExpressions.Regex _ticketRefRegex = new(@"#(\d+)", System.Text.RegularExpressions.RegexOptions.Compiled);
+    private Dictionary<Guid, string> _attachmentNames = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -361,6 +369,7 @@ else
             }
 
             await LoadReferencedTickets();
+            await LoadAttachmentNames();
         }
         catch { }
 
@@ -541,6 +550,17 @@ else
                 }
                 catch { }
             }
+        }
+    }
+
+    private async Task LoadAttachmentNames()
+    {
+        if (_ticket is null) return;
+        foreach (var aid in _ticket.Attachments)
+        {
+            if (_attachmentNames.ContainsKey(aid)) continue;
+            var name = await AttachmentService.GetFileNameAsync(aid);
+            if (name is not null) _attachmentNames[aid] = name;
         }
     }
 

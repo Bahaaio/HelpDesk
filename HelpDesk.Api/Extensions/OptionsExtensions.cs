@@ -10,5 +10,10 @@ public static class OptionsExtensions
             .BindConfiguration(AttachmentOptions.Key)
             .ValidateDataAnnotations()
             .ValidateOnStart();
+
+        services.AddOptions<DefaultTechnicianOptions>()
+            .BindConfiguration(DefaultTechnicianOptions.Key)
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
     }
 }

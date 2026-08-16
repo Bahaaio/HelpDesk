@@ -84,6 +84,9 @@ public class TicketService
         if (!string.IsNullOrEmpty(query.Q))
             qs["Q"] = query.Q;
 
+        if (query.Sort != TicketSort.Latest)
+            qs["Sort"] = query.Sort.ToString();
+
         var str = qs.ToString();
         return string.IsNullOrEmpty(str) ? path : $"{path}?{str}";
     }

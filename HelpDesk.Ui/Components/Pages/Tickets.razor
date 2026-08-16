@@ -40,10 +40,10 @@
 
         <MudSelect T="string" @bind-Value="_sortBy" Label="Sort by" Style="width: 180px;"
                    SelectedValuesChanged="_ => LoadTickets()">
-            <MudSelectItem Value="@("newest")">Newest first</MudSelectItem>
-            <MudSelectItem Value="@("oldest")">Oldest first</MudSelectItem>
-            <MudSelectItem Value="@("score_desc")">Highest score</MudSelectItem>
-            <MudSelectItem Value="@("score_asc")">Lowest score</MudSelectItem>
+            <MudSelectItem Value="@("Latest")">Newest first</MudSelectItem>
+            <MudSelectItem Value="@("Oldest")">Oldest first</MudSelectItem>
+            <MudSelectItem Value="@("HighestScore")">Highest score</MudSelectItem>
+            <MudSelectItem Value="@("LowestScore")">Lowest score</MudSelectItem>
         </MudSelect>
     </MudStack>
 
@@ -107,7 +107,7 @@
     private string _searchText = "";
     private string _selectedStatus = "all";
     private string _selectedTag = "all";
-    private string _sortBy = "newest";
+    private string _sortBy = "Latest";
     private CancellationTokenSource? _searchCts;
 
     protected override async Task OnInitializedAsync()
@@ -147,18 +147,11 @@
                 Status: _selectedStatus != "all" ? Enum.Parse<Status>(_selectedStatus) : null,
                 Tag: _selectedTag != "all" ? _selectedTag : null,
                 Author: null,
-                Q: string.IsNullOrWhiteSpace(_searchText) ? null : _searchText
+                Q: string.IsNullOrWhiteSpace(_searchText) ? null : _searchText,
+                Sort: Enum.Parse<TicketSort>(_sortBy)
             );
 
-            var allTickets = await TicketService.GetAllAsync(query);
-
-            _tickets = _sortBy switch
-            {
-                "oldest" => allTickets.OrderBy(t => t.CreatedAt).ToList(),
-                "score_desc" => allTickets.OrderByDescending(t => t.VoteScore).ToList(),
-                "score_asc" => allTickets.OrderBy(t => t.VoteScore).ToList(),
-                _ => allTickets.OrderByDescending(t => t.CreatedAt).ToList()
-            };
+            _tickets = await TicketService.GetAllAsync(query);
         }
         catch { }
 

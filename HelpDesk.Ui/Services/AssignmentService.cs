@@ -49,8 +49,8 @@ public class AssignmentService
         if (!string.IsNullOrEmpty(query.Author))
             qs["Author"] = query.Author;
 
-        if (!string.IsNullOrEmpty(query.Query))
-            qs["Query"] = query.Query;
+        if (!string.IsNullOrEmpty(query.Q))
+            qs["Q"] = query.Q;
 
         var str = qs.ToString();
         return string.IsNullOrEmpty(str) ? path : $"{path}?{str}";

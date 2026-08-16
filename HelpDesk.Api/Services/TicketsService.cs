@@ -5,6 +5,7 @@ using HelpDesk.Api.Exceptions;
 using HelpDesk.Api.Extensions;
 using HelpDesk.Api.Mappers;
 using HelpDesk.Api.Models;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace HelpDesk.Api.Services;
@@ -27,7 +28,7 @@ public class TicketsService : ITicketsService
         _attachmentsService = attachmentsService;
     }
 
-    public async Task<List<TicketDto>> GetAll(TicketQuery ticketQuery)
+    public async Task<List<TicketDto>> GetAll([FromQuery] TicketQuery ticketQuery)
     {
         var query = _db.Tickets.AsNoTracking().ApplyFilters(ticketQuery);
 

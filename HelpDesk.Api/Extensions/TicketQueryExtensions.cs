@@ -24,9 +24,9 @@ public static class TicketQueryExtensions
                         EF.Functions.ILike(tag.Name, ticketQuery.Tag))
                 );
 
-            if (ticketQuery.Query is not null)
+            if (ticketQuery.Q is not null)
             {
-                var pattern = $"%{ticketQuery.Query}%";
+                var pattern = $"%{ticketQuery.Q}%";
                 query = query.Where(t =>
                     EF.Functions.ILike(t.Title, pattern) ||
                     (t.Description != null && EF.Functions.ILike(t.Description, pattern))

@@ -224,69 +224,101 @@ else
 
         <MudDivider Class="mb-4" />
 
-        <MudText Typo="Typo.h6" Class="mb-2">Comments (@_comments.Count)</MudText>
+        <MudText Typo="Typo.h6" Class="mb-2">Activity</MudText>
 
-        @if (_comments.Count == 0)
+        @if (_timeline.Count == 0)
         {
             <MudPaper Class="pa-4 mb-4 text-center">
-                <MudText Typo="Typo.body2" Color="Color.Default">No comments yet</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Default">No activity yet</MudText>
             </MudPaper>
         }
         else
         {
-            @foreach (var comment in _comments)
+            @foreach (var item in _timeline)
             {
-                <MudPaper Class="pa-3 mb-2">
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-1">
-                        <MudAvatar Size="Size.Small" Color="Color.Primary">
-                            @comment.AuthorUsername[..1].ToUpper()
-                        </MudAvatar>
-                        <MudText Typo="Typo.subtitle2">@comment.AuthorUsername</MudText>
+                @if (item.Type == TimelineItemType.StatusChange && item.StatusChange is not null)
+                {
+                    var sc = item.StatusChange;
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2 ml-4"
+                              Style="opacity: 0.7;">
+                        <MudIcon Icon="@Icons.Material.Filled.SwapHoriz" Size="Size.Small" Color="Color.Default" />
+                        <MudText Typo="Typo.body2">
+                            <strong>@sc.ChangedByUsername</strong> changed status from
+                            <MudChip T="string" Size="Size.Small"
+                                     Color="@(sc.FromStatus == Status.Open ? Color.Success : Color.Default)"
+                                     Variant="Variant.Outlined"
+                                     Style="height: 18px; font-size: 0.7rem; pointer-events: none;">
+                                @(sc.FromStatus == Status.Open ? "Open" : "Closed")
+                            </MudChip>
+                            to
+                            <MudChip T="string" Size="Size.Small"
+                                     Color="@(sc.ToStatus == Status.Open ? Color.Success : Color.Default)"
+                                     Variant="Variant.Outlined"
+                                     Style="height: 18px; font-size: 0.7rem; pointer-events: none;">
+                                @(sc.ToStatus == Status.Open ? "Open" : "Closed")
+                            </MudChip>
+                        </MudText>
                         <MudSpacer />
                         <MudText Typo="Typo.caption" Color="Color.Default">
-                            @comment.CreatedAt.ToString("MMM dd, yyyy HH:mm")
+                            @sc.ChangedAt.ToString("MMM dd, yyyy HH:mm")
                         </MudText>
-                        @if (AuthState.Username == comment.AuthorUsername || AuthState.Role == "Technician")
-                        {
-                            <MudTooltip Text="Delete">
-                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                               Color="Color.Error"
-                                               OnClick="() => DeleteComment(comment.Id)" />
-                            </MudTooltip>
-                        }
                     </MudStack>
-                    <div Class="ml-8" style="line-height: 1.6;">
-                        @foreach (var seg in ParseComment(comment.Content))
-                        {
-                            @if (seg.IsReference && _referencedTickets.TryGetValue(seg.TicketId, out var refTicket))
+                }
+                else if (item.Type == TimelineItemType.Comment && item.Comment is not null)
+                {
+                    var comment = item.Comment;
+                    <MudPaper Class="pa-3 mb-2">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-1">
+                            <MudAvatar Size="Size.Small" Color="Color.Primary">
+                                @comment.AuthorUsername[..1].ToUpper()
+                            </MudAvatar>
+                            <MudText Typo="Typo.subtitle2">@comment.AuthorUsername</MudText>
+                            <MudSpacer />
+                            <MudText Typo="Typo.caption" Color="Color.Default">
+                                @comment.CreatedAt.ToString("MMM dd, yyyy HH:mm")
+                            </MudText>
+                            @if (AuthState.Username == comment.AuthorUsername || AuthState.Role == "Technician")
                             {
-                                <MudLink Href="@($"/tickets/{seg.TicketId}")" Target="_blank"
-                                         Style="vertical-align: middle; text-decoration: none;">
-                                    <MudChip T="string" Size="Size.Small"
-                                             Color="@(refTicket.Status == Status.Open ? Color.Success : Color.Default)"
-                                             Variant="Variant.Outlined"
-                                             Style="height: 20px; font-size: 0.7rem; vertical-align: middle; pointer-events: none;">
-                                        @(refTicket.Status == Status.Open ? "Open" : "Closed")
-                                    </MudChip>
-                                    <span style="font-size: 0.875rem; text-decoration: underline;">
-                                        #@seg.TicketId
-                                    </span>
-                                    <span style="font-size: 0.875rem;">
-                                        @(refTicket.Title.Length > 30 ? refTicket.Title[..30] + "..." : refTicket.Title)
-                                    </span>
-                                </MudLink>
+                                <MudTooltip Text="Delete">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                   Color="Color.Error"
+                                                   OnClick="() => DeleteComment(comment.Id)" />
+                                </MudTooltip>
                             }
-                            else if (seg.IsReference)
+                        </MudStack>
+                        <div Class="ml-8" style="line-height: 1.6;">
+                            @foreach (var seg in ParseComment(comment.Content))
                             {
-                                <span style="font-size: 0.875rem;"><strong>@seg.Text</strong></span>
+                                @if (seg.IsReference && _referencedTickets.TryGetValue(seg.TicketId, out var refTicket))
+                                {
+                                    <MudLink Href="@($"/tickets/{seg.TicketId}")" Target="_blank"
+                                             Style="vertical-align: middle; text-decoration: none;">
+                                        <MudChip T="string" Size="Size.Small"
+                                                 Color="@(refTicket.Status == Status.Open ? Color.Success : Color.Default)"
+                                                 Variant="Variant.Outlined"
+                                                 Style="height: 20px; font-size: 0.7rem; vertical-align: middle; pointer-events: none;">
+                                            @(refTicket.Status == Status.Open ? "Open" : "Closed")
+                                        </MudChip>
+                                        <span style="font-size: 0.875rem; text-decoration: underline;">
+                                            #@seg.TicketId
+                                        </span>
+                                        <span style="font-size: 0.875rem;">
+                                            @(refTicket.Title.Length > 30 ? refTicket.Title[..30] + "..." : refTicket.Title)
+                                        </span>
+                                    </MudLink>
+                                }
+                                else if (seg.IsReference)
+                                {
+                                    <span style="font-size: 0.875rem;"><strong>@seg.Text</strong></span>
+                                }
+                                else
+                                {
+                                    <span style="font-size: 0.875rem;">@seg.Text</span>
+                                }
                             }
-                            else
-                            {
-                                <span style="font-size: 0.875rem;">@seg.Text</span>
-                            }
-                        }
-                    </div>
-                </MudPaper>
+                        </div>
+                    </MudPaper>
+                }
             }
         }
 
@@ -364,6 +396,8 @@ else
 
     private TicketDto? _ticket;
     private List<CommentDto> _comments = new();
+    private List<StatusChangeDto> _statusChanges = new();
+    private List<TimelineItem> _timeline = new();
     private VoteValue? _currentVote;
     private bool _loading = true;
     private string _newComment = "";
@@ -397,6 +431,12 @@ else
 
             try
             {
+                _statusChanges = await TicketService.GetStatusHistoryAsync(Id);
+            }
+            catch { }
+
+            try
+            {
                 _currentVote = await VoteService.GetMyVoteAsync(Id);
             }
             catch { }
@@ -415,6 +455,7 @@ else
 
             await LoadReferencedTickets();
             await LoadAttachmentNames();
+            BuildTimeline();
         }
         catch { }
 
@@ -673,6 +714,19 @@ else
     }
 
     private record CommentSegment(bool IsReference, string Text, int TicketId);
+
+    private void BuildTimeline()
+    {
+        _timeline = new List<TimelineItem>();
+        foreach (var c in _comments)
+            _timeline.Add(new TimelineItem(c.CreatedAt, TimelineItemType.Comment, Comment: c));
+        foreach (var s in _statusChanges)
+            _timeline.Add(new TimelineItem(s.ChangedAt, TimelineItemType.StatusChange, StatusChange: s));
+        _timeline.Sort((a, b) => a.Timestamp.CompareTo(b.Timestamp));
+    }
+
+    private record TimelineItem(DateTime Timestamp, TimelineItemType Type, CommentDto? Comment = null, StatusChangeDto? StatusChange = null);
+    private enum TimelineItemType { Comment, StatusChange }
 
     private async Task DeleteTicketAsync()
     {

@@ -61,6 +61,11 @@ public class TicketService
         resp.EnsureSuccessStatusCode();
     }
 
+    public async Task<List<StatusChangeDto>> GetStatusHistoryAsync(int id)
+    {
+        return await Client.GetFromJsonAsync<List<StatusChangeDto>>($"/api/tickets/{id}/status-history") ?? new();
+    }
+
     private static string BuildUrl(string path, TicketQuery? query)
     {
         if (query is null) return path;

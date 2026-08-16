@@ -111,7 +111,8 @@ else
             <MudSpacer />
             @if (_canEdit)
             {
-                <MudFileUpload T="IBrowserFile" FilesChanged="UploadAttachment" Accept="image/jpeg">
+                <MudFileUpload T="IBrowserFile" FilesChanged="UploadAttachment"
+                               Accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.txt,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx">
                     <ActivatorContent>
                         <MudButton Variant="Variant.Outlined" Size="Size.Small"
                                    StartIcon="@Icons.Material.Filled.AttachFile">
@@ -129,9 +130,15 @@ else
                 {
                     <MudItem xs="6" sm="4" md="3">
                         <MudPaper Class="pa-1 relative">
-                            <MudImage Src="@AttachmentService.GetImageUrl(attachmentId)"
-                                      Fluid="true" Class="rounded-lg"
-                                      Style="aspect-ratio: 1; object-fit: cover;" />
+                            <MudLink Href="@AttachmentService.GetImageUrl(attachmentId)" Target="_blank">
+                                <img src="@AttachmentService.GetImageUrl(attachmentId)"
+                                     alt="Attachment"
+                                     style="width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; display: block;"
+                                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+                                <div style="display: none; width: 100%; aspect-ratio: 1; align-items: center; justify-content: center; background: var(--mud-palette-surface); border-radius: 8px;">
+                                    <MudIcon Icon="@Icons.Material.Filled.InsertDriveFile" Size="Size.Large" Color="Color.Default" />
+                                </div>
+                            </MudLink>
                             @if (_canEdit)
                             {
                                 <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"

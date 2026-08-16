@@ -24,7 +24,8 @@ public class AttachmentService
         using var content = new MultipartFormDataContent();
         using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
         using var fileContent = new StreamContent(stream);
-        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
+        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(
+            file.ContentType ?? "application/octet-stream");
         content.Add(fileContent, "file", file.Name);
 
         var resp = await Client.PostAsync($"/api/tickets/{ticketId}/attachments", content);

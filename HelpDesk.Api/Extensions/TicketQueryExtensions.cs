@@ -48,6 +48,8 @@ public static class TicketQueryExtensions
                 _ => throw new BadRequestException("Invalid sort parameter")
             };
 
+            query = query.AsSplitQuery();
+
             return query;
         }
     }

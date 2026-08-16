@@ -85,6 +85,7 @@ public class TicketsService : ITicketsService
             .Include(t => t.Tags)
             .Include(t => t.Attachments)
             .Include(t => t.Votes)
+            .AsSplitQuery()
             .SingleOrDefaultAsync();
 
         if (ticket is null)

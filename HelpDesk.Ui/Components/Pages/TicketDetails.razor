@@ -28,7 +28,10 @@ else
     <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-2">
         <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
             <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Href="/tickets" />
-            <MudText Typo="Typo.h4">@_ticket.Title</MudText>
+            <MudText Typo="Typo.h4">
+                <span style="opacity: 0.5; font-weight: 400;">#@_ticket.Id</span>
+                @_ticket.Title
+            </MudText>
             <MudSpacer />
             @if (_canEdit)
             {
@@ -217,8 +220,11 @@ else
                                              Style="height: 20px; font-size: 0.7rem; vertical-align: middle; pointer-events: none;">
                                         @(refTicket.Status == Status.Open ? "Open" : "Closed")
                                     </MudChip>
+                                    <span style="font-size: 0.875rem; text-decoration: underline;">
+                                        #@seg.TicketId
+                                    </span>
                                     <span style="font-size: 0.875rem;">
-                                        #@seg.TicketId @(refTicket.Title.Length > 30 ? refTicket.Title[..30] + "..." : refTicket.Title)
+                                        @(refTicket.Title.Length > 30 ? refTicket.Title[..30] + "..." : refTicket.Title)
                                     </span>
                                 </MudLink>
                             }

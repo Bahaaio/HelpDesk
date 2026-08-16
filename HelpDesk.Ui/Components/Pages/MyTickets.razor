@@ -60,7 +60,9 @@
             </HeaderContent>
             <RowTemplate>
                 <MudTd DataLabel="Title">
-                    <MudLink Href="@($"/tickets/{context.Id}")">@context.Title</MudLink>
+                    <MudLink Href="@($"/tickets/{context.Id}")">
+                        <span style="opacity: 0.5;">#@context.Id</span> @context.Title
+                    </MudLink>
                 </MudTd>
                 <MudTd DataLabel="Status">
                     @if (context.Status == Status.Open)

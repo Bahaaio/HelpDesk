@@ -99,32 +99,6 @@ public class TicketsService : ITicketsService
         return ticket.ToDto();
     }
 
-    public async Task UpdateStatus(int id, UpdateTicketStatusRequest request)
-    {
-        var ticket = await _db.Tickets.FindOrThrowAsync(id);
-
-        await _authGuard.AuthorizeOwnerOrTechnician(ticket);
-
-        if (ticket.Status == request.Status)
-            return;
-
-        var statusChange = new TicketStatusChange
-        {
-            TicketId = id,
-            FromStatus = ticket.Status,
-            ToStatus = request.Status,
-            ChangedByUserId = _user.Id
-        };
-
-        ticket.Status = request.Status;
-        _db.TicketStatusChanges.Add(statusChange);
-
-        await _db.SaveChangesAsync();
-
-        _logger.LogInformation("User {userId} updated ticket {ticketId} status from {from} to {to}",
-            _user.Id, ticket.Id, statusChange.FromStatus, statusChange.ToStatus);
-    }
-
     public async Task Delete(int id)
     {
         var ticket = await _db.Tickets.FindOrThrowAsync(id);

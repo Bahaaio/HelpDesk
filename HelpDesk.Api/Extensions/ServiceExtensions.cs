@@ -20,7 +20,7 @@ public static class ServiceExtensions
             services.AddScoped<ITicketsService, TicketsService>();
             services.AddScoped<ITicketTagsService, TicketTagsService>();
             services.AddScoped<ITicketAssignmentsService, TicketAssignmentsService>();
-            services.AddScoped<ITicketStatusHistoryService, TicketStatusHistoryService>();
+            services.AddScoped<ITicketStatusService, TicketStatusService>();
             services.AddScoped<ICommentsService, CommentsService>();
             services.AddScoped<ITagsService, TagsService>();
             services.AddScoped<IVotesService, VotesService>();

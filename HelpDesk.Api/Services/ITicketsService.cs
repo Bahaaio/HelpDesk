@@ -42,13 +42,6 @@ public interface ITicketsService
     Task<TicketDto> Update(int id, UpdateTicketRequest request);
 
     /// <summary>
-    ///     Updates the status of a ticket. Only the ticket author or a technician may change status.
-    /// </summary>
-    /// <param name="id">The ticket ID.</param>
-    /// <param name="request">The new status value.</param>
-    Task UpdateStatus(int id, UpdateTicketStatusRequest request);
-
-    /// <summary>
     ///     Deletes a ticket and its attachments from storage. Only the ticket author or a technician may delete.
     /// </summary>
     /// <param name="id">The ticket ID.</param>

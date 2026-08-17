@@ -4,16 +4,20 @@ namespace HelpDesk.Api.Extensions;
 
 public static class OptionsExtensions
 {
-    public static void AddOptionsServices(this IServiceCollection services)
+    extension(IServiceCollection services)
     {
-        services.AddOptions<AttachmentOptions>()
-            .BindConfiguration(AttachmentOptions.Key)
-            .ValidateDataAnnotations()
-            .ValidateOnStart();
+        public void AddOptionsServices()
+        {
+            services.AddKeyableOptions<DefaultTechnicianOptions>();
+            services.AddKeyableOptions<TicketAttachmentOptions>();
+        }
 
-        services.AddOptions<DefaultTechnicianOptions>()
-            .BindConfiguration(DefaultTechnicianOptions.Key)
-            .ValidateDataAnnotations()
-            .ValidateOnStart();
+        private void AddKeyableOptions<T>() where T : class, IKeyableOptions
+        {
+            services.AddOptions<T>()
+                .BindConfiguration(T.Key)
+                .ValidateDataAnnotations()
+                .ValidateOnStart();
+        }
     }
 }

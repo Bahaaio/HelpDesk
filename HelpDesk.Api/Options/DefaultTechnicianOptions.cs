@@ -2,19 +2,28 @@ using System.ComponentModel.DataAnnotations;
 
 namespace HelpDesk.Api.Options;
 
-public class DefaultTechnicianOptions
+public class DefaultTechnicianOptions : IKeyableOptions
 {
-    public const string Key = "DefaultTechnician";
-
+    /// <summary>
+    ///     Default technician username.
+    /// </summary>
     [Required]
     [MinLength(3)]
-    public string Username { get; set; } = default!;
+    public string Username { get; set; } = string.Empty;
 
+    /// <summary>
+    ///     Default technician email.
+    /// </summary>
     [Required]
     [EmailAddress]
-    public string Email { get; set; } = default!;
+    public string Email { get; set; } = string.Empty;
 
+    /// <summary>
+    ///     Default technician password.
+    /// </summary>
     [Required]
     [MinLength(8)]
-    public string Password { get; set; } = default!;
+    public string Password { get; set; } = string.Empty;
+
+    public static string Key => "DefaultTechnician";
 }

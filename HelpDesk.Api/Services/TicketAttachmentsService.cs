@@ -2,6 +2,8 @@ using HelpDesk.Api.Data;
 using HelpDesk.Api.Dtos.Responses;
 using HelpDesk.Api.Extensions;
 using HelpDesk.Api.Models;
+using HelpDesk.Api.Options;
+using Microsoft.Extensions.Options;
 
 namespace HelpDesk.Api.Services;
 
@@ -13,12 +15,15 @@ public class TicketAttachmentsService : AttachmentsService<TicketAttachment>
     public TicketAttachmentsService(IStorageService storageService, AppDbContext db,
         ICurrentUser user, ILogger<TicketAttachmentsService> logger,
         IAttachmentValidationService attachmentValidationService,
-        IAuthorizationGuard authGuard) :
+        IAuthorizationGuard authGuard, IOptions<TicketAttachmentOptions> attachmentOptions) :
         base(storageService, db, user, logger, attachmentValidationService)
     {
         _db = db;
         _authGuard = authGuard;
+        AttachmentOptions = attachmentOptions.Value;
     }
+
+    protected override AttachmentOptions AttachmentOptions { get; }
 
     public override async Task<AttachmentDto> Add(int ticketId, IFormFile file)
     {

@@ -3,6 +3,7 @@ using HelpDesk.Api.Dtos.Responses;
 using HelpDesk.Api.Exceptions;
 using HelpDesk.Api.Extensions;
 using HelpDesk.Api.Models;
+using HelpDesk.Api.Options;
 using Microsoft.EntityFrameworkCore;
 
 namespace HelpDesk.Api.Services;
@@ -14,17 +15,18 @@ namespace HelpDesk.Api.Services;
 ///     This class does not implement any authorization logic.
 ///     You must implement authorization logic in the derived classes.
 /// </remarks>
-/// <typeparam name="T">The type of resource to attach to.</typeparam>
-public abstract class AttachmentsService<T> : IAttachmentsService where T : Attachment
+/// <typeparam name="TResource">The type of resource to attach to.</typeparam>
+public abstract class AttachmentsService<TResource> : IAttachmentsService
+    where TResource : Attachment
 {
     private readonly IAttachmentValidationService _attachmentValidationService;
     private readonly AppDbContext _db;
-    private readonly ILogger<AttachmentsService<T>> _logger;
+    private readonly ILogger<AttachmentsService<TResource>> _logger;
     private readonly IStorageService _storageService;
     private readonly ICurrentUser _user;
 
-    public AttachmentsService(IStorageService storageService, AppDbContext db, ICurrentUser user,
-        ILogger<AttachmentsService<T>> logger,
+    protected AttachmentsService(IStorageService storageService, AppDbContext db, ICurrentUser user,
+        ILogger<AttachmentsService<TResource>> logger,
         IAttachmentValidationService attachmentValidationService)
     {
         _storageService = storageService;
@@ -33,6 +35,8 @@ public abstract class AttachmentsService<T> : IAttachmentsService where T : Atta
         _attachmentValidationService = attachmentValidationService;
         _user = user;
     }
+
+    protected abstract AttachmentOptions AttachmentOptions { get; }
 
     public virtual async Task<AttachmentResult> Get(Guid attachmentId)
     {
@@ -51,10 +55,10 @@ public abstract class AttachmentsService<T> : IAttachmentsService where T : Atta
 
     public virtual async Task<AttachmentDto> Add(int resourceId, IFormFile file)
     {
-        _attachmentValidationService.Validate(file);
+        _attachmentValidationService.Validate(file, AttachmentOptions);
 
         var count = await _db.Attachments.CountAsync(a => a.ResourceId == resourceId);
-        _attachmentValidationService.ValidateCount(count + 1);
+        _attachmentValidationService.ValidateCount(count + 1, AttachmentOptions.MaxCount);
 
         var guid = Guid.NewGuid();
         await _storageService.Store(file, guid.ToString());

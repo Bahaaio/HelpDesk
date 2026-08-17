@@ -5,9 +5,12 @@ namespace HelpDesk.Api.Options;
 /// <summary>
 ///     Options for configuring attachment validation and storage.
 /// </summary>
-public class AttachmentOptions
+public abstract class AttachmentOptions
 {
-    public const string Key = "Attachments";
+    /// <summary>
+    ///     Base key for all attachment options.
+    /// </summary>
+    protected const string BaseKey = "Attachments";
 
     /// <summary>
     ///     The maximum allowed file size for attachments in bytes.

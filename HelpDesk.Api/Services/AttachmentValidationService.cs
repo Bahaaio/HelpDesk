@@ -1,46 +1,36 @@
 using HelpDesk.Api.Exceptions;
 using HelpDesk.Api.Options;
-using Microsoft.Extensions.Options;
 
 namespace HelpDesk.Api.Services;
 
 public class AttachmentValidationService : IAttachmentValidationService
 {
-    private readonly AttachmentOptions _attachmentOptions;
-
-    public AttachmentValidationService(IOptions<AttachmentOptions> attachmentOptions)
+    public void Validate(IFormFile file, AttachmentOptions options)
     {
-        _attachmentOptions = attachmentOptions.Value;
+        ValidateSize(file, options);
+        ValidateExtension(file, options);
     }
 
-    public void Validate(IFormFile file)
+    public void ValidateCount(int count, int maxCount)
     {
-        ValidateSize(file);
-        ValidateExtension(file);
+        if (count > maxCount)
+            throw new BadRequestException($"Maximum number of attachments exceeded ({maxCount})");
     }
 
-    public void ValidateCount(int count)
-    {
-        if (count > _attachmentOptions.MaxCount)
-            throw new BadRequestException(
-                $"Maximum number of attachments exceeded ({_attachmentOptions.MaxCount})");
-    }
-
-    private void ValidateExtension(IFormFile file)
+    private void ValidateExtension(IFormFile file, AttachmentOptions options)
     {
         var extension = Path.GetExtension(file.FileName);
 
-        if (!_attachmentOptions.AllowedExtensions.Contains(extension))
+        if (!options.AllowedExtensions.Contains(extension))
             throw new BadRequestException("File extension is not allowed");
     }
 
-    private void ValidateSize(IFormFile file)
+    private void ValidateSize(IFormFile file, AttachmentOptions options)
     {
         if (file.Length == 0)
             throw new BadRequestException("File cannot be empty");
 
-        if (file.Length > _attachmentOptions.MaxSizeBytes)
-            throw new BadRequestException(
-                $"File cannot exceed {_attachmentOptions.MaxSizeBytes} bytes");
+        if (file.Length > options.MaxSizeBytes)
+            throw new BadRequestException($"File cannot exceed {options.MaxSizeBytes} bytes");
     }
 }

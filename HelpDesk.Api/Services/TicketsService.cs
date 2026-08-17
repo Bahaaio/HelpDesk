@@ -106,7 +106,7 @@ public class TicketsService : ITicketsService
 
         await _authGuard.AuthorizeOwnerOrTechnician(ticket);
 
-        await _attachmentsService.DeleteAttachmentsForTicket(id);
+        await _attachmentsService.DeleteAll(id);
 
         _db.Remove(ticket);
         await _db.SaveChangesAsync();

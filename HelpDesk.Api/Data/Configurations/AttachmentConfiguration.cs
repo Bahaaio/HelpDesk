@@ -20,13 +20,10 @@ public class AttachmentConfiguration : IEntityTypeConfiguration<Attachment>
             .IsRequired()
             .HasMaxLength(255);
 
-        builder.HasOne(a => a.Ticket)
-            .WithMany(t => t.Attachments)
-            .HasForeignKey(a => a.TicketId)
-            .OnDelete(DeleteBehavior.Cascade);
-
         builder.HasOne(a => a.Uploader)
             .WithMany()
             .HasForeignKey(a => a.UploaderId);
+
+        builder.UseTphMappingStrategy();
     }
 }

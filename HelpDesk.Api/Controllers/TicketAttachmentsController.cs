@@ -16,12 +16,12 @@ public class TicketAttachmentsController : ControllerBase
 
     [HttpPost]
     public async Task<ActionResult> Attach(int ticketId, IFormFile file) =>
-        Ok(await _attachmentsService.AddAttachment(ticketId, file));
+        Ok(await _attachmentsService.Add(ticketId, file));
 
     [HttpDelete("{AttachmentId:guid}")]
     public async Task<ActionResult> Delete(int ticketId, Guid attachmentId)
     {
-        await _attachmentsService.DeleteAttachment(attachmentId);
+        await _attachmentsService.Delete(attachmentId);
         return NoContent();
     }
 }

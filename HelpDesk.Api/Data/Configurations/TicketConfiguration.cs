@@ -32,6 +32,10 @@ public class TicketConfiguration : IEntityTypeConfiguration<Ticket>
             .HasForeignKey(t => t.AssignedToId)
             .OnDelete(DeleteBehavior.SetNull);
 
+        builder.HasMany(t => t.Attachments)
+            .WithOne()
+            .HasForeignKey(t => t.TicketId);
+
         builder.HasIndex(t => t.AssignedToId);
     }
 }

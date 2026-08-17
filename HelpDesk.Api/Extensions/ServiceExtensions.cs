@@ -21,13 +21,13 @@ public static class ServiceExtensions
             services.AddScoped<ITicketTagsService, TicketTagsService>();
             services.AddScoped<ITicketAssignmentsService, TicketAssignmentsService>();
             services.AddScoped<ITicketStatusService, TicketStatusService>();
+            services.AddScoped<IAttachmentsService, TicketAttachmentsService>();
+            services.AddScoped<IAttachmentValidationService, AttachmentValidationService>();
             services.AddScoped<ICommentsService, CommentsService>();
             services.AddScoped<ITagsService, TagsService>();
             services.AddScoped<IVotesService, VotesService>();
             services.AddScoped<IUsersService, UsersService>();
             services.AddScoped<IStorageService, LocalStorageService>();
-            services.AddScoped<IAttachmentsService, AttachmentsService>();
-            services.AddScoped<IAttachmentValidationService, AttachmentValidationService>();
             services.AddScoped<ICurrentUser, CurrentUser>();
             services.AddScoped<IAuthorizationGuard, AuthorizationGuard>();
             services.AddSingleton<ITokensService, TokensService>();

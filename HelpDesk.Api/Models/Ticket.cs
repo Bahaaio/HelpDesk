@@ -17,7 +17,7 @@ public class Ticket : IOwnedByUser
     public int? AssignedToId { get; set; }
     public ApplicationUser? AssignedTo { get; set; }
 
-    public ICollection<Attachment> Attachments { get; set; } = [];
+    public ICollection<TicketAttachment> Attachments { get; set; } = [];
     public ICollection<Comment> Comments { get; set; } = [];
     public ICollection<Vote> Votes { get; set; } = [];
     public ICollection<Tag> Tags { get; set; } = [];

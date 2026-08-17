@@ -3,6 +3,7 @@ using System;
 using HelpDesk.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace HelpDesk.Api.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260817200506_AddAttachmentJoinTable")]
+    partial class AddAttachmentJoinTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -243,8 +246,7 @@ namespace HelpDesk.Api.Data.Migrations
             modelBuilder.Entity("HelpDesk.Api.Models.TicketAttachment", b =>
                 {
                     b.Property<int>("OwnerId")
-                        .HasColumnType("integer")
-                        .HasColumnName("TicketId");
+                        .HasColumnType("integer");
 
                     b.Property<Guid>("AttachmentId")
                         .HasColumnType("uuid");

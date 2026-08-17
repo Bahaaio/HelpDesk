@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 
 namespace HelpDesk.Api.Services;
 
-public class TicketAttachmentsService : AttachmentsService<TicketAttachment>
+public class TicketAttachmentsService : AttachmentsService<Ticket, TicketAttachment>
 {
     private readonly IAuthorizationGuard _authGuard;
     private readonly AppDbContext _db;
@@ -25,29 +25,20 @@ public class TicketAttachmentsService : AttachmentsService<TicketAttachment>
 
     protected override AttachmentOptions AttachmentOptions { get; }
 
-    public override async Task<AttachmentDto> Add(int ticketId, IFormFile file)
+    public override async Task<AttachmentDto> Add(int ownerId, IFormFile file)
     {
-        var ticket = await _db.Tickets.FindOrThrowAsync(ticketId);
+        var ticket = await _db.Tickets.FindOrThrowAsync(ownerId);
         await _authGuard.AuthorizeOwnerOrTechnician(ticket);
 
-        return await base.Add(ticketId, file);
+        return await base.Add(ownerId, file);
     }
 
     public override async Task Delete(Guid attachmentId)
     {
         var attachment = await _db.Attachments.FindOrThrowAsync(attachmentId);
-        var ticket = await _db.Tickets.FindOrThrowAsync(attachment.ResourceId);
+        var ticket = await _db.Tickets.FindOrThrowAsync(attachment.OwnerId);
         await _authGuard.AuthorizeOwnerOrTechnician(ticket);
 
         await base.Delete(attachmentId);
     }
-
-    protected override Attachment CreateAttachment(int resourceId, IFormFile file, int uploaderId)
-        => new TicketAttachment
-        {
-            TicketId = resourceId,
-            ContentType = file.ContentType,
-            OriginalFileName = file.FileName,
-            UploaderId = uploaderId
-        };
 }

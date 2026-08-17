@@ -17,9 +17,9 @@ public interface IAttachmentsService
     /// <summary>
     ///     Uploads a file attachment to a resource.
     /// </summary>
-    /// <param name="resourceId">The ID of the resource to attach the file to.</param>
+    /// <param name="ownerId">The ID of the resource to attach the file to.</param>
     /// <param name="file">The file to upload.</param>
-    Task<AttachmentDto> Add(int resourceId, IFormFile file);
+    Task<AttachmentDto> Add(int ownerId, IFormFile file);
 
     /// <summary>
     ///     Deletes an attachment.
@@ -30,6 +30,6 @@ public interface IAttachmentsService
     /// <summary>
     ///     Deletes all attachments for a resource, including files from storage.
     /// </summary>
-    /// <param name="resourceId">The ID of the resource to delete attachments for.</param>
-    Task DeleteAll(int resourceId);
+    /// <param name="ownerId">The ID of the resource to delete attachments for.</param>
+    Task DeleteAll(int ownerId);
 }

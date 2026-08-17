@@ -18,7 +18,7 @@ public static class TicketMapper
         AuthorUsername = t.Author.UserName!,
         AssignedToUsername = t.AssignedTo != null ? t.AssignedTo.UserName! : null,
         Tags = t.Tags.Select(tag => tag.Name).ToList(),
-        Attachments = t.Attachments.Select(a => a.Id).ToList(),
+        Attachments = t.Attachments.Select(aj => aj.AttachmentId).ToList(),
         VoteScore = t.Votes.Sum(v => (int)v.Value)
     };
 

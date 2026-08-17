@@ -9,6 +9,7 @@
 @inject AuthState AuthState
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
+@inject ILogger<TicketDetails> Logger
 
 <PageTitle>Ticket #@Id - HelpDesk</PageTitle>
 
@@ -433,13 +434,20 @@ else
             {
                 _statusChanges = await TicketService.GetStatusHistoryAsync(Id);
             }
-            catch { }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load ticket {TicketId}", Id);
+            Snackbar.Add($"Failed to load ticket: {ex.Message}", Severity.Error);
+        }
 
             try
             {
                 _currentVote = await VoteService.GetMyVoteAsync(Id);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Failed to load vote for ticket {TicketId}", Id);
+            }
 
             _canUpdateStatus = AuthState.IsAuthenticated
                 && (AuthState.Role == "Technician" || AuthState.Username == _ticket?.AuthorUsername);
@@ -455,10 +463,13 @@ else
 
             await LoadReferencedTickets();
             await LoadAttachmentNames();
-            BuildTimeline();
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load ticket {TicketId}", Id);
+        }
 
+        BuildTimeline();
         _loading = false;
     }
 

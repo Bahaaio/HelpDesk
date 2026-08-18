@@ -53,4 +53,32 @@ public class AttachmentService
         catch { }
         return null;
     }
+
+    public async Task<(string? ContentType, string? FileName, string? TextContent)> GetPreviewDataAsync(Guid attachmentId)
+    {
+        try
+        {
+            using var resp = await Client.GetAsync($"/api/attachments/{attachmentId}");
+            resp.EnsureSuccessStatusCode();
+
+            var contentType = resp.Content.Headers.ContentType?.MediaType;
+            var cd = resp.Content.Headers.ContentDisposition;
+            string? fileName = cd?.FileNameStar is { Length: > 0 } ns ? ns
+                : cd?.FileName is { Length: > 0 } n ? n.Trim('"')
+                : null;
+
+            var textTypes = new[] { "text/", "application/json", "application/xml", "application/csv" };
+            var isText = contentType is not null && textTypes.Any(t => contentType.StartsWith(t, StringComparison.OrdinalIgnoreCase));
+
+            if (isText)
+            {
+                var text = await resp.Content.ReadAsStringAsync();
+                return (contentType, fileName, text);
+            }
+
+            return (contentType, fileName, null);
+        }
+        catch { }
+        return (null, null, null);
+    }
 }

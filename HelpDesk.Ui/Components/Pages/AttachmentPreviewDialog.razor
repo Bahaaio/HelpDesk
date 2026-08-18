@@ -1,0 +1,63 @@
+@inject AttachmentService AttachmentService
+
+<MudDialog>
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center">
+            <MudText Typo="Typo.h6">@(_fileName ?? "Preview")</MudText>
+            <MudSpacer />
+            <MudTooltip Text="Download">
+                <MudIconButton Icon="@Icons.Material.Filled.Download" Href="@AttachmentService.GetImageUrl(AttachmentId)"
+                               Target="_blank" Size="Size.Small" Color="Color.Inherit" />
+            </MudTooltip>
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        @if (_loading)
+        {
+            <MudProgressCircular Indeterminate="true" Class="d-flex justify-center ma-4" />
+        }
+        else if (_isImage)
+        {
+            <img src="@AttachmentService.GetImageUrl(AttachmentId)"
+                 alt="@_fileName"
+                 style="max-width: 100%; max-height: 70vh; border-radius: 8px; display: block; margin: 0 auto;" />
+        }
+        else if (_textContent is not null)
+        {
+            <pre style="max-height: 70vh; overflow: auto; white-space: pre-wrap; word-break: break-word; font-size: 0.85rem; background: var(--mud-palette-surface); padding: 16px; border-radius: 8px;">@_textContent</pre>
+        }
+        else
+        {
+            <MudStack AlignItems="AlignItems.Center" Class="pa-4">
+                <MudIcon Icon="@Icons.Material.Filled.InsertDriveFile" Size="Size.Large" Color="Color.Default" />
+                <MudText Typo="Typo.body2" Color="Color.Default">Preview not available for this file type</MudText>
+            </MudStack>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Close">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public Guid AttachmentId { get; set; }
+
+    private string? _fileName;
+    private string? _textContent;
+    private bool _isImage;
+    private bool _loading = true;
+
+    private static readonly string[] ImageTypes = { "image/jpeg", "image/png", "image/gif", "image/webp" };
+
+    protected override async Task OnInitializedAsync()
+    {
+        var (contentType, fileName, textContent) = await AttachmentService.GetPreviewDataAsync(AttachmentId);
+        _fileName = fileName;
+        _textContent = textContent;
+        _isImage = contentType is not null && ImageTypes.Contains(contentType);
+        _loading = false;
+    }
+
+    private void Close() => MudDialog.Cancel();
+}

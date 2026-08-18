@@ -1,6 +1,6 @@
 using HelpDesk.Api.Authorization.Requirements;
 using HelpDesk.Api.Models.Enums;
-using HelpDesk.Api.Services;
+using HelpDesk.Api.Services.Auth;
 using Microsoft.AspNetCore.Authorization;
 
 namespace HelpDesk.Api.Authorization.Handlers;

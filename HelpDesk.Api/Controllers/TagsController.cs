@@ -1,7 +1,7 @@
 using HelpDesk.Api.Dtos.Requests;
 using HelpDesk.Api.Dtos.Responses;
 using HelpDesk.Api.Models.Enums;
-using HelpDesk.Api.Services;
+using HelpDesk.Api.Services.Tags;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,10 +19,7 @@ public class TagsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<TagDto>>> GetAll()
-    {
-        return Ok(await _tagsService.GetAll());
-    }
+    public async Task<ActionResult<List<TagDto>>> GetAll() => Ok(await _tagsService.GetAll());
 
     [Authorize(Roles = Role.Technician)]
     [HttpPost]
@@ -34,10 +31,8 @@ public class TagsController : ControllerBase
 
     [Authorize(Roles = Role.Technician)]
     [HttpPut("{name}")]
-    public async Task<ActionResult<TagDto>> Update(string name, UpdateTagRequest request)
-    {
-        return Ok(await _tagsService.Update(name, request));
-    }
+    public async Task<ActionResult<TagDto>> Update(string name, UpdateTagRequest request) =>
+        Ok(await _tagsService.Update(name, request));
 
     [Authorize(Roles = Role.Technician)]
     [HttpDelete("{name}")]

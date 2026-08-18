@@ -1,6 +1,6 @@
 using HelpDesk.Api.Authorization;
 using HelpDesk.Api.Authorization.Requirements;
-using HelpDesk.Api.Services;
+using HelpDesk.Api.Services.Auth;
 
 namespace HelpDesk.Api.Extensions;
 

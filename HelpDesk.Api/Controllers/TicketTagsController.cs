@@ -1,5 +1,5 @@
 using HelpDesk.Api.Models.Enums;
-using HelpDesk.Api.Services;
+using HelpDesk.Api.Services.Tickets;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,8 +18,6 @@ public class TicketTagsController : ControllerBase
     }
 
     [HttpPut]
-    public async Task<ActionResult<List<string>>> UpdateTags(int ticketId, List<string> tags)
-    {
-        return Ok(await _ticketTagsService.UpdateTags(ticketId, tags));
-    }
+    public async Task<ActionResult<List<string>>> UpdateTags(int ticketId, List<string> tags) =>
+        Ok(await _ticketTagsService.UpdateTags(ticketId, tags));
 }

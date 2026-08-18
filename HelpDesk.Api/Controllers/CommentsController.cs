@@ -1,6 +1,6 @@
 using HelpDesk.Api.Dtos.Requests;
 using HelpDesk.Api.Dtos.Responses;
-using HelpDesk.Api.Services;
+using HelpDesk.Api.Services.Comments;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HelpDesk.Api.Controllers;
@@ -17,10 +17,8 @@ public class CommentsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<CommentDto>>> GetAll(int ticketId)
-    {
-        return Ok(await _commentsService.GetAll(ticketId));
-    }
+    public async Task<ActionResult<List<CommentDto>>> GetAll(int ticketId) =>
+        Ok(await _commentsService.GetAll(ticketId));
 
     [HttpPost]
     public async Task<ActionResult<CommentDto>> Create(int ticketId, CreateCommentRequest request)

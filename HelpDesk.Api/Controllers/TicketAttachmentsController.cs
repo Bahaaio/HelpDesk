@@ -1,4 +1,4 @@
-using HelpDesk.Api.Services;
+using HelpDesk.Api.Services.Attachments;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HelpDesk.Api.Controllers;

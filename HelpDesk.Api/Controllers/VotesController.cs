@@ -1,7 +1,7 @@
 using HelpDesk.Api.Dtos.Requests;
 using HelpDesk.Api.Dtos.Responses;
 using HelpDesk.Api.Models.Enums;
-using HelpDesk.Api.Services;
+using HelpDesk.Api.Services.Votes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

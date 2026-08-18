@@ -1,5 +1,5 @@
 using HelpDesk.Api.Models.Enums;
-using HelpDesk.Api.Services;
+using HelpDesk.Api.Services.Tickets;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

@@ -1,5 +1,5 @@
 using HelpDesk.Api.Dtos.Requests;
-using HelpDesk.Api.Services;
+using HelpDesk.Api.Services.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

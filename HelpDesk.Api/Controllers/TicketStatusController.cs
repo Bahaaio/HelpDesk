@@ -1,6 +1,6 @@
 using HelpDesk.Api.Dtos.Requests;
 using HelpDesk.Api.Dtos.Responses;
-using HelpDesk.Api.Services;
+using HelpDesk.Api.Services.Tickets;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HelpDesk.Api.Controllers;

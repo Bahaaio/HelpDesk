@@ -1,5 +1,13 @@
 using HelpDesk.Api.Data;
-using HelpDesk.Api.Services;
+using HelpDesk.Api.Services.Attachments;
+using HelpDesk.Api.Services.Auth;
+using HelpDesk.Api.Services.Comments;
+using HelpDesk.Api.Services.Invites;
+using HelpDesk.Api.Services.Storage;
+using HelpDesk.Api.Services.Tags;
+using HelpDesk.Api.Services.Tickets;
+using HelpDesk.Api.Services.Users;
+using HelpDesk.Api.Services.Votes;
 using Microsoft.EntityFrameworkCore;
 
 namespace HelpDesk.Api.Extensions;

@@ -1,5 +1,5 @@
 using HelpDesk.Api.Dtos.Responses;
-using HelpDesk.Api.Services;
+using HelpDesk.Api.Services.Users;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HelpDesk.Api.Controllers;
@@ -16,8 +16,5 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("me")]
-    public ActionResult<UserDto> GetCurrentUser()
-    {
-        return Ok(_usersService.GetCurrentUser());
-    }
+    public ActionResult<UserDto> GetCurrentUser() => Ok(_usersService.GetCurrentUser());
 }

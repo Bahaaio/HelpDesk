@@ -1,20 +1,19 @@
 Table User {
   Id int [pk, increment]
-  Email varchar
-  UserName varchar
+  Email varchar(256)
+  UserName varchar(256)
   PasswordHash varchar
-  Role varchar // 'Employee' | 'Technician'
 }
 
 Table Ticket {
   Id int [pk, increment]
-  Title varchar
-  Description text
+  Title varchar(120)
+  Description varchar(2000)
   Status varchar // 'Open' | 'Closed'
   CreatedAt datetime
-  UpdatedAt datetime
 
   AuthorId int [ref: > User.Id]
+  AssignedToId int [ref: > User.Id, note: 'nullable']
 }
 
 Table Comment {
@@ -28,11 +27,20 @@ Table Comment {
 
 Table Attachment {
   Id UUID [pk]
-  FilePath varchar
-  UploadedAt datetime
+  ContentType varchar(128)
+  OriginalFileName varchar(255)
+  CreatedAt datetime
 
   UploaderId int [ref: > User.Id]
+}
+
+Table TicketAttachment {
   TicketId int [ref: > Ticket.Id]
+  AttachmentId UUID [ref: > Attachment.Id, unique]
+
+  indexes {
+    (TicketId, AttachmentId) [pk]
+  }
 }
 
 Table Tag {
@@ -44,13 +52,35 @@ Table Tag {
 Table TicketTag {
   TicketId int [ref: > Ticket.Id]
   TagId int [ref: > Tag.Id]
+
+  indexes {
+    (TicketId, TagId) [pk]
+  }
 }
 
-Table TicketVote {
-  Id int [pk, increment]
-  Value int // 1 for upvote, -1 for downvote
+Table Vote {
+  TicketId int [ref: > Ticket.Id]
+  VoterId int [ref: > User.Id]
+  Value int // 1 (Upvote) or -1 (Downvote)
   CreatedAt datetime
 
-  VoterId int [ref: > User.Id]
+  indexes {
+    (TicketId, VoterId) [pk]
+  }
+}
+
+Table TicketStatusChange {
+  Id int [pk, increment]
+  FromStatus varchar
+  ToStatus varchar
+  ChangedAt datetime
+
   TicketId int [ref: > Ticket.Id]
+  ChangedByUserId int [ref: > User.Id]
+}
+
+Table InviteCode {
+  Code varchar [pk]
+  CreatedAt datetime
+  ExpiresAt datetime
 }

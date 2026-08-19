@@ -3,7 +3,7 @@ using HelpDesk.Dtos.Requests;
 using HelpDesk.Dtos.Responses;
 using HelpDesk.Models.Enums;
 
-namespace HelpDesk.Ui.Services;
+namespace HelpDesk.ClientServices;
 
 public class VoteService
 {

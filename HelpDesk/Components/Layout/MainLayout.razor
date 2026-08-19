@@ -109,7 +109,7 @@ else
     private async Task LogoutAsync()
     {
         var client = HttpClientFactory.CreateClient("api");
-        await client.PostAsync("/auth/logout", null);
+        await client.PostAsync("/api/auth/logout", null);
         AuthState.SetUnauthenticated();
         Navigation.NavigateTo("/login", false);
     }

@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Components.Forms;
 using HelpDesk.Dtos.Responses;
 
-namespace HelpDesk.Ui.Services;
+namespace HelpDesk.ClientServices;
 
 public class AttachmentService
 {

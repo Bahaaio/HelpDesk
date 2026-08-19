@@ -1,6 +1,6 @@
 using System.Net.Http.Json;
 
-namespace HelpDesk.Ui.Services;
+namespace HelpDesk.ClientServices;
 
 public class InviteService
 {

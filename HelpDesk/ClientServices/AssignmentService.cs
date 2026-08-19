@@ -3,7 +3,7 @@ using System.Web;
 using HelpDesk.Dtos.Requests;
 using HelpDesk.Dtos.Responses;
 
-namespace HelpDesk.Ui.Services;
+namespace HelpDesk.ClientServices;
 
 public class AssignmentService
 {

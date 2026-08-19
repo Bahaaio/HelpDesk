@@ -1,4 +1,4 @@
-namespace HelpDesk.Ui.Services;
+namespace HelpDesk.ClientServices;
 
 public class AuthState
 {

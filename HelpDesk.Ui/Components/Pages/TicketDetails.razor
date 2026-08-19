@@ -153,30 +153,27 @@ else
         <MudDivider Class="mb-4" />
 
         <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
-            <MudText Typo="Typo.h6">Attachments (@_ticket.Attachments.Count)</MudText>
+            <MudText Typo="Typo.h6">Attachments (@_attachments.Count)</MudText>
         </MudStack>
 
-        @if (_ticket.Attachments.Count > 0)
+        @if (_attachments.Count > 0)
         {
             <MudGrid Class="mb-4">
-                @foreach (var attachmentId in _ticket.Attachments)
+                @foreach (var attachment in _attachments)
                 {
                     <MudItem xs="6" sm="4" md="3">
                         <MudPaper Class="pa-1 relative" Style="cursor: pointer;"
-                                   @onclick="() => OpenPreview(attachmentId)">
-                            <img src="@AttachmentService.GetImageUrl(attachmentId)"
-                                 alt="Attachment"
+                                   @onclick="() => OpenPreview(attachment.AttachmentId)">
+                            <img src="@AttachmentService.GetImageUrl(attachment.AttachmentId)"
+                                 alt="@attachment.OriginalFileName"
                                  style="width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; display: block;"
                                  onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
                             <div style="display: none; width: 100%; aspect-ratio: 1; align-items: center; justify-content: center; flex-direction: column; background: var(--mud-palette-surface); border-radius: 8px; padding: 8px;">
                                 <MudIcon Icon="@Icons.Material.Filled.InsertDriveFile" Size="Size.Large" Color="Color.Default" />
-                                @if (_attachmentNames.TryGetValue(attachmentId, out var fileName))
-                                {
-                                    <MudText Typo="Typo.caption" Align="Align.Center" Class="mt-1"
-                                             Style="word-break: break-all; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
-                                        @fileName
-                                    </MudText>
-                                }
+                                <MudText Typo="Typo.caption" Align="Align.Center" Class="mt-1"
+                                         Style="word-break: break-all; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                                    @attachment.OriginalFileName
+                                </MudText>
                             </div>
                         </MudPaper>
                     </MudItem>
@@ -345,18 +342,18 @@ else
 
         <MudText Typo="Typo.subtitle1" Class="mb-2">Attachments</MudText>
 
-        @if (_ticket.Attachments.Count > 0)
+        @if (_attachments.Count > 0)
         {
-            var visibleAttachments = _ticket.Attachments.Where(a => !_editDeletedAttachmentIds.Contains(a)).ToList();
+            var visibleAttachments = _attachments.Where(a => !_editDeletedAttachmentIds.Contains(a.AttachmentId)).ToList();
             @if (visibleAttachments.Count > 0)
             {
                 <MudText Typo="Typo.body2" Class="mb-1" Color="Color.Default">Current (@visibleAttachments.Count)</MudText>
                 <MudStack Row="true" Wrap="Wrap.Wrap" Class="mb-2 gap-2">
-                    @foreach (var attachmentId in visibleAttachments)
+                    @foreach (var attachment in visibleAttachments)
                     {
                         <MudPaper Class="pa-1 relative" Style="width: 80px; height: 80px;">
-                            <img src="@AttachmentService.GetImageUrl(attachmentId)"
-                                 alt="Attachment"
+                            <img src="@AttachmentService.GetImageUrl(attachment.AttachmentId)"
+                                 alt="@attachment.OriginalFileName"
                                  style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px; display: block;"
                                  onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
                             <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background: var(--mud-palette-surface); border-radius: 4px;">
@@ -365,7 +362,7 @@ else
                             <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
                                            Color="Color.Error"
                                            Style="position: absolute; top: 2px; right: 2px;"
-                                           OnClick="() => _editDeletedAttachmentIds.Add(attachmentId)" />
+                                           OnClick="() => _editDeletedAttachmentIds.Add(attachment.AttachmentId)" />
                         </MudPaper>
                     }
                 </MudStack>
@@ -443,6 +440,7 @@ else
     [Parameter] public int Id { get; set; }
 
     private TicketDto? _ticket;
+    private List<AttachmentDto> _attachments = new();
     private List<CommentDto> _comments = new();
     private List<StatusChangeDto> _statusChanges = new();
     private List<TimelineItem> _timeline = new();
@@ -471,13 +469,13 @@ else
 
     private Dictionary<int, TicketDto> _referencedTickets = new();
     private static readonly System.Text.RegularExpressions.Regex _ticketRefRegex = new(@"#(\d+)", System.Text.RegularExpressions.RegexOptions.Compiled);
-    private Dictionary<Guid, string> _attachmentNames = new();
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
             _ticket = await TicketService.GetByIdAsync(Id);
+            _attachments = await TicketService.GetAttachmentsAsync(Id);
             _comments = await CommentService.GetAllAsync(Id);
 
             try
@@ -512,7 +510,6 @@ else
             }
 
             await LoadReferencedTickets();
-            await LoadAttachmentNames();
         }
         catch (Exception ex)
         {
@@ -633,6 +630,7 @@ else
 
             var refreshed = await TicketService.GetByIdAsync(Id);
             if (refreshed is not null) _ticket = refreshed;
+            _attachments = await TicketService.GetAttachmentsAsync(Id);
 
             _editDialogOpen = false;
             Snackbar.Add("Ticket updated", Severity.Success);
@@ -654,6 +652,7 @@ else
             await AttachmentService.DeleteAsync(Id, attachmentId);
             var refreshed = await TicketService.GetByIdAsync(Id);
             if (refreshed is not null) _ticket = refreshed;
+            _attachments = await TicketService.GetAttachmentsAsync(Id);
             Snackbar.Add("Attachment deleted", Severity.Success);
         }
         catch (Exception ex)
@@ -693,6 +692,7 @@ else
             await AssignmentService.AssignAsync(Id);
             var refreshed = await TicketService.GetByIdAsync(Id);
             if (refreshed is not null) _ticket = refreshed;
+            _attachments = await TicketService.GetAttachmentsAsync(Id);
             _isAssignedToCurrentUser = _ticket?.AssignedToUsername == AuthState.Username;
             Snackbar.Add("Ticket assigned to you", Severity.Success);
         }
@@ -714,6 +714,7 @@ else
             await AssignmentService.UnassignAsync(Id);
             var refreshed = await TicketService.GetByIdAsync(Id);
             if (refreshed is not null) _ticket = refreshed;
+            _attachments = await TicketService.GetAttachmentsAsync(Id);
             _isAssignedToCurrentUser = false;
             Snackbar.Add("Ticket unassigned", Severity.Success);
         }
@@ -809,17 +810,6 @@ else
                 }
                 catch { }
             }
-        }
-    }
-
-    private async Task LoadAttachmentNames()
-    {
-        if (_ticket is null) return;
-        foreach (var aid in _ticket.Attachments)
-        {
-            if (_attachmentNames.ContainsKey(aid)) continue;
-            var name = await AttachmentService.GetFileNameAsync(aid);
-            if (name is not null) _attachmentNames[aid] = name;
         }
     }
 

@@ -66,6 +66,11 @@ public class TicketService
         return await Client.GetFromJsonAsync<List<StatusChangeDto>>($"/api/tickets/{id}/status") ?? new();
     }
 
+    public async Task<List<AttachmentDto>> GetAttachmentsAsync(int ticketId)
+    {
+        return await Client.GetFromJsonAsync<List<AttachmentDto>>($"/api/tickets/{ticketId}/attachments") ?? new();
+    }
+
     private static string BuildUrl(string path, TicketQuery? query)
     {
         if (query is null) return path;

@@ -1,28 +1,33 @@
 @page "/login"
-@layout Layout.AuthLayout
+@using System.Text.Json
+@using HelpDesk.Ui.Components.Layout
+@layout AuthLayout
 @rendermode InteractiveServer
 @inject AuthState AuthState
+@inject AuthService AuthService
 @inject NavigationManager NavigationManager
 
 <MudContainer Class="d-flex justify-center align-center" Style="min-height: 80vh;">
     <MudPaper Class="d-flex flex-column align-center pa-6" Style="width: 380px;" Elevation="4">
-        <MudIcon Icon="@Icons.Material.Filled.Lock" Size="Size.Large" Color="Color.Primary" Class="mb-2" />
+        <MudIcon Icon="@Icons.Material.Filled.Lock" Size="Size.Large" Color="Color.Primary"
+                 Class="mb-2"/>
         <MudText Typo="Typo.h5" Class="mb-4">Sign in</MudText>
 
         <MudTextField @bind-Value="_username" Label="Username" Adornment="Adornment.Start"
-                      AdornmentIcon="@Icons.Material.Filled.Person" Class="mb-3" FullWidth="true" />
+                      AdornmentIcon="@Icons.Material.Filled.Person" Class="mb-3" FullWidth="true"/>
 
         <MudTextField @bind-Value="_password" Label="Password" InputType="InputType.Password"
                       Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Key"
-                      Class="mb-3" FullWidth="true" />
+                      Class="mb-3" FullWidth="true"/>
 
-        <MudCheckBox @bind-Value="_rememberMe" Label="Remember me" Color="Color.Primary" Class="mb-3" />
+        <MudCheckBox @bind-Value="_rememberMe" Label="Remember me" Color="Color.Primary"
+                     Class="mb-3"/>
 
         <MudButton OnClick="LoginAsync" Color="Color.Primary" Variant="Variant.Filled"
                    FullWidth="true" Disabled="_loading" Size="Size.Large">
             @if (_loading)
             {
-                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2"/>
             }
             Sign In
         </MudButton>
@@ -52,13 +57,7 @@
         _error = "";
         try
         {
-            using var http = new HttpClient { BaseAddress = new Uri(NavigationManager.BaseUri) };
-            var resp = await http.PostAsJsonAsync("/auth/login", new
-            {
-                Username = _username,
-                Password = _password,
-                RememberMe = _rememberMe
-            });
+            var resp = await AuthService.LoginAsync(_username, _password, _rememberMe);
 
             if (!resp.IsSuccessStatusCode)
             {
@@ -84,7 +83,7 @@
     {
         try
         {
-            var doc = System.Text.Json.JsonDocument.Parse(body);
+            var doc = JsonDocument.Parse(body);
 
             if (doc.RootElement.TryGetProperty("detail", out var detail))
                 return detail.GetString() ?? body;
@@ -99,11 +98,16 @@
                         messages.Add(err.GetString() ?? "");
                     }
                 }
+
                 if (messages.Count > 0)
                     return string.Join("\n", messages);
             }
         }
-        catch { }
+        catch
+        {
+        }
+
         return body;
     }
+
 }

@@ -1,64 +1,44 @@
-using System.Net.Http.Json;
-using HelpDesk.Api.Dtos.Responses;
-
 namespace HelpDesk.Ui.Services;
 
 public class AuthState
 {
-    private readonly IHttpClientFactory _httpClientFactory;
-    private bool _isAuthenticated;
-    private string _username = "";
-    private string _role = "";
+    private readonly AuthService _authService;
 
-    public AuthState(IHttpClientFactory httpClientFactory)
+    public AuthState(AuthService authService)
     {
-        _httpClientFactory = httpClientFactory;
+        _authService = authService;
     }
 
-    public bool IsAuthenticated => _isAuthenticated;
-    public string Username => _username;
-    public string Role => _role;
+    public bool IsAuthenticated { get; private set; }
+
+    public string Username { get; private set; } = "";
+
+    public string Role { get; private set; } = "";
 
     public async Task<bool> CheckAsync()
     {
-        try
+        var user = await _authService.GetCurrentUserAsync();
+        if (user is not null)
         {
-            var client = _httpClientFactory.CreateClient("api");
-            var resp = await client.GetAsync("/api/users/me");
-
-            if (resp.IsSuccessStatusCode)
-            {
-                var user = await resp.Content.ReadFromJsonAsync<UserDto>();
-                if (user is not null)
-                {
-                    _isAuthenticated = true;
-                    _username = user.UserName;
-                    _role = user.Role;
-                    return true;
-                }
-            }
-
-            SetUnauthenticated();
-            return false;
+            SetAuthenticated(user.UserName, user.Role);
+            return true;
         }
-        catch
-        {
-            SetUnauthenticated();
-            return false;
-        }
+
+        SetUnauthenticated();
+        return false;
     }
 
     public void SetAuthenticated(string username, string role)
     {
-        _isAuthenticated = true;
-        _username = username;
-        _role = role;
+        IsAuthenticated = true;
+        Username = username;
+        Role = role;
     }
 
     public void SetUnauthenticated()
     {
-        _isAuthenticated = false;
-        _username = "";
-        _role = "";
+        IsAuthenticated = false;
+        Username = "";
+        Role = "";
     }
 }

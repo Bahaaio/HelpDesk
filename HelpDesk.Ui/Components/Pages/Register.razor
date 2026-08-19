@@ -1,12 +1,17 @@
 @page "/register"
-@layout Layout.AuthLayout
+@using System.Text.Json
+@using HelpDesk.Ui.Components.Layout
+@using Microsoft.AspNetCore.WebUtilities
+@layout AuthLayout
 @rendermode InteractiveServer
 @inject AuthState AuthState
+@inject AuthService AuthService
 @inject NavigationManager Navigation
 
 <MudContainer Class="d-flex justify-center align-center" Style="min-height: 80vh;">
     <MudPaper Class="d-flex flex-column align-center pa-6" Style="width: 380px;" Elevation="4">
-        <MudIcon Icon="@Icons.Material.Filled.PersonAdd" Size="Size.Large" Color="Color.Primary" Class="mb-2" />
+        <MudIcon Icon="@Icons.Material.Filled.PersonAdd" Size="Size.Large" Color="Color.Primary"
+                 Class="mb-2"/>
         <MudText Typo="Typo.h5" Class="mb-4">
             @(_isInvite ? "Create Technician Account" : "Create Account")
         </MudText>
@@ -19,21 +24,21 @@
         }
 
         <MudTextField @bind-Value="_username" Label="Username" Adornment="Adornment.Start"
-                      AdornmentIcon="@Icons.Material.Filled.Person" Class="mb-3" FullWidth="true" />
+                      AdornmentIcon="@Icons.Material.Filled.Person" Class="mb-3" FullWidth="true"/>
 
         <MudTextField @bind-Value="_email" Label="Email" InputType="InputType.Email"
                       Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Email"
-                      Class="mb-3" FullWidth="true" />
+                      Class="mb-3" FullWidth="true"/>
 
         <MudTextField @bind-Value="_password" Label="Password" InputType="InputType.Password"
                       Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Key"
-                      Class="mb-3" FullWidth="true" />
+                      Class="mb-3" FullWidth="true"/>
 
         <MudButton OnClick="RegisterAsync" Color="Color.Primary" Variant="Variant.Filled"
                    FullWidth="true" Disabled="_loading" Size="Size.Large">
             @if (_loading)
             {
-                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2"/>
             }
             Register
         </MudButton>
@@ -62,7 +67,7 @@
     protected override void OnInitialized()
     {
         var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
-        if (Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query)
+        if (QueryHelpers.ParseQuery(uri.Query)
             .TryGetValue("code", out var code))
         {
             _code = code;
@@ -76,14 +81,7 @@
         _error = "";
         try
         {
-            using var http = new HttpClient { BaseAddress = new Uri(Navigation.BaseUri) };
-            var resp = await http.PostAsJsonAsync("/auth/register", new
-            {
-                Username = _username,
-                Email = _email,
-                Password = _password,
-                Code = _code
-            });
+            var resp = await AuthService.RegisterAsync(_username, _email, _password, _code);
 
             if (!resp.IsSuccessStatusCode)
             {
@@ -92,12 +90,7 @@
                 return;
             }
 
-            var loginResp = await http.PostAsJsonAsync("/auth/login", new
-            {
-                Username = _username,
-                Password = _password,
-                RememberMe = false
-            });
+            var loginResp = await AuthService.LoginAsync(_username, _password, false);
 
             if (!loginResp.IsSuccessStatusCode)
             {
@@ -122,7 +115,7 @@
     {
         try
         {
-            var doc = System.Text.Json.JsonDocument.Parse(body);
+            var doc = JsonDocument.Parse(body);
 
             if (doc.RootElement.TryGetProperty("detail", out var detail))
                 return detail.GetString() ?? body;
@@ -137,11 +130,16 @@
                         messages.Add(err.GetString() ?? "");
                     }
                 }
+
                 if (messages.Count > 0)
                     return string.Join("\n", messages);
             }
         }
-        catch { }
+        catch
+        {
+        }
+
         return body;
     }
+
 }

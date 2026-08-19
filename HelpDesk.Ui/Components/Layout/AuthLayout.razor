@@ -1,0 +1,35 @@
+@inherits LayoutComponentBase
+@inject AuthState AuthState
+
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+@if (!_initialized)
+{
+    <MudContainer Class="d-flex justify-center align-center" Style="min-height: 100vh;">
+        <MudProgressCircular Size="Size.Large" Indeterminate="true" />
+    </MudContainer>
+}
+else
+{
+    <MudContainer Class="d-flex flex-column justify-center align-center" Style="min-height: 100vh;">
+        <MudText Typo="Typo.h4" Class="mb-2 cursor-pointer" @onclick='() => Navigation.NavigateTo("/login")'>
+            HelpDesk
+        </MudText>
+        @Body
+    </MudContainer>
+}
+
+@code {
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+
+    private bool _initialized;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await AuthState.CheckAsync();
+        _initialized = true;
+    }
+}

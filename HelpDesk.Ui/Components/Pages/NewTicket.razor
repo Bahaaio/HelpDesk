@@ -20,7 +20,7 @@
         <MudTextField @bind-Value="_description" Label="Description" Lines="5" MaxLength="2000"
                       Class="mb-4" FullWidth="true" />
 
-        <MudFileUpload T="IBrowserFile" FilesChanged="OnFilesChanged"
+        <MudFileUpload @bind-Files="Files" Multiple="true"
                        Accept=".jpg,.jpeg,.png,.gif,.webp,.log,.pdf,.txt,.csv,.doc,.docx,.xls,.xlsx,
                        .ppt,.pptx" Class="mb-4">
             <ActivatorContent>
@@ -30,9 +30,39 @@
             </ActivatorContent>
         </MudFileUpload>
 
-        @if (_selectedFiles.Count > 0)
+        @if (_files is { Count: > 0 })
         {
-            <MudText Typo="Typo.body2" Class="mb-2">@_selectedFiles.Count file(s) selected</MudText>
+            <MudText Typo="Typo.body2" Class="mb-2">@_files.Count file(s) selected</MudText>
+
+            <MudGrid Class="mb-4">
+                @foreach (var file in _files)
+                {
+                    <MudItem xs="6" sm="4" md="3">
+                        <MudPaper Class="pa-1 relative">
+                            @if (_previewUrls.TryGetValue(file, out var dataUrl) && dataUrl is not null)
+                            {
+                                <img src="@dataUrl"
+                                     alt="@file.Name"
+                                     style="width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; display: block;" />
+                            }
+                            else
+                            {
+                                <div style="width: 100%; aspect-ratio: 1; align-items: center; justify-content: center; flex-direction: column; background: var(--mud-palette-surface); border-radius: 8px; padding: 8px; display: flex;">
+                                    <MudIcon Icon="@Icons.Material.Filled.InsertDriveFile" Size="Size.Large" Color="Color.Default" />
+                                    <MudText Typo="Typo.caption" Align="Align.Center" Class="mt-1"
+                                             Style="word-break: break-all; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                                        @file.Name
+                                    </MudText>
+                                </div>
+                            }
+                            <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
+                                           Color="Color.Error"
+                                           Style="position: absolute; top: 4px; right: 4px;"
+                                           OnClick="() => RemoveFile(file)" />
+                        </MudPaper>
+                    </MudItem>
+                }
+            </MudGrid>
         }
 
         <MudStack Row="true" Justify="Justify.FlexEnd">
@@ -53,12 +83,63 @@
     private string _title = "";
     private string? _description;
     private bool _loading;
-    private List<IBrowserFile> _selectedFiles = new();
+    private IReadOnlyList<IBrowserFile>? _files;
+    private Dictionary<IBrowserFile, string?> _previewUrls = new();
 
-    private void OnFilesChanged(IBrowserFile? file)
+    private static readonly string[] ImageTypes = { "image/jpeg", "image/png", "image/gif", "image/webp" };
+
+    private IReadOnlyList<IBrowserFile>? Files
     {
-        if (file is not null)
-            _selectedFiles.Add(file);
+        get => _files;
+        set
+        {
+            _files = value;
+            _ = LoadPreviews();
+        }
+    }
+
+    private async Task LoadPreviews()
+    {
+        if (_files is null) return;
+
+        var current = new HashSet<IBrowserFile>(_files);
+
+        foreach (var file in current)
+        {
+            if (_previewUrls.ContainsKey(file)) continue;
+
+            if (file.ContentType is not null && ImageTypes.Contains(file.ContentType))
+            {
+                try
+                {
+                    using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+                    using var ms = new MemoryStream();
+                    await stream.CopyToAsync(ms);
+                    _previewUrls[file] = $"data:{file.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}";
+                }
+                catch
+                {
+                    _previewUrls[file] = null;
+                }
+            }
+            else
+            {
+                _previewUrls[file] = null;
+            }
+        }
+
+        foreach (var key in _previewUrls.Keys.ToList())
+        {
+            if (!current.Contains(key))
+                _previewUrls.Remove(key);
+        }
+
+        StateHasChanged();
+    }
+
+    private void RemoveFile(IBrowserFile file)
+    {
+        Files = _files?.Where(f => f != file).ToList();
     }
 
     private async Task CreateAsync()
@@ -72,13 +153,16 @@
                 Description = _description
             });
 
-            foreach (var file in _selectedFiles)
+            if (_files is { Count: > 0 })
             {
-                try
+                foreach (var file in _files)
                 {
-                    await AttachmentService.UploadAsync(ticket.Id, file);
+                    try
+                    {
+                        await AttachmentService.UploadAsync(ticket.Id, file);
+                    }
+                    catch { }
                 }
-                catch { }
             }
 
             Navigation.NavigateTo($"/tickets/{ticket.Id}");

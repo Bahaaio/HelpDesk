@@ -11,6 +11,13 @@ public interface IAttachmentsService<TOwner>
     where TOwner : class
 {
     /// <summary>
+    ///     Gets all attachments for a resource.
+    /// </summary>
+    /// <param name="ownerId">The ID of the resource to get attachments for.</param>
+    /// <returns>A list of attachments.</returns>
+    Task<List<AttachmentDto>> GetAll(int ownerId);
+
+    /// <summary>
     ///     Uploads a file attachment to a resource.
     /// </summary>
     /// <param name="ownerId">The ID of the resource to attach the file to.</param>

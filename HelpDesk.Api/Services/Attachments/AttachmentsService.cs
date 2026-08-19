@@ -3,6 +3,7 @@ using HelpDesk.Api.Data;
 using HelpDesk.Api.Dtos.Responses;
 using HelpDesk.Api.Exceptions;
 using HelpDesk.Api.Extensions;
+using HelpDesk.Api.Mappers;
 using HelpDesk.Api.Models;
 using HelpDesk.Api.Options;
 using HelpDesk.Api.Services.Auth;
@@ -47,6 +48,14 @@ public abstract class AttachmentsService<TOwner, TJoin> : IAttachmentsService<TO
 
     protected abstract AttachmentOptions AttachmentOptions { get; }
 
+    public async Task<List<AttachmentDto>> GetAll(int ownerId)
+    {
+        return await _attachmentJoinSet
+            .Where(aj => aj.OwnerId == ownerId)
+            .Select(aj => aj.Attachment.ToDto())
+            .ToListAsync();
+    }
+
     public virtual async Task<AttachmentDto> Add(int ownerId, IFormFile file)
     {
         _attachmentValidationService.Validate(file, AttachmentOptions);
@@ -78,7 +87,7 @@ public abstract class AttachmentsService<TOwner, TJoin> : IAttachmentsService<TO
             "User {userId} added attachment {attachmentId} to owner {OwnerId}",
             _user.Id, attachment.Id, ownerId);
 
-        return new AttachmentDto(attachment.Id, file.ContentType, file.FileName);
+        return attachment.ToDto();
     }
 
     public virtual async Task Delete(Guid attachmentId)

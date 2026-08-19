@@ -1,3 +1,4 @@
+using HelpDesk.Api.Dtos.Responses;
 using HelpDesk.Api.Models;
 using HelpDesk.Api.Services.Attachments;
 using Microsoft.AspNetCore.Mvc;
@@ -15,8 +16,12 @@ public class TicketAttachmentsController : ControllerBase
         _attachmentsService = attachmentsService;
     }
 
+    [HttpGet]
+    public async Task<ActionResult<List<AttachmentDto>>> GetAll(int ticketId) =>
+        Ok(await _attachmentsService.GetAll(ticketId));
+
     [HttpPost]
-    public async Task<ActionResult> Attach(int ticketId, IFormFile file) =>
+    public async Task<ActionResult<AttachmentDto>> Attach(int ticketId, IFormFile file) =>
         Ok(await _attachmentsService.Add(ticketId, file));
 
     [HttpDelete("{AttachmentId:guid}")]

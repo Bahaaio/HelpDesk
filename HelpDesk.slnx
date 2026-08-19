@@ -1,5 +1,5 @@
 <Solution>
-  <Project Path="HelpDesk.Api/HelpDesk.Api.csproj" />
+  <Project Path="HelpDesk/HelpDesk.csproj" />
   <Project Path="HelpDesk.Tests/HelpDesk.Tests.csproj" />
   <Project Path="HelpDesk.Ui/HelpDesk.Ui.csproj" />
 </Solution>

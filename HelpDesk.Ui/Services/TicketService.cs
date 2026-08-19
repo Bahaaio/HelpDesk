@@ -1,8 +1,8 @@
 using System.Net.Http.Json;
 using System.Web;
-using HelpDesk.Api.Dtos.Requests;
-using HelpDesk.Api.Dtos.Responses;
-using HelpDesk.Api.Models.Enums;
+using HelpDesk.Dtos.Requests;
+using HelpDesk.Dtos.Responses;
+using HelpDesk.Models.Enums;
 
 namespace HelpDesk.Ui.Services;
 

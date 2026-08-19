@@ -1,7 +1,7 @@
 using System.Net.Http.Json;
 using System.Web;
-using HelpDesk.Api.Dtos.Requests;
-using HelpDesk.Api.Dtos.Responses;
+using HelpDesk.Dtos.Requests;
+using HelpDesk.Dtos.Responses;
 
 namespace HelpDesk.Ui.Services;
 

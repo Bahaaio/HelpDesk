@@ -1,10 +1,10 @@
-using HelpDesk.Api.Authorization.Requirements;
-using HelpDesk.Api.Data;
-using HelpDesk.Api.Dtos.Requests;
-using HelpDesk.Api.Exceptions;
-using HelpDesk.Api.Models;
-using HelpDesk.Api.Services.Auth;
-using HelpDesk.Api.Services.Comments;
+using HelpDesk.Authorization.Requirements;
+using HelpDesk.Data;
+using HelpDesk.Dtos.Requests;
+using HelpDesk.Exceptions;
+using HelpDesk.Models;
+using HelpDesk.Services.Auth;
+using HelpDesk.Services.Comments;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;

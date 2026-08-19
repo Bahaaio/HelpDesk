@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Components.Forms;
-using HelpDesk.Api.Dtos.Responses;
+using HelpDesk.Dtos.Responses;
 
 namespace HelpDesk.Ui.Services;
 

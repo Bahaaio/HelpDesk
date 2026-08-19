@@ -1,4 +1,4 @@
-using HelpDesk.Api.Dtos.Responses;
+using HelpDesk.Dtos.Responses;
 
 namespace HelpDesk.Ui.Services;
 

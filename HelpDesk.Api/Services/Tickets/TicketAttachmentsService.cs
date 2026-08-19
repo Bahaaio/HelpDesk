@@ -18,8 +18,8 @@ public class TicketAttachmentsService : AttachmentsService<Ticket, TicketAttachm
     public TicketAttachmentsService(IStorageService storageService, AppDbContext db,
         ICurrentUser user, ILogger<TicketAttachmentsService> logger,
         IAttachmentValidationService attachmentValidationService,
-        IAuthorizationGuard authGuard, IOptions<TicketAttachmentOptions> attachmentOptions) :
-        base(storageService, db, user, logger, attachmentValidationService)
+        IAuthorizationGuard authGuard, IOptions<TicketAttachmentOptions> attachmentOptions)
+        : base(storageService, db, user, logger, attachmentValidationService)
     {
         _db = db;
         _authGuard = authGuard;
@@ -38,8 +38,7 @@ public class TicketAttachmentsService : AttachmentsService<Ticket, TicketAttachm
 
     public override async Task Delete(Guid attachmentId)
     {
-        var attachment = await _db.Attachments.FindOrThrowAsync(attachmentId);
-        var ticket = await _db.Tickets.FindOrThrowAsync(attachment.OwnerId);
+        var ticket = await GetOwnerEntity(attachmentId);
         await _authGuard.AuthorizeOwnerOrTechnician(ticket);
 
         await base.Delete(attachmentId);

@@ -14,14 +14,14 @@ namespace HelpDesk.Api.Services.Tickets;
 
 public class TicketsService : ITicketsService
 {
-    private readonly IAttachmentsService _attachmentsService;
+    private readonly IAttachmentsService<Ticket> _attachmentsService;
     private readonly IAuthorizationGuard _authGuard;
     private readonly AppDbContext _db;
     private readonly ILogger<TicketsService> _logger;
     private readonly ICurrentUser _user;
 
     public TicketsService(AppDbContext db, ICurrentUser user, IAuthorizationGuard authGuard,
-        ILogger<TicketsService> logger, IAttachmentsService attachmentsService)
+        ILogger<TicketsService> logger, IAttachmentsService<Ticket> attachmentsService)
     {
         _db = db;
         _user = user;

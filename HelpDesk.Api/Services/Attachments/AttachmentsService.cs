@@ -1,3 +1,4 @@
+using HelpDesk.Api.Authorization;
 using HelpDesk.Api.Data;
 using HelpDesk.Api.Dtos.Responses;
 using HelpDesk.Api.Exceptions;
@@ -19,13 +20,15 @@ namespace HelpDesk.Api.Services.Attachments;
 /// </remarks>
 /// <typeparam name="TOwner">The owner of the attachment.</typeparam>
 /// <typeparam name="TJoin">The join table between attachments and owner.</typeparam>
-public abstract class AttachmentsService<TOwner, TJoin> : IAttachmentsService
+public abstract class AttachmentsService<TOwner, TJoin> : IAttachmentsService<TOwner>
+    where TOwner : class, IOwnedByUser
     where TJoin : class, IAttachmentJoin<TOwner>, new()
 {
     private readonly DbSet<TJoin> _attachmentJoinSet;
     private readonly IAttachmentValidationService _attachmentValidationService;
     private readonly AppDbContext _db;
     private readonly ILogger<AttachmentsService<TOwner, TJoin>> _logger;
+    private readonly DbSet<TOwner> _ownerSet;
     private readonly IStorageService _storageService;
     private readonly ICurrentUser _user;
 
@@ -37,26 +40,12 @@ public abstract class AttachmentsService<TOwner, TJoin> : IAttachmentsService
         _db = db;
         _logger = logger;
         _attachmentValidationService = attachmentValidationService;
+        _ownerSet = db.Set<TOwner>();
         _user = user;
         _attachmentJoinSet = db.Set<TJoin>();
     }
 
     protected abstract AttachmentOptions AttachmentOptions { get; }
-
-    public virtual async Task<AttachmentResult> Get(Guid attachmentId)
-    {
-        var stream = await _storageService.Load(attachmentId.ToString());
-
-        var attachment = await _db.Attachments
-            .Where(a => a.Id == attachmentId)
-            .Select(a => new { a.ContentType, a.OriginalFileName })
-            .SingleOrDefaultAsync();
-
-        if (stream is null || attachment is null)
-            throw new NotFoundException($"Attachment with id: {attachmentId} not found");
-
-        return new AttachmentResult(stream, attachment.ContentType, attachment.OriginalFileName);
-    }
 
     public virtual async Task<AttachmentDto> Add(int ownerId, IFormFile file)
     {
@@ -117,5 +106,24 @@ public abstract class AttachmentsService<TOwner, TJoin> : IAttachmentsService
         await _attachmentJoinSet
             .Where(aj => aj.OwnerId == ownerId)
             .ExecuteDeleteAsync();
+    }
+
+    /// <summary>
+    ///     Gets the owner entity of the attachment.
+    ///     Used to implement authorization logic.
+    /// </summary>
+    /// <param name="attachmentId">The ID of the attachment.</param>
+    /// <returns>The owner entity.</returns>
+    /// <exception cref="NotFoundException">Thrown if the attachment is not found.</exception>
+    protected async Task<TOwner> GetOwnerEntity(Guid attachmentId)
+    {
+        var attachmentJoin = await _attachmentJoinSet
+            .Where(aj => aj.AttachmentId == attachmentId)
+            .SingleOrDefaultAsync();
+
+        if (attachmentJoin is null)
+            throw new NotFoundException($"Attachment with id {attachmentId} not found");
+
+        return await _ownerSet.FindOrThrowAsync(attachmentJoin.OwnerId);
     }
 }

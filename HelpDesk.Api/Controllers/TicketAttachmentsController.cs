@@ -1,3 +1,4 @@
+using HelpDesk.Api.Models;
 using HelpDesk.Api.Services.Attachments;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,9 +8,9 @@ namespace HelpDesk.Api.Controllers;
 [Route("api/tickets/{ticketId:int}/attachments")]
 public class TicketAttachmentsController : ControllerBase
 {
-    private readonly IAttachmentsService _attachmentsService;
+    private readonly IAttachmentsService<Ticket> _attachmentsService;
 
-    public TicketAttachmentsController(IAttachmentsService attachmentsService)
+    public TicketAttachmentsController(IAttachmentsService<Ticket> attachmentsService)
     {
         _attachmentsService = attachmentsService;
     }

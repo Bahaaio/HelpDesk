@@ -6,14 +6,10 @@ namespace HelpDesk.Api.Services.Attachments;
 ///     Manages file attachments on resources.
 ///     Does not manage authorization.
 /// </summary>
-public interface IAttachmentsService
+/// <typeparam name="TOwner">The owner of the attachment.</typeparam>
+public interface IAttachmentsService<TOwner>
+    where TOwner : class
 {
-    /// <summary>
-    ///     Returns the file stream, content type, and original file name for a given attachment.
-    /// </summary>
-    /// <param name="attachmentId">The unique ID of the attachment to retrieve.</param>
-    Task<AttachmentResult> Get(Guid attachmentId);
-
     /// <summary>
     ///     Uploads a file attachment to a resource.
     /// </summary>

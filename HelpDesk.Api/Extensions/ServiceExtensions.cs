@@ -1,4 +1,5 @@
 using HelpDesk.Api.Data;
+using HelpDesk.Api.Models;
 using HelpDesk.Api.Services.Attachments;
 using HelpDesk.Api.Services.Auth;
 using HelpDesk.Api.Services.Comments;
@@ -29,7 +30,8 @@ public static class ServiceExtensions
             services.AddScoped<ITicketTagsService, TicketTagsService>();
             services.AddScoped<ITicketAssignmentsService, TicketAssignmentsService>();
             services.AddScoped<ITicketStatusService, TicketStatusService>();
-            services.AddScoped<IAttachmentsService, TicketAttachmentsService>();
+            services.AddScoped<IAttachmentsService<Ticket>, TicketAttachmentsService>();
+            services.AddScoped<IAttachmentsReader, AttachmentsReader>();
             services.AddScoped<IAttachmentValidationService, AttachmentValidationService>();
             services.AddScoped<ICommentsService, CommentsService>();
             services.AddScoped<ITagsService, TagsService>();

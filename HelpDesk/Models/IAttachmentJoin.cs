@@ -9,5 +9,8 @@ public interface IAttachmentJoin<TOwner>
     public Guid AttachmentId { get; set; }
     public Attachment Attachment { get; set; }
 
+    /// <summary>
+    ///     The ID of the owner entity.
+    /// </summary>
     public int OwnerId { get; set; }
 }

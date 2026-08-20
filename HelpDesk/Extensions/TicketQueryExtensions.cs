@@ -9,6 +9,12 @@ public static class TicketQueryExtensions
 {
     extension(IQueryable<Ticket> query)
     {
+        /// <summary>
+        ///     Applies the filters from the query to the queryable.
+        /// </summary>
+        /// <param name="ticketQuery">The query to apply filters to.</param>
+        /// <returns>The filtered query.</returns>
+        /// <exception cref="BadRequestException">Thrown if the sort parameter is invalid.</exception>
         public IQueryable<Ticket> ApplyFilters(TicketQuery ticketQuery)
         {
             if (ticketQuery.Status is not null)

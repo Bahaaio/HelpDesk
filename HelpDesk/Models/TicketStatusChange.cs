@@ -2,7 +2,7 @@ using HelpDesk.Models.Enums;
 
 namespace HelpDesk.Models;
 
-public class TicketStatusChange
+public class TicketStatusChange : IEntity<int>
 {
     public int Id { get; set; }
     public required Status FromStatus { get; set; }

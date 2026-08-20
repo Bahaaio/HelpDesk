@@ -2,9 +2,11 @@ using HelpDesk.Authorization;
 
 namespace HelpDesk.Models;
 
-public class Comment : IOwnedByUser
+public class Comment : IOwnedByUser, IEntity<int>
 {
     public int Id { get; set; }
+    public int OwnerId => AuthorId;
+
     public required string Content { get; set; }
     public DateTime CreatedAt { get; set; }
 
@@ -13,6 +15,4 @@ public class Comment : IOwnedByUser
 
     public required int TicketId { get; set; }
     public Ticket Ticket { get; set; } = null!;
-
-    public int OwnerId => AuthorId;
 }

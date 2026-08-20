@@ -1,6 +1,7 @@
 namespace HelpDesk.Models;
 
-public class Tag
+public class Tag : IEntity<int>
+
 {
     public int Id { get; set; }
     public required string Name { get; set; }

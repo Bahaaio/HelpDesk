@@ -3,9 +3,11 @@ using HelpDesk.Models.Enums;
 
 namespace HelpDesk.Models;
 
-public class Ticket : IOwnedByUser
+public class Ticket : IOwnedByUser, IEntity<int>
 {
     public int Id { get; set; }
+    public int OwnerId => AuthorId;
+
     public required string Title { get; set; }
     public string? Description { get; set; }
     public Status Status { get; set; }
@@ -22,6 +24,4 @@ public class Ticket : IOwnedByUser
     public ICollection<Vote> Votes { get; set; } = [];
     public ICollection<Tag> Tags { get; set; } = [];
     public ICollection<TicketStatusChange> StatusChanges { get; set; } = [];
-
-    public int OwnerId => AuthorId;
 }

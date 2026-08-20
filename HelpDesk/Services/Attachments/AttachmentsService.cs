@@ -22,7 +22,7 @@ namespace HelpDesk.Services.Attachments;
 /// <typeparam name="TOwner">The owner of the attachment.</typeparam>
 /// <typeparam name="TJoin">The join table between attachments and owner.</typeparam>
 public abstract class AttachmentsService<TOwner, TJoin> : IAttachmentsService<TOwner>
-    where TOwner : class, IOwnedByUser
+    where TOwner : class, IOwnedByUser, IEntity<int>
     where TJoin : class, IAttachmentJoin<TOwner>, new()
 {
     private readonly DbSet<TJoin> _attachmentJoinSet;

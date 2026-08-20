@@ -1,11 +1,20 @@
 using HelpDesk.Exceptions;
+using HelpDesk.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace HelpDesk.Extensions;
 
+/// <summary>
+///     Extension methods for <see cref="DbSet{TEntity}" />.
+/// </summary>
 public static class DbContextExtensions
 {
-    extension<TEntity>(DbSet<TEntity> set) where TEntity : class
+    /// <param name="set">The <see cref="DbSet{TEntity}" /> to search in.</param>
+    /// <typeparam name="TEntity">The type of the entity.</typeparam>
+    /// <typeparam name="TKey">The type of the primary key.</typeparam>
+    extension<TEntity, TKey>(DbSet<TEntity> set)
+        where TEntity : class, IEntity<TKey>
+        where TKey : notnull
     {
         /// <summary>
         ///     Finds an entity by its primary key value.
@@ -13,7 +22,7 @@ public static class DbContextExtensions
         /// <param name="key">The primary key value of the entity to find.</param>
         /// <returns>The entity if found.</returns>
         /// <exception cref="NotFoundException">Thrown when the entity with the specified key is not found.</exception>
-        public async Task<TEntity> FindOrThrowAsync(object key)
+        public async Task<TEntity> FindOrThrowAsync(TKey key)
         {
             var entity = await set.FindAsync(key);
 
@@ -28,10 +37,9 @@ public static class DbContextExtensions
         /// </summary>
         /// <param name="key">The primary key value of the entity to check.</param>
         /// <exception cref="NotFoundException">Thrown when the entity with the specified key does not exist.</exception>
-        public async Task ExistsOrThrowAsync(object key)
+        public async Task ExistsOrThrowAsync(TKey key)
         {
-            var pkName = set.EntityType.FindPrimaryKey()!.Properties[0].Name;
-            var exists = await set.AnyAsync(e => EF.Property<object>(e, pkName).Equals(key));
+            var exists = await set.AnyAsync(e => e.Id.Equals(key));
 
             if (!exists)
                 throw new NotFoundException($"Resource with id {key} not found");

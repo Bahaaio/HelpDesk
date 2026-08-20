@@ -1,42 +1,37 @@
+using HelpDesk.Services.Auth;
+
 namespace HelpDesk.ClientServices;
 
 public class AuthState
 {
-    private readonly AuthService _authService;
+    private readonly ICurrentUser _currentUser;
 
-    public AuthState(AuthService authService)
+    public AuthState(ICurrentUser currentUser)
     {
-        _authService = authService;
+        _currentUser = currentUser;
     }
 
     public bool IsAuthenticated { get; private set; }
-
     public string Username { get; private set; } = "";
-
     public string Role { get; private set; } = "";
 
-    public async Task<bool> CheckAsync()
+    public void Check()
     {
-        var user = await _authService.GetCurrentUserAsync();
-        if (user is not null)
+        try
         {
-            SetAuthenticated(user.UserName, user.Role);
-            return true;
+            if (_currentUser.Principal.Identity?.IsAuthenticated == true)
+            {
+                IsAuthenticated = true;
+                Username = _currentUser.UserName;
+                Role = _currentUser.Role;
+                return;
+            }
+        }
+        catch
+        {
+            // Not authenticated or not in a circuit
         }
 
-        SetUnauthenticated();
-        return false;
-    }
-
-    public void SetAuthenticated(string username, string role)
-    {
-        IsAuthenticated = true;
-        Username = username;
-        Role = role;
-    }
-
-    public void SetUnauthenticated()
-    {
         IsAuthenticated = false;
         Username = "";
         Role = "";

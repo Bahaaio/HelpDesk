@@ -1,7 +1,9 @@
 using HelpDesk.Authorization.Handlers;
 using HelpDesk.Data;
 using HelpDesk.Models;
+using HelpDesk.Services.Auth;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 
 namespace HelpDesk.Extensions;
@@ -37,6 +39,8 @@ public static class SecurityExtensions
                 options.ExpireTimeSpan = TimeSpan.FromDays(7);
                 options.SlidingExpiration = true;
             });
+
+            services.AddScoped<AuthenticationStateProvider, HttpContextAuthenticationStateProvider>();
         }
 
         public void AddAuthorizationServices()

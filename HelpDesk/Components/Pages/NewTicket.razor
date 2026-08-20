@@ -1,7 +1,7 @@
 @page "/tickets/new"
 @rendermode InteractiveServer
-@inject TicketService TicketService
-@inject AttachmentService AttachmentService
+@inject ITicketsService TicketsService
+@inject ITicketAttachmentsClient AttachmentsClient
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
 
@@ -147,7 +147,7 @@
         _loading = true;
         try
         {
-            var ticket = await TicketService.CreateAsync(new CreateTicketRequest
+            var ticket = await TicketsService.Create(new CreateTicketRequest
             {
                 Title = _title,
                 Description = _description
@@ -159,7 +159,7 @@
                 {
                     try
                     {
-                        await AttachmentService.UploadAsync(ticket.Id, file);
+                        await AttachmentsClient.Add(ticket.Id, file);
                     }
                     catch { }
                 }

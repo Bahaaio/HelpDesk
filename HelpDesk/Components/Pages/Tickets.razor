@@ -1,7 +1,7 @@
 @page "/tickets"
 @rendermode InteractiveServer
-@inject TicketService TicketService
-@inject TagService TagService
+@inject ITicketsService TicketsService
+@inject ITagsService TagsService
 @inject NavigationManager Navigation
 
 <PageTitle>Tickets - HelpDesk</PageTitle>
@@ -114,7 +114,7 @@
     {
         try
         {
-            _allTags = await TagService.GetAllAsync();
+            _allTags = await TagsService.GetAll();
         }
         catch { }
 
@@ -151,7 +151,7 @@
                 Sort: Enum.Parse<TicketSort>(_sortBy)
             );
 
-            _tickets = await TicketService.GetAllAsync(query);
+            _tickets = await TicketsService.GetAll(query);
         }
         catch { }
 

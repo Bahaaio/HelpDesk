@@ -1,4 +1,4 @@
-@inject AttachmentService AttachmentService
+@inject IAttachmentsReader AttachmentsReader
 
 <MudDialog>
     <TitleContent>
@@ -6,7 +6,7 @@
             <MudText Typo="Typo.h6">@(_fileName ?? "Preview")</MudText>
             <MudSpacer />
             <MudTooltip Text="Download">
-                <MudIconButton Icon="@Icons.Material.Filled.Download" Href="@AttachmentService.GetImageUrl(AttachmentId)"
+                <MudIconButton Icon="@Icons.Material.Filled.Download" Href="@($"/api/attachments/{AttachmentId}")"
                                Target="_blank" Size="Size.Small" Color="Color.Inherit" />
             </MudTooltip>
         </MudStack>
@@ -18,7 +18,7 @@
         }
         else if (_isImage)
         {
-            <img src="@AttachmentService.GetImageUrl(AttachmentId)"
+            <img src="@($"/api/attachments/{AttachmentId}")"
                  alt="@_fileName"
                  style="max-width: 100%; max-height: 70vh; border-radius: 8px; display: block; margin: 0 auto;" />
         }
@@ -52,10 +52,30 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var (contentType, fileName, textContent) = await AttachmentService.GetPreviewDataAsync(AttachmentId);
-        _fileName = fileName;
-        _textContent = textContent;
-        _isImage = contentType is not null && ImageTypes.Contains(contentType);
+        try
+        {
+            var result = await AttachmentsReader.Get(AttachmentId);
+            _fileName = result.OriginalFileName;
+            _isImage = result.ContentType is not null && ImageTypes.Contains(result.ContentType);
+
+            if (!_isImage)
+            {
+                var textTypes = new[] { "text/", "application/json", "application/xml", "application/csv" };
+                var isText = result.ContentType is not null &&
+                             textTypes.Any(t => result.ContentType.StartsWith(t, StringComparison.OrdinalIgnoreCase));
+
+                if (isText)
+                {
+                    using var reader = new StreamReader(result.Stream);
+                    _textContent = await reader.ReadToEndAsync();
+                }
+            }
+        }
+        catch
+        {
+            // Preview unavailable
+        }
+
         _loading = false;
     }
 

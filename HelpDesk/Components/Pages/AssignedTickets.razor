@@ -1,6 +1,6 @@
 @page "/tickets/assigned"
 @rendermode InteractiveServer
-@inject AssignmentService AssignmentService
+@inject ITicketAssignmentsService TicketAssignmentsService
 @inject NavigationManager Navigation
 
 <PageTitle>Assigned Tickets - HelpDesk</PageTitle>
@@ -112,7 +112,7 @@
                 Sort: Enum.Parse<TicketSort>(_sortBy)
             );
 
-            _tickets = await AssignmentService.GetAssignedTicketsAsync(query);
+            _tickets = await TicketAssignmentsService.GetCurrentUserAssignedTickets(query);
         }
         catch { }
 

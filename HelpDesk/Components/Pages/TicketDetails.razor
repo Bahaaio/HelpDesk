@@ -1,11 +1,13 @@
 @page "/tickets/{Id:int}"
 @rendermode InteractiveServer
-@inject TicketService TicketService
-@inject VoteService VoteService
-@inject CommentService CommentService
-@inject TagService TagService
-@inject AttachmentService AttachmentService
-@inject AssignmentService AssignmentService
+@inject ITicketsService TicketsService
+@inject ITicketStatusService TicketStatusService
+@inject IVotesService VotesService
+@inject ICommentsService CommentsService
+@inject ITagsService TagsService
+@inject ITicketTagsService TicketTagsService
+@inject ITicketAttachmentsClient AttachmentsClient
+@inject ITicketAssignmentsService TicketAssignmentsService
 @inject AuthState AuthState
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
@@ -164,7 +166,7 @@ else
                     <MudItem xs="6" sm="4" md="3">
                         <MudPaper Class="pa-1 relative" Style="cursor: pointer;"
                                    @onclick="() => OpenPreview(attachment.AttachmentId)">
-                            <img src="@AttachmentService.GetImageUrl(attachment.AttachmentId)"
+                            <img src="@($"/api/attachments/{attachment.AttachmentId}")"
                                  alt="@attachment.OriginalFileName"
                                  style="width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; display: block;"
                                  onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
@@ -352,7 +354,7 @@ else
                     @foreach (var attachment in visibleAttachments)
                     {
                         <MudPaper Class="pa-1 relative" Style="width: 80px; height: 80px;">
-                            <img src="@AttachmentService.GetImageUrl(attachment.AttachmentId)"
+                            <img src="@($"/api/attachments/{attachment.AttachmentId}")"
                                  alt="@attachment.OriginalFileName"
                                  style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px; display: block;"
                                  onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
@@ -474,13 +476,13 @@ else
     {
         try
         {
-            _ticket = await TicketService.GetByIdAsync(Id);
-            _attachments = await TicketService.GetAttachmentsAsync(Id);
-            _comments = await CommentService.GetAllAsync(Id);
+            _ticket = await TicketsService.GetById(Id);
+            _attachments = await AttachmentsClient.GetAll(Id);
+            _comments = await CommentsService.GetAll(Id);
 
             try
             {
-                _statusChanges = await TicketService.GetStatusHistoryAsync(Id);
+                _statusChanges = await TicketStatusService.GetStatusHistory(Id);
             }
         catch (Exception ex)
         {
@@ -490,7 +492,8 @@ else
 
             try
             {
-                _currentVote = await VoteService.GetMyVoteAsync(Id);
+                var voteDto = await VotesService.GetUserVote(Id);
+                _currentVote = voteDto.Vote;
             }
             catch (Exception ex)
             {
@@ -506,7 +509,7 @@ else
 
             if (_canEdit && AuthState.Role == "Technician")
             {
-                _allTags = await TagService.GetAllAsync();
+                _allTags = await TagsService.GetAll();
             }
 
             await LoadReferencedTickets();
@@ -595,7 +598,7 @@ else
         _savingEdit = true;
         try
         {
-            var updated = await TicketService.UpdateAsync(Id, new UpdateTicketRequest
+            var updated = await TicketsService.Update(Id, new UpdateTicketRequest
             {
                 Title = _editTitle,
                 Description = _editDescription
@@ -604,15 +607,14 @@ else
 
             if (AuthState.Role == "Technician")
             {
-                await TagService.UpdateTicketTagsAsync(Id, _editSelectedTags.ToList());
+                await TicketTagsService.UpdateTags(Id, _editSelectedTags.ToList());
             }
 
             foreach (var attachmentId in _editDeletedAttachmentIds)
             {
                 try
                 {
-                    await AttachmentService.DeleteAsync(Id, attachmentId);
-                }
+                    await AttachmentsClient.Delete(Id, attachmentId);                }
                 catch { }
             }
 
@@ -622,15 +624,15 @@ else
                 {
                     try
                     {
-                        await AttachmentService.UploadAsync(Id, file);
+                        await AttachmentsClient.Add(Id, file);
                     }
                     catch { }
                 }
             }
 
-            var refreshed = await TicketService.GetByIdAsync(Id);
-            if (refreshed is not null) _ticket = refreshed;
-            _attachments = await TicketService.GetAttachmentsAsync(Id);
+            var refreshed = await TicketsService.GetById(Id);
+            _ticket = refreshed;
+            _attachments = await AttachmentsClient.GetAll(Id);
 
             _editDialogOpen = false;
             Snackbar.Add("Ticket updated", Severity.Success);
@@ -649,10 +651,10 @@ else
     {
         try
         {
-            await AttachmentService.DeleteAsync(Id, attachmentId);
-            var refreshed = await TicketService.GetByIdAsync(Id);
-            if (refreshed is not null) _ticket = refreshed;
-            _attachments = await TicketService.GetAttachmentsAsync(Id);
+            await AttachmentsClient.Delete(Id, attachmentId);
+            var refreshed = await TicketsService.GetById(Id);
+            _ticket = refreshed;
+            _attachments = await AttachmentsClient.GetAll(Id);
             Snackbar.Add("Attachment deleted", Severity.Success);
         }
         catch (Exception ex)
@@ -674,7 +676,7 @@ else
     {
         try
         {
-            await TicketService.UpdateStatusAsync(Id, status);
+            await TicketStatusService.UpdateStatus(Id, new UpdateTicketStatusRequest(status));
             _ticket = _ticket! with { Status = status };
             Snackbar.Add($"Ticket status changed to {status}", Severity.Success);
         }
@@ -689,10 +691,10 @@ else
         _assigning = true;
         try
         {
-            await AssignmentService.AssignAsync(Id);
-            var refreshed = await TicketService.GetByIdAsync(Id);
-            if (refreshed is not null) _ticket = refreshed;
-            _attachments = await TicketService.GetAttachmentsAsync(Id);
+            await TicketAssignmentsService.AssignCurrentUser(Id);
+            var refreshed = await TicketsService.GetById(Id);
+            _ticket = refreshed;
+            _attachments = await AttachmentsClient.GetAll(Id);
             _isAssignedToCurrentUser = _ticket?.AssignedToUsername == AuthState.Username;
             Snackbar.Add("Ticket assigned to you", Severity.Success);
         }
@@ -711,10 +713,10 @@ else
         _assigning = true;
         try
         {
-            await AssignmentService.UnassignAsync(Id);
-            var refreshed = await TicketService.GetByIdAsync(Id);
-            if (refreshed is not null) _ticket = refreshed;
-            _attachments = await TicketService.GetAttachmentsAsync(Id);
+            await TicketAssignmentsService.UnassignCurrentUser(Id);
+            var refreshed = await TicketsService.GetById(Id);
+            _ticket = refreshed;
+            _attachments = await AttachmentsClient.GetAll(Id);
             _isAssignedToCurrentUser = false;
             Snackbar.Add("Ticket unassigned", Severity.Success);
         }
@@ -734,17 +736,17 @@ else
         {
             if (_currentVote == value)
             {
-                await VoteService.DeleteVoteAsync(Id);
+                await VotesService.DeleteUserVote(Id);
                 _currentVote = null;
             }
             else
             {
-                await VoteService.VoteAsync(Id, value);
+                await VotesService.Vote(Id, new VoteRequest(value));
                 _currentVote = value;
             }
 
-            var updated = await TicketService.GetByIdAsync(Id);
-            if (updated is not null) _ticket = updated;
+            var updated = await TicketsService.GetById(Id);
+            _ticket = updated;
         }
         catch (Exception ex)
         {
@@ -759,7 +761,7 @@ else
         _submittingComment = true;
         try
         {
-            var comment = await CommentService.CreateAsync(Id, new CreateCommentRequest(_newComment));
+            var comment = await CommentsService.Create(Id, new CreateCommentRequest(_newComment));
             _comments.Add(comment);
             _newComment = "";
             await LoadReferencedTickets();
@@ -778,7 +780,7 @@ else
     {
         try
         {
-            await CommentService.DeleteAsync(Id, commentId);
+            await CommentsService.Delete(commentId);
             _comments.RemoveAll(c => c.Id == commentId);
         }
         catch (Exception ex)
@@ -805,8 +807,8 @@ else
             {
                 try
                 {
-                    var t = await TicketService.GetByIdAsync(tid);
-                    if (t is not null) _referencedTickets[tid] = t;
+                    var t = await TicketsService.GetById(tid);
+                    _referencedTickets[tid] = t;
                 }
                 catch { }
             }
@@ -854,7 +856,7 @@ else
         _deleting = true;
         try
         {
-            await TicketService.DeleteAsync(Id);
+            await TicketsService.Delete(Id);
             Snackbar.Add("Ticket deleted", Severity.Success);
             Navigation.NavigateTo("/tickets");
         }

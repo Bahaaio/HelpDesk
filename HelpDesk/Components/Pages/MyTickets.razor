@@ -1,6 +1,6 @@
 @page "/tickets/mine"
 @rendermode InteractiveServer
-@inject TicketService TicketService
+@inject ITicketsService TicketsService
 @inject NavigationManager Navigation
 
 <PageTitle>My Tickets - HelpDesk</PageTitle>
@@ -117,7 +117,7 @@
                 Sort: Enum.Parse<TicketSort>(_sortBy)
             );
 
-            _tickets = await TicketService.GetMyTicketsAsync(query);
+            _tickets = await TicketsService.GetCurrentUserTickets(query);
         }
         catch { }
 

@@ -1,6 +1,6 @@
 @page "/invite"
 @rendermode InteractiveServer
-@inject InviteService InviteService
+@inject IInvitesService InvitesService
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
 
@@ -16,13 +16,13 @@
 
         <MudStack AlignItems="AlignItems.Stretch">
             <MudNumericField @bind-Value="_validDays" Label="Valid for (days)" Min="1" Max="30"
-                             Class="mb-2" />
+                             Class="mb-2"/>
 
             <MudButton OnClick="GenerateAsync" Color="Color.Primary" Variant="Variant.Filled"
                        Disabled="_loading" FullWidth="true">
                 @if (_loading)
                 {
-                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2"/>
                 }
                 Generate Invite Link
             </MudButton>
@@ -30,15 +30,14 @@
 
         @if (_inviteUrl is not null)
         {
-            <MudDivider Class="my-4" />
+            <MudDivider Class="my-4"/>
             <MudText Typo="Typo.subtitle2" Class="mb-2">Invite Link</MudText>
             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                 <MudTextField Value="_inviteUrl" ReadOnly="true" Variant="Variant.Outlined"
-                              Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.ContentCopy"
-                              OnAdornmentClick="CopyToClipboard" Class="flex-grow-1" />
+                              Adornment="Adornment.End" Class="flex-grow-1"/>
                 <MudTooltip Text="Copy to clipboard">
                     <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" Color="Color.Primary"
-                                   OnClick="CopyToClipboard" />
+                                   OnClick="CopyToClipboard"/>
                 </MudTooltip>
             </MudStack>
             <MudText Typo="Typo.caption" Color="Color.Default" Class="mt-2">
@@ -66,7 +65,7 @@
         _error = null;
         try
         {
-            var invite = await InviteService.InviteAsync(_validDays);
+            var invite = await InvitesService.CreateInvite(new CreateInviteRequest(_validDays));
             var baseUrl = Navigation.BaseUri.TrimEnd('/');
             _inviteUrl = $"{baseUrl}/register?code={invite.Code}";
             _expiresAt = invite.ExpiresAt;

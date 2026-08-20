@@ -1,6 +1,6 @@
 @page "/tags"
 @rendermode InteractiveServer
-@inject TagService TagService
+@inject ITagsService TagsService
 @inject ISnackbar Snackbar
 
 <PageTitle>Tags - HelpDesk</PageTitle>
@@ -107,7 +107,7 @@
         _loading = true;
         try
         {
-            _tags = await TagService.GetAllAsync();
+            _tags = await TagsService.GetAll();
         }
         catch (Exception ex)
         {
@@ -122,7 +122,7 @@
 
         try
         {
-            await TagService.CreateAsync(new CreateTagRequest(_newTagName.Trim(), _newTagDescription));
+            await TagsService.Create(new CreateTagRequest(_newTagName.Trim(), _newTagDescription));
             _newTagName = "";
             _newTagDescription = "";
             Snackbar.Add("Tag created", Severity.Success);
@@ -148,7 +148,7 @@
         _savingTag = true;
         try
         {
-            await TagService.UpdateAsync(_editingTag.Name, new UpdateTagRequest(_editDescription));
+            await TagsService.Update(_editingTag.Name, new UpdateTagRequest(_editDescription));
             _editDialogVisible = false;
             Snackbar.Add("Tag updated", Severity.Success);
             await LoadTags();
@@ -176,7 +176,7 @@
         _deletingTag_loading = true;
         try
         {
-            await TagService.DeleteAsync(_deletingTag.Name);
+            await TagsService.Delete(_deletingTag.Name);
             _deleteDialogVisible = false;
             Snackbar.Add("Tag deleted", Severity.Success);
             await LoadTags();

@@ -36,6 +36,7 @@ public static class ServiceExtensions
             services.AddScoped<IAttachmentsReader, AttachmentsReader>();
             services.AddScoped<IAttachmentValidationService, AttachmentValidationService>();
             services.AddScoped<IAttachmentsService<Ticket>, TicketAttachmentsService>();
+            services.AddScoped<IAttachmentsService<Comment>, CommentAttachmentsService>();
 
             // tickets
             services.AddScoped<ITicketsService, TicketsService>();

@@ -15,4 +15,6 @@ public class Comment : IOwnedByUser, IEntity<int>
 
     public required int TicketId { get; set; }
     public Ticket Ticket { get; set; } = null!;
+
+    public ICollection<CommentAttachment> Attachments { get; set; } = [];
 }

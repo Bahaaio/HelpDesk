@@ -10,6 +10,7 @@ public static class OptionsExtensions
         {
             services.AddKeyableOptions<DefaultTechnicianOptions>();
             services.AddKeyableOptions<TicketAttachmentOptions>();
+            services.AddKeyableOptions<CommentAttachmentOptions>();
         }
 
         /// <summary>

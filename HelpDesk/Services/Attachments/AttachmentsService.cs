@@ -135,4 +135,7 @@ public abstract class AttachmentsService<TOwner, TJoin> : IAttachmentsService<TO
 
         return await _ownerSet.FindOrThrowAsync(attachmentJoin.OwnerId);
     }
+
+    protected async Task<TOwner> GetOwnerEntity(int ownerId) =>
+        await _ownerSet.FindOrThrowAsync(ownerId);
 }

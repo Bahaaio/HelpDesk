@@ -13,7 +13,6 @@ namespace HelpDesk.Services.Tickets;
 public class TicketAttachmentsService : AttachmentsService<Ticket, TicketAttachment>
 {
     private readonly IAuthorizationGuard _authGuard;
-    private readonly AppDbContext _db;
 
     public TicketAttachmentsService(IStorageService storageService, AppDbContext db,
         ICurrentUser user, ILogger<TicketAttachmentsService> logger,
@@ -21,7 +20,6 @@ public class TicketAttachmentsService : AttachmentsService<Ticket, TicketAttachm
         IAuthorizationGuard authGuard, IOptions<TicketAttachmentOptions> attachmentOptions)
         : base(storageService, db, user, logger, attachmentValidationService)
     {
-        _db = db;
         _authGuard = authGuard;
         AttachmentOptions = attachmentOptions.Value;
     }
@@ -30,7 +28,7 @@ public class TicketAttachmentsService : AttachmentsService<Ticket, TicketAttachm
 
     public override async Task<AttachmentDto> Add(int ownerId, IFormFile file)
     {
-        var ticket = await _db.Tickets.FindOrThrowAsync(ownerId);
+        var ticket = await GetOwnerEntity(ownerId);
         await _authGuard.AuthorizeOwnerOrTechnician(ticket);
 
         return await base.Add(ownerId, file);

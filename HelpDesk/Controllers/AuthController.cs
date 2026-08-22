@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace HelpDesk.Controllers;
 
-[AllowAnonymous]
 [ApiController]
 [Route("api/[controller]")]
 public class AuthController : Controller
@@ -18,6 +17,7 @@ public class AuthController : Controller
         _authService = authService;
     }
 
+    [AllowAnonymous]
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromForm] LoginRequest loginRequest,
         string returnUrl = "/tickets")
@@ -25,7 +25,7 @@ public class AuthController : Controller
         try
         {
             await _authService.Login(loginRequest);
-            return Redirect(returnUrl);
+            return RedirectToLocal(returnUrl, "/tickets");
         }
         catch (Exception)
         {
@@ -33,6 +33,7 @@ public class AuthController : Controller
         }
     }
 
+    [AllowAnonymous]
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromForm] RegisterRequest registerRequest)
     {
@@ -51,10 +52,14 @@ public class AuthController : Controller
         }
     }
 
-    [HttpGet("logout")]
-    public async Task<IActionResult> Logout()
+    [Authorize]
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout(string returnUrl = "/login")
     {
         await _authService.Logout();
-        return Redirect("/login");
+        return RedirectToLocal(returnUrl, "/login");
     }
+
+    private IActionResult RedirectToLocal(string returnUrl, string fallback) =>
+        Url.IsLocalUrl(returnUrl) ? LocalRedirect(returnUrl) : LocalRedirect(fallback);
 }

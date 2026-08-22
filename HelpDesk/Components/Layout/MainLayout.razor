@@ -41,8 +41,10 @@ else
             </MudAvatar>
 
             <MudTooltip Text="Logout">
-                <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit"
-                               OnClick="LogoutAsync" />
+                <form method="post" action="/api/auth/logout">
+                    <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit"
+                                   ButtonType="ButtonType.Submit" />
+                </form>
             </MudTooltip>
         </MudAppBar>
 
@@ -105,8 +107,4 @@ else
         _drawerOpen = !_drawerOpen;
     }
 
-    private void LogoutAsync()
-    {
-        Navigation.NavigateTo("/api/auth/logout", true);
-    }
 }

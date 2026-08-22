@@ -940,6 +940,8 @@ else
         {
             await CommentsService.Delete(commentId);
             _comments.RemoveAll(c => c.Id == commentId);
+            BuildTimeline();
+            Snackbar.Add("Comment deleted", Severity.Success);
         }
         catch (Exception ex)
         {

@@ -1,42 +1,42 @@
-using System.Net.Http.Headers;
 using HelpDesk.Dtos.Responses;
+using HelpDesk.Models;
+using HelpDesk.Services.Attachments;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Components.Forms;
 
 namespace HelpDesk.ClientServices;
 
 public class TicketAttachmentsClient : ITicketAttachmentsClient
 {
-    private readonly HttpClient _httpClient;
+    private const long MaximumFileSize = 10 * 1024 * 1024;
+    private readonly IAttachmentsService<Ticket> _attachmentsService;
 
-    public TicketAttachmentsClient(HttpClient httpClient)
+    public TicketAttachmentsClient(IAttachmentsService<Ticket> attachmentsService)
     {
-        _httpClient = httpClient;
+        _attachmentsService = attachmentsService;
     }
 
     public async Task<List<AttachmentDto>> GetAll(int ticketId) =>
-        await _httpClient.GetFromJsonAsync<List<AttachmentDto>>(
-            $"/api/tickets/{ticketId}/attachments") ?? new List<AttachmentDto>();
+        await _attachmentsService.GetAll(ticketId);
 
     public async Task<AttachmentDto> Add(int ticketId, IBrowserFile file)
     {
-        using var content = new MultipartFormDataContent();
-        await using var stream = file.OpenReadStream(10 * 1024 * 1024);
-        using var streamContent = new StreamContent(stream);
-        streamContent.Headers.ContentType = new MediaTypeHeaderValue(
-            file.ContentType ?? "application/octet-stream");
-        content.Add(streamContent, "file", file.Name);
+        await using var source = file.OpenReadStream(MaximumFileSize);
+        await using var stream = new MemoryStream();
+        await source.CopyToAsync(stream);
+        stream.Position = 0;
 
-        var response = await _httpClient.PostAsync($"/api/tickets/{ticketId}/attachments", content);
-        response.EnsureSuccessStatusCode();
+        var formFile = new FormFile(stream, 0, stream.Length, "file", file.Name)
+        {
+            Headers = new HeaderDictionary(),
+            ContentType = file.ContentType ?? "application/octet-stream"
+        };
 
-        return await response.Content.ReadFromJsonAsync<AttachmentDto>()
-               ?? throw new InvalidOperationException("Failed to deserialize attachment response");
+        return await _attachmentsService.Add(ticketId, formFile);
     }
 
     public async Task Delete(int ticketId, Guid attachmentId)
     {
-        var response =
-            await _httpClient.DeleteAsync($"/api/tickets/{ticketId}/attachments/{attachmentId}");
-        response.EnsureSuccessStatusCode();
+        await _attachmentsService.Delete(attachmentId);
     }
 }

@@ -1,17 +1,14 @@
 using System.Security.Claims;
-using Microsoft.AspNetCore.Components.Authorization;
 
 namespace HelpDesk.Services.Auth;
 
 public class CurrentUser : ICurrentUser
 {
-    private ClaimsPrincipal _principal;
+    private readonly ClaimsPrincipal _principal;
 
-    public CurrentUser(AuthenticationStateProvider authStateProvider)
+    public CurrentUser(IHttpContextAccessor contextAccessor)
     {
-        var task = authStateProvider.GetAuthenticationStateAsync();
-        task.Wait();
-        _principal = task.Result.User;
+        _principal = contextAccessor.HttpContext?.User ?? new ClaimsPrincipal();
     }
 
     public int Id => int.Parse(Principal.FindFirstValue(ClaimTypes.NameIdentifier)!);

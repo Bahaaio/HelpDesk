@@ -28,9 +28,9 @@ public static class ServiceExtensions
             // auth
             services.AddScoped<ICurrentUser, CurrentUser>();
             services.AddScoped<IAuthorizationGuard, AuthorizationGuard>();
-            services.AddSingleton<ITokensService, TokensService>();
             services.AddScoped<IInvitesService, InvitesService>();
             services.AddScoped<IAuthService, AuthService>();
+            services.AddSingleton<ITokensService, TokensService>();
 
             // attachments
             services.AddScoped<IAttachmentsReader, AttachmentsReader>();

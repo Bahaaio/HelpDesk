@@ -260,6 +260,11 @@ else
                             </MudText>
                             @if (AuthState.Username == comment.AuthorUsername || AuthState.Role == "Technician")
                             {
+                                <MudTooltip Text="Edit">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                   Color="Color.Inherit"
+                                                   OnClick="() => OpenCommentImageDialog(comment)" />
+                                </MudTooltip>
                                 <MudTooltip Text="Delete">
                                     <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
                                                    Color="Color.Error"
@@ -301,26 +306,13 @@ else
                         @if (comment.Attachments.Count > 0)
                         {
                             var attachment = comment.Attachments[0];
-                            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2 ml-8 gap-1">
+                            <MudStack Row="true" Class="mt-2 ml-8">
                                 <MudPaper Class="pa-1 relative" Style="cursor: pointer; width: 96px; height: 96px;"
                                           @onclick="() => OpenPreview(attachment.AttachmentId)">
                                     <img src="@($"/api/attachments/{attachment.AttachmentId}")"
                                          alt="@attachment.OriginalFileName"
                                          style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px; display: block;" />
                                 </MudPaper>
-                                @if (AuthState.Username == comment.AuthorUsername || AuthState.Role == "Technician")
-                                {
-                                    <MudTooltip Text="Replace image">
-                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                                       Color="Color.Inherit"
-                                                       OnClick="() => OpenCommentImageDialog(comment)" />
-                                    </MudTooltip>
-                                    <MudTooltip Text="Delete image">
-                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                                       Color="Color.Error"
-                                                       OnClick="() => DeleteCommentImageAsync(comment)" />
-                                    </MudTooltip>
-                                }
                             </MudStack>
                         }
                     </MudPaper>
@@ -898,27 +890,15 @@ else
             { x => x.CommentId, comment.Id },
             { x => x.AttachmentId, comment.Attachments.Count > 0 ? comment.Attachments[0].AttachmentId : null }
         };
-        var dialog = await DialogService.ShowAsync<CommentImageDialog>("Comment Image", parameters);
+        var dialog = await DialogService.ShowAsync<CommentImageDialog>("Edit Comment Image", parameters);
         var result = await dialog.Result;
 
-        if (!result.Canceled && result.Data is AttachmentDto attachment)
+        if (result.Canceled) return;
+
+        if (result.Data is AttachmentDto attachment)
             ReplaceCommentInState(comment.Id, comment with { Attachments = [attachment] });
-    }
-
-    private async Task DeleteCommentImageAsync(CommentDto comment)
-    {
-        if (comment.Attachments.Count == 0) return;
-
-        try
-        {
-            await CommentAttachmentsClient.Delete(comment.Id, comment.Attachments[0].AttachmentId);
+        else if (result.Data is true)
             ReplaceCommentInState(comment.Id, comment with { Attachments = [] });
-            Snackbar.Add("Image deleted", Severity.Success);
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add(ex.Message, Severity.Error);
-        }
     }
 
     private void ReplaceCommentInState(int commentId, CommentDto updated)

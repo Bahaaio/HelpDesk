@@ -53,6 +53,14 @@
         </MudText>
     </DialogContent>
     <DialogActions>
+        @if (AttachmentId is not null)
+        {
+            <MudButton OnClick="RemoveImageAsync" Color="Color.Error" Disabled="_saving"
+                       StartIcon="@Icons.Material.Filled.Delete">
+                Remove Image
+            </MudButton>
+            <MudSpacer />
+        }
         <MudButton OnClick="Cancel">Cancel</MudButton>
         <MudButton OnClick="SaveAsync" Color="Color.Primary" Disabled="_saving || _selectedFile is null">
             @if (_saving)
@@ -120,6 +128,28 @@
     }
 
     private void Cancel() => MudDialog.Cancel();
+
+    /// <summary>Removes the current image and closes the dialog with <c>true</c>.</summary>
+    private async Task RemoveImageAsync()
+    {
+        if (AttachmentId is null) return;
+
+        _saving = true;
+        try
+        {
+            await AttachmentsClient.Delete(CommentId, AttachmentId.Value);
+            Snackbar.Add("Image removed", Severity.Success);
+            MudDialog.Close(true);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
 
     private async Task SaveAsync()
     {

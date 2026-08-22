@@ -10,7 +10,8 @@ public class CommentAttachmentConfiguration : IEntityTypeConfiguration<CommentAt
     {
         builder.HasKey(ca => new { ca.OwnerId, ca.AttachmentId });
 
-        builder.Property(ta => ta.OwnerId).HasColumnName("CommentId");
+        builder.Property(ta => ta.OwnerId)
+            .HasColumnName("CommentId");
 
         builder.HasIndex(ta => ta.AttachmentId)
             .IsUnique();
@@ -21,7 +22,7 @@ public class CommentAttachmentConfiguration : IEntityTypeConfiguration<CommentAt
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(ta => ta.Comment)
-            .WithMany()
+            .WithMany(c => c.Attachments)
             .HasForeignKey(ta => ta.OwnerId)
             .OnDelete(DeleteBehavior.Cascade);
     }

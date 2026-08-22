@@ -7,6 +7,7 @@
 @inject ITagsService TagsService
 @inject ITicketTagsService TicketTagsService
 @inject ITicketAttachmentsClient AttachmentsClient
+@inject ICommentAttachmentsClient CommentAttachmentsClient
 @inject ITicketAssignmentsService TicketAssignmentsService
 @inject AuthState AuthState
 @inject ISnackbar Snackbar
@@ -297,6 +298,31 @@ else
                                 }
                             }
                         </div>
+                        @if (comment.Attachments.Count > 0)
+                        {
+                            var attachment = comment.Attachments[0];
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2 ml-8 gap-1">
+                                <MudPaper Class="pa-1 relative" Style="cursor: pointer; width: 96px; height: 96px;"
+                                          @onclick="() => OpenPreview(attachment.AttachmentId)">
+                                    <img src="@($"/api/attachments/{attachment.AttachmentId}")"
+                                         alt="@attachment.OriginalFileName"
+                                         style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px; display: block;" />
+                                </MudPaper>
+                                @if (AuthState.Username == comment.AuthorUsername || AuthState.Role == "Technician")
+                                {
+                                    <MudTooltip Text="Replace image">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                       Color="Color.Inherit"
+                                                       OnClick="() => OpenCommentImageDialog(comment)" />
+                                    </MudTooltip>
+                                    <MudTooltip Text="Delete image">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                       Color="Color.Error"
+                                                       OnClick="() => DeleteCommentImageAsync(comment)" />
+                                    </MudTooltip>
+                                }
+                            </MudStack>
+                        }
                     </MudPaper>
                 }
             }
@@ -307,6 +333,34 @@ else
             <MudPaper Class="pa-4 mt-4">
                 <MudTextField @bind-Value="_newComment" Label="Add a comment"
                               Lines="3" MaxLength="2000" />
+
+                <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2 gap-2">
+                    <MudFileUpload T="IBrowserFile"
+                                   Accept="@string.Join(',', ICommentAttachmentsClient.AllowedExtensions)"
+                                   FilesChanged="OnNewCommentImageSelected">
+                        <ActivatorContent>
+                            <MudButton Variant="Variant.Outlined" Size="Size.Small"
+                                       StartIcon="@Icons.Material.Filled.Image">
+                                Attach Image
+                            </MudButton>
+                        </ActivatorContent>
+                    </MudFileUpload>
+                    @if (_newCommentImage is not null)
+                    {
+                        @if (_newCommentImagePreviewUrl is not null)
+                        {
+                            <img src="@_newCommentImagePreviewUrl"
+                                 alt="@_newCommentImage.Name"
+                                 style="width: 48px; height: 48px; object-fit: cover; border-radius: 4px; display: block;" />
+                        }
+                        <MudText Typo="Typo.caption">@_newCommentImage.Name</MudText>
+                        <MudTooltip Text="Remove image">
+                            <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
+                                           Color="Color.Error" OnClick="ClearNewCommentImage" />
+                        </MudTooltip>
+                    }
+                </MudStack>
+
                 <MudButton OnClick="AddCommentAsync" Color="Color.Primary" Variant="Variant.Filled"
                            Class="mt-2" Disabled="string.IsNullOrWhiteSpace(_newComment) || _submittingComment">
                     @if (_submittingComment)
@@ -450,6 +504,8 @@ else
     private bool _loading = true;
     private string _newComment = "";
     private bool _submittingComment;
+    private IBrowserFile? _newCommentImage;
+    private string? _newCommentImagePreviewUrl;
     private bool _canUpdateStatus;
     private bool _canEdit;
     private bool _isAssignedToCurrentUser;
@@ -762,8 +818,24 @@ else
         try
         {
             var comment = await CommentsService.Create(Id, new CreateCommentRequest(_newComment));
+
+            if (_newCommentImage is not null)
+            {
+                try
+                {
+                    var attachment = await CommentAttachmentsClient.Add(comment.Id, _newCommentImage);
+                    comment = comment with { Attachments = [attachment] };
+                }
+                catch (Exception ex)
+                {
+                    Snackbar.Add($"Comment posted but image upload failed: {ex.Message}", Severity.Warning);
+                }
+            }
+
             _comments.Add(comment);
             _newComment = "";
+            ClearNewCommentImage();
+            BuildTimeline();
             await LoadReferencedTickets();
         }
         catch (Exception ex)
@@ -773,6 +845,92 @@ else
         finally
         {
             _submittingComment = false;
+        }
+    }
+
+    private async Task OnNewCommentImageSelected(IBrowserFile? file)
+    {
+        _newCommentImagePreviewUrl = null;
+
+        if (file is null)
+        {
+            _newCommentImage = null;
+            return;
+        }
+
+        var extension = Path.GetExtension(file.Name).ToLowerInvariant();
+        if (!ICommentAttachmentsClient.AllowedExtensions.Contains(extension))
+        {
+            Snackbar.Add($"Only {string.Join(", ", ICommentAttachmentsClient.AllowedExtensions)} files are allowed", Severity.Error);
+            return;
+        }
+
+        if (file.Size > ICommentAttachmentsClient.MaximumFileSizeBytes)
+        {
+            Snackbar.Add("Image must be 5 MB or smaller", Severity.Error);
+            return;
+        }
+
+        try
+        {
+            await using var stream = file.OpenReadStream(ICommentAttachmentsClient.MaximumFileSizeBytes);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            _newCommentImagePreviewUrl = $"data:{file.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}";
+            _newCommentImage = file;
+        }
+        catch
+        {
+            Snackbar.Add("Failed to read the selected file", Severity.Error);
+        }
+    }
+
+    private void ClearNewCommentImage()
+    {
+        _newCommentImage = null;
+        _newCommentImagePreviewUrl = null;
+    }
+
+    private async Task OpenCommentImageDialog(CommentDto comment)
+    {
+        var parameters = new DialogParameters<CommentImageDialog>
+        {
+            { x => x.CommentId, comment.Id },
+            { x => x.AttachmentId, comment.Attachments.Count > 0 ? comment.Attachments[0].AttachmentId : null }
+        };
+        var dialog = await DialogService.ShowAsync<CommentImageDialog>("Comment Image", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is AttachmentDto attachment)
+            ReplaceCommentInState(comment.Id, comment with { Attachments = [attachment] });
+    }
+
+    private async Task DeleteCommentImageAsync(CommentDto comment)
+    {
+        if (comment.Attachments.Count == 0) return;
+
+        try
+        {
+            await CommentAttachmentsClient.Delete(comment.Id, comment.Attachments[0].AttachmentId);
+            ReplaceCommentInState(comment.Id, comment with { Attachments = [] });
+            Snackbar.Add("Image deleted", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private void ReplaceCommentInState(int commentId, CommentDto updated)
+    {
+        var index = _comments.FindIndex(c => c.Id == commentId);
+        if (index >= 0)
+            _comments[index] = updated;
+
+        for (var i = 0; i < _timeline.Count; i++)
+        {
+            if (_timeline[i].Type == TimelineItemType.Comment && _timeline[i].Comment?.Id == commentId)
+                _timeline[i] = _timeline[i] with { Comment = updated };
         }
     }
 

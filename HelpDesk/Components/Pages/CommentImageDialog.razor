@@ -1,0 +1,152 @@
+@inject ICommentAttachmentsClient AttachmentsClient
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">Comment Image</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (_selectedFile is null)
+        {
+            @if (AttachmentId is not null)
+            {
+                <img src="@($"/api/attachments/{AttachmentId}")"
+                     alt="Current image"
+                     style="max-width: 100%; max-height: 40vh; border-radius: 8px; display: block; margin: 0 auto;"
+                     onerror="this.style.display='none'" />
+            }
+            else
+            {
+                <MudText Typo="Typo.body2" Color="Color.Default" Class="text-center mb-2">
+                    No image attached yet.
+                </MudText>
+            }
+        }
+        else if (_previewUrl is not null)
+        {
+            <img src="@_previewUrl"
+                 alt="@_selectedFile.Name"
+                 style="max-width: 100%; max-height: 40vh; border-radius: 8px; display: block; margin: 0 auto;" />
+        }
+
+        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-3">
+            <MudFileUpload T="IBrowserFile" Accept="@string.Join(',', ICommentAttachmentsClient.AllowedExtensions)"
+                           FilesChanged="OnFileSelected">
+                <ActivatorContent>
+                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Image"
+                               Size="Size.Small">
+                        @(AttachmentId is null ? "Attach Image" : "Replace Image")
+                    </MudButton>
+                </ActivatorContent>
+            </MudFileUpload>
+            @if (_selectedFile is not null)
+            {
+                <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small"
+                           OnClick="ClearSelection">
+                    Remove Selection
+                </MudButton>
+            }
+        </MudStack>
+
+        <MudText Typo="Typo.caption" Color="Color.Default" Class="mt-2 text-center">
+            Images only (@string.Join(", ", ICommentAttachmentsClient.AllowedExtensions)), max 5 MB.
+        </MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton OnClick="SaveAsync" Color="Color.Primary" Disabled="_saving || _selectedFile is null">
+            @if (_saving)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+            }
+            Save
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public int CommentId { get; set; }
+
+    /// <summary>The comment's current attachment, if any.</summary>
+    [Parameter] public Guid? AttachmentId { get; set; }
+
+    private bool _saving;
+    private IBrowserFile? _selectedFile;
+    private string? _previewUrl;
+
+    private async Task OnFileSelected(IBrowserFile? file)
+    {
+        _previewUrl = null;
+
+        if (file is null)
+        {
+            _selectedFile = null;
+            return;
+        }
+
+        var extension = Path.GetExtension(file.Name).ToLowerInvariant();
+        if (!ICommentAttachmentsClient.AllowedExtensions.Contains(extension))
+        {
+            Snackbar.Add($"Only {string.Join(", ", ICommentAttachmentsClient.AllowedExtensions)} files are allowed", Severity.Error);
+            return;
+        }
+
+        if (file.Size > ICommentAttachmentsClient.MaximumFileSizeBytes)
+        {
+            Snackbar.Add("Image must be 5 MB or smaller", Severity.Error);
+            return;
+        }
+
+        try
+        {
+            await using var stream = file.OpenReadStream(ICommentAttachmentsClient.MaximumFileSizeBytes);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            _previewUrl = $"data:{file.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}";
+            _selectedFile = file;
+        }
+        catch
+        {
+            Snackbar.Add("Failed to read the selected file", Severity.Error);
+        }
+    }
+
+    private void ClearSelection()
+    {
+        _selectedFile = null;
+        _previewUrl = null;
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task SaveAsync()
+    {
+        if (_selectedFile is null) return;
+
+        _saving = true;
+        try
+        {
+            if (AttachmentId is not null)
+                await AttachmentsClient.Delete(CommentId, AttachmentId.Value);
+
+            var added = await AttachmentsClient.Add(CommentId, _selectedFile);
+
+            if (AttachmentId is not null)
+                Snackbar.Add("Image replaced", Severity.Success);
+            else
+                Snackbar.Add("Image attached", Severity.Success);
+
+            MudDialog.Close(added);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+}

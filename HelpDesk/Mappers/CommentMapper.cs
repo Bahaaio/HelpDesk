@@ -9,7 +9,17 @@ public static class CommentMapper
     private static readonly Func<Comment, CommentDto> Compiled = ToDtoExpression.Compile();
 
     public static Expression<Func<Comment, CommentDto>> ToDtoExpression => c =>
-        new CommentDto(c.Id, c.Content, c.CreatedAt, c.Author.UserName!);
+        new CommentDto(
+            c.Id,
+            c.Content,
+            c.CreatedAt,
+            c.Author.UserName!,
+            c.Attachments
+                .Select(a => new AttachmentDto(
+                    a.AttachmentId,
+                    a.Attachment.ContentType,
+                    a.Attachment.OriginalFileName))
+                .ToList());
 
     public static CommentDto ToDto(this Comment c) => Compiled(c);
 }

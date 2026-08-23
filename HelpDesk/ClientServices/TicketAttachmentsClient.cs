@@ -1,19 +1,23 @@
 using HelpDesk.Dtos.Responses;
 using HelpDesk.Models;
+using HelpDesk.Options;
 using HelpDesk.Services.Attachments;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.Extensions.Options;
 
 namespace HelpDesk.ClientServices;
 
 public class TicketAttachmentsClient : ITicketAttachmentsClient
 {
-    private const long MaximumFileSize = 10 * 1024 * 1024;
     private readonly IAttachmentsService<Ticket> _attachmentsService;
+    private readonly TicketAttachmentOptions _options;
 
-    public TicketAttachmentsClient(IAttachmentsService<Ticket> attachmentsService)
+    public TicketAttachmentsClient(IAttachmentsService<Ticket> attachmentsService,
+        IOptions<TicketAttachmentOptions> options)
     {
         _attachmentsService = attachmentsService;
+        _options = options.Value;
     }
 
     public async Task<List<AttachmentDto>> GetAll(int ticketId) =>
@@ -21,7 +25,7 @@ public class TicketAttachmentsClient : ITicketAttachmentsClient
 
     public async Task<AttachmentDto> Add(int ticketId, IBrowserFile file)
     {
-        await using var source = file.OpenReadStream(MaximumFileSize);
+        await using var source = file.OpenReadStream(_options.MaxSizeBytes);
         await using var stream = new MemoryStream();
         await source.CopyToAsync(stream);
         stream.Position = 0;

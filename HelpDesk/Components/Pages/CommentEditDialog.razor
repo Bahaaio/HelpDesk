@@ -1,5 +1,6 @@
 @inject ICommentsService CommentsService
 @inject ICommentAttachmentsClient AttachmentsClient
+@inject IOptions<CommentAttachmentOptions> CommentAttachmentOptions
 @inject ISnackbar Snackbar
 
 <MudDialog>
@@ -27,7 +28,7 @@
         }
 
         <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-3">
-            <MudFileUpload T="IBrowserFile" Accept="@string.Join(',', ICommentAttachmentsClient.AllowedExtensions)"
+            <MudFileUpload T="IBrowserFile" Accept="@string.Join(',', CommentAttachmentOptions.Value.AllowedExtensions)"
                            FilesChanged="OnFileSelected">
                 <ActivatorContent>
                     <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Image"
@@ -54,7 +55,7 @@
         </MudStack>
 
         <MudText Typo="Typo.caption" Color="Color.Default" Class="mt-2 text-center">
-            Optional image (@string.Join(", ", ICommentAttachmentsClient.AllowedExtensions)), max 5 MB.
+            Optional image (@string.Join(", ", CommentAttachmentOptions.Value.AllowedExtensions)), max @(CommentAttachmentOptions.Value.MaxSizeBytes / 1024 / 1024) MB.
         </MudText>
     </DialogContent>
     <DialogActions>
@@ -110,21 +111,23 @@
         }
 
         var extension = Path.GetExtension(file.Name).ToLowerInvariant();
-        if (!ICommentAttachmentsClient.AllowedExtensions.Contains(extension))
+        var allowedExtensions = CommentAttachmentOptions.Value.AllowedExtensions;
+        if (!allowedExtensions.Contains(extension))
         {
-            Snackbar.Add($"Only {string.Join(", ", ICommentAttachmentsClient.AllowedExtensions)} files are allowed", Severity.Error);
+            Snackbar.Add($"Only {string.Join(", ", allowedExtensions)} files are allowed", Severity.Error);
             return;
         }
 
-        if (file.Size > ICommentAttachmentsClient.MaximumFileSizeBytes)
+        var maxSizeBytes = CommentAttachmentOptions.Value.MaxSizeBytes;
+        if (file.Size > maxSizeBytes)
         {
-            Snackbar.Add("Image must be 5 MB or smaller", Severity.Error);
+            Snackbar.Add($"Image must be {maxSizeBytes / 1024 / 1024} MB or smaller", Severity.Error);
             return;
         }
 
         try
         {
-            await using var stream = file.OpenReadStream(ICommentAttachmentsClient.MaximumFileSizeBytes);
+            await using var stream = file.OpenReadStream(maxSizeBytes);
             using var ms = new MemoryStream();
             await stream.CopyToAsync(ms);
             _previewUrl = $"data:{file.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}";

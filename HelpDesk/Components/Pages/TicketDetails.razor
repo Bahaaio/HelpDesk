@@ -8,6 +8,8 @@
 @inject ITicketTagsService TicketTagsService
 @inject ITicketAttachmentsClient AttachmentsClient
 @inject ICommentAttachmentsClient CommentAttachmentsClient
+@inject IOptions<CommentAttachmentOptions> CommentAttachmentOptions
+@inject IOptions<TicketAttachmentOptions> TicketAttachmentOptions
 @inject ITicketAssignmentsService TicketAssignmentsService
 @inject AuthState AuthState
 @inject ISnackbar Snackbar
@@ -328,7 +330,7 @@ else
 
                 <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2 gap-2">
                     <MudFileUpload T="IBrowserFile"
-                                   Accept="@string.Join(',', ICommentAttachmentsClient.AllowedExtensions)"
+                                   Accept="@string.Join(',', CommentAttachmentOptions.Value.AllowedExtensions)"
                                    FilesChanged="OnNewCommentImageSelected">
                         <ActivatorContent>
                             <MudButton Variant="Variant.Outlined" Size="Size.Small"
@@ -418,7 +420,7 @@ else
         }
 
         <MudFileUpload @bind-Files="EditFiles" Multiple="true"
-                       Accept=".jpg,.jpeg,.png,.gif,.webp,.log,.pdf,.txt,.csv,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.sql">
+                       Accept="@string.Join(',', TicketAttachmentOptions.Value.AllowedExtensions)">
             <ActivatorContent>
                 <MudButton Variant="Variant.Outlined" Size="Size.Small"
                            StartIcon="@Icons.Material.Filled.AttachFile">
@@ -614,7 +616,7 @@ else
             {
                 try
                 {
-                    using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+                    using var stream = file.OpenReadStream(maxAllowedSize: TicketAttachmentOptions.Value.MaxSizeBytes);
                     using var ms = new MemoryStream();
                     await stream.CopyToAsync(ms);
                     _editPreviewUrls[file] = $"data:{file.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}";
@@ -851,21 +853,23 @@ else
         }
 
         var extension = Path.GetExtension(file.Name).ToLowerInvariant();
-        if (!ICommentAttachmentsClient.AllowedExtensions.Contains(extension))
+        var allowedExtensions = CommentAttachmentOptions.Value.AllowedExtensions;
+        if (!allowedExtensions.Contains(extension))
         {
-            Snackbar.Add($"Only {string.Join(", ", ICommentAttachmentsClient.AllowedExtensions)} files are allowed", Severity.Error);
+            Snackbar.Add($"Only {string.Join(", ", allowedExtensions)} files are allowed", Severity.Error);
             return;
         }
 
-        if (file.Size > ICommentAttachmentsClient.MaximumFileSizeBytes)
+        var maxSizeBytes = CommentAttachmentOptions.Value.MaxSizeBytes;
+        if (file.Size > maxSizeBytes)
         {
-            Snackbar.Add("Image must be 5 MB or smaller", Severity.Error);
+            Snackbar.Add($"Image must be {maxSizeBytes / 1024 / 1024} MB or smaller", Severity.Error);
             return;
         }
 
         try
         {
-            await using var stream = file.OpenReadStream(ICommentAttachmentsClient.MaximumFileSizeBytes);
+            await using var stream = file.OpenReadStream(maxSizeBytes);
             using var ms = new MemoryStream();
             await stream.CopyToAsync(ms);
             _newCommentImagePreviewUrl = $"data:{file.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}";

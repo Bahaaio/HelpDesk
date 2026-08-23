@@ -18,7 +18,7 @@ Table Ticket {
 
 Table Comment {
   Id int [pk, increment]
-  Content text
+  Content varchar(2000)
   CreatedAt datetime
 
   AuthorId int [ref: > User.Id]
@@ -43,10 +43,19 @@ Table TicketAttachment {
   }
 }
 
+Table CommentAttachment {
+  CommentId int [ref: > Comment.Id]
+  AttachmentId UUID [ref: > Attachment.Id, unique]
+
+  indexes {
+    (CommentId, AttachmentId) [pk]
+  }
+}
+
 Table Tag {
   Id int [pk, increment]
-  Name varchar
-  Description varchar
+  Name varchar(50) [unique]
+  Description varchar(2000)
 }
 
 Table TicketTag {
@@ -80,7 +89,7 @@ Table TicketStatusChange {
 }
 
 Table InviteCode {
-  Code varchar [pk]
+  Code varchar(64) [pk]
   CreatedAt datetime
   ExpiresAt datetime
 }

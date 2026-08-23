@@ -20,10 +20,19 @@
 
 ### Ticket Comments
 
-| Method | Endpoint                   | Description              |
-| ------ | -------------------------- | ------------------------ |
-| GET    | /api/tickets/{id}/comments | List comments for ticket |
-| POST   | /api/tickets/{id}/comments | Add comment to ticket    |
+| Method | Endpoint                            | Description              |
+| ------ | ----------------------------------- | ------------------------ |
+| GET    | /api/tickets/{id}/comments          | List comments for ticket |
+| POST   | /api/tickets/{id}/comments          | Add comment to ticket    |
+| PUT    | /api/tickets/{id}/comments/{commentId} | Update comment content (author or Technician) |
+
+### Comment Attachments
+
+| Method | Endpoint                                    | Description              |
+| ------ | ------------------------------------------- | ------------------------ |
+| GET    | /api/comments/{commentId}/attachments       | List comment images      |
+| POST   | /api/comments/{commentId}/attachments       | Upload image (max 1, jpg/jpeg/png/webp, 5 MB) |
+| DELETE | /api/comments/{commentId}/attachments/{attachmentId} | Delete image    |
 
 ### Ticket Tags
 

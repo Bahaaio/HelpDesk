@@ -27,6 +27,10 @@ public class CommentsController : ControllerBase
         return Created((string?)null, comment);
     }
 
+    [HttpPut("{commentId:int}")]
+    public async Task<ActionResult<CommentDto>> Update(int ticketId, int commentId, UpdateCommentRequest request) =>
+        Ok(await _commentsService.Update(commentId, request));
+
     [HttpDelete("{commentId:int}")]
     public async Task<ActionResult> Delete(int ticketId, int commentId)
     {

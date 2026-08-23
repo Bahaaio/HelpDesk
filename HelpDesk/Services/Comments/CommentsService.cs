@@ -59,6 +59,25 @@ public class CommentsService : ICommentsService
         return comment.ToDto();
     }
 
+    public async Task<CommentDto> Update(int commentId, UpdateCommentRequest request)
+    {
+        var comment = await _db.Comments.FindOrThrowAsync(commentId);
+
+        await _authGuard.AuthorizeOwnerOrTechnician(comment);
+
+        comment.Content = request.Content;
+        await _db.SaveChangesAsync();
+
+        _logger.LogInformation("User {userId} updated comment {commentId}",
+            _user.Id, commentId);
+
+        return await _db.Comments
+            .AsNoTracking()
+            .Where(c => c.Id == commentId)
+            .Select(CommentMapper.ToDtoExpression)
+            .SingleAsync();
+    }
+
     public async Task Delete(int commentId)
     {
         var comment = await _db.Comments.FindOrThrowAsync(commentId);

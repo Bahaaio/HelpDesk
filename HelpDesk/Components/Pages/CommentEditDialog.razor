@@ -1,25 +1,22 @@
+@inject ICommentsService CommentsService
 @inject ICommentAttachmentsClient AttachmentsClient
 @inject ISnackbar Snackbar
 
 <MudDialog>
     <TitleContent>
-        <MudText Typo="Typo.h6">Comment Image</MudText>
+        <MudText Typo="Typo.h6">Edit Comment</MudText>
     </TitleContent>
     <DialogContent>
+        <MudTextField @bind-Value="_content" Label="Comment" Lines="3" MaxLength="2000" Class="mb-2" />
+
         @if (_selectedFile is null)
         {
-            @if (AttachmentId is not null)
+            @if (Comment.Attachments.Count > 0)
             {
-                <img src="@($"/api/attachments/{AttachmentId}")"
+                <img src="@($"/api/attachments/{Comment.Attachments[0].AttachmentId}")"
                      alt="Current image"
                      style="max-width: 100%; max-height: 40vh; border-radius: 8px; display: block; margin: 0 auto;"
                      onerror="this.style.display='none'" />
-            }
-            else
-            {
-                <MudText Typo="Typo.body2" Color="Color.Default" Class="text-center mb-2">
-                    No image attached yet.
-                </MudText>
             }
         }
         else if (_previewUrl is not null)
@@ -35,7 +32,7 @@
                 <ActivatorContent>
                     <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Image"
                                Size="Size.Small">
-                        @(AttachmentId is null ? "Attach Image" : "Replace Image")
+                        @(Comment.Attachments.Count > 0 ? "Replace Image" : "Attach Image")
                     </MudButton>
                 </ActivatorContent>
             </MudFileUpload>
@@ -46,23 +43,30 @@
                     Remove Selection
                 </MudButton>
             }
+            else if (_hasImage && !_removeImage)
+            {
+                <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small"
+                           StartIcon="@Icons.Material.Filled.Delete"
+                           OnClick='() => _removeImage = true'>
+                    Remove Image
+                </MudButton>
+            }
         </MudStack>
 
         <MudText Typo="Typo.caption" Color="Color.Default" Class="mt-2 text-center">
-            Images only (@string.Join(", ", ICommentAttachmentsClient.AllowedExtensions)), max 5 MB.
+            Optional image (@string.Join(", ", ICommentAttachmentsClient.AllowedExtensions)), max 5 MB.
         </MudText>
     </DialogContent>
     <DialogActions>
-        @if (AttachmentId is not null)
+        @if (_removeImage)
         {
-            <MudButton OnClick="RemoveImageAsync" Color="Color.Error" Disabled="_saving"
-                       StartIcon="@Icons.Material.Filled.Delete">
-                Remove Image
-            </MudButton>
-            <MudSpacer />
+            <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined">
+                Current image will be removed
+            </MudChip>
         }
+        <MudSpacer />
         <MudButton OnClick="Cancel">Cancel</MudButton>
-        <MudButton OnClick="SaveAsync" Color="Color.Primary" Disabled="_saving || _selectedFile is null">
+        <MudButton OnClick="SaveAsync" Color="Color.Primary" Disabled="_saving || !_canSave">
             @if (_saving)
             {
                 <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
@@ -75,18 +79,29 @@
 @code {
     [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
 
-    [Parameter] public int CommentId { get; set; }
+    /// <summary>The comment being edited.</summary>
+    [Parameter] public CommentDto Comment { get; set; } = null!;
 
-    /// <summary>The comment's current attachment, if any.</summary>
-    [Parameter] public Guid? AttachmentId { get; set; }
-
+    private string _content = "";
     private bool _saving;
     private IBrowserFile? _selectedFile;
     private string? _previewUrl;
+    private bool _removeImage;
+
+    private bool _hasImage => Comment.Attachments.Count > 0;
+    private bool _contentChanged => !string.IsNullOrWhiteSpace(_content) && _content != Comment.Content;
+    private bool _imageChanged => _selectedFile is not null || _removeImage;
+    private bool _canSave => _contentChanged || _imageChanged;
+
+    protected override void OnInitialized()
+    {
+        _content = Comment.Content;
+    }
 
     private async Task OnFileSelected(IBrowserFile? file)
     {
         _previewUrl = null;
+        _removeImage = false;
 
         if (file is null)
         {
@@ -129,46 +144,41 @@
 
     private void Cancel() => MudDialog.Cancel();
 
-    /// <summary>Removes the current image and closes the dialog with <c>true</c>.</summary>
-    private async Task RemoveImageAsync()
-    {
-        if (AttachmentId is null) return;
-
-        _saving = true;
-        try
-        {
-            await AttachmentsClient.Delete(CommentId, AttachmentId.Value);
-            Snackbar.Add("Image removed", Severity.Success);
-            MudDialog.Close(true);
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add(ex.Message, Severity.Error);
-        }
-        finally
-        {
-            _saving = false;
-        }
-    }
-
     private async Task SaveAsync()
     {
-        if (_selectedFile is null) return;
+        if (!_canSave) return;
 
         _saving = true;
         try
         {
-            if (AttachmentId is not null)
-                await AttachmentsClient.Delete(CommentId, AttachmentId.Value);
+            var updated = Comment;
 
-            var added = await AttachmentsClient.Add(CommentId, _selectedFile);
+            if (_contentChanged)
+            {
+                updated = await CommentsService.Update(Comment.Id,
+                    new UpdateCommentRequest(_content.Trim()));
+            }
 
-            if (AttachmentId is not null)
-                Snackbar.Add("Image replaced", Severity.Success);
-            else
-                Snackbar.Add("Image attached", Severity.Success);
+            if (_removeImage && _hasImage)
+            {
+                await AttachmentsClient.Delete(Comment.Id, Comment.Attachments[0].AttachmentId);
+                updated = updated with { Attachments = [] };
+                Snackbar.Add("Image removed", Severity.Success);
+            }
+            else if (_selectedFile is not null)
+            {
+                if (_hasImage)
+                    await AttachmentsClient.Delete(Comment.Id, Comment.Attachments[0].AttachmentId);
 
-            MudDialog.Close(added);
+                var added = await AttachmentsClient.Add(Comment.Id, _selectedFile);
+                updated = updated with { Attachments = [added] };
+                Snackbar.Add(_hasImage ? "Image replaced" : "Image attached", Severity.Success);
+            }
+
+            if (_contentChanged)
+                Snackbar.Add("Comment updated", Severity.Success);
+
+            MudDialog.Close(updated);
         }
         catch (Exception ex)
         {

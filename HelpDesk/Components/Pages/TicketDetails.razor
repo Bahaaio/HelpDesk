@@ -263,7 +263,7 @@ else
                                 <MudTooltip Text="Edit">
                                     <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
                                                    Color="Color.Inherit"
-                                                   OnClick="() => OpenCommentImageDialog(comment)" />
+                                                   OnClick="() => OpenCommentEditDialog(comment)" />
                                 </MudTooltip>
                                 <MudTooltip Text="Delete">
                                     <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
@@ -883,22 +883,17 @@ else
         _newCommentImagePreviewUrl = null;
     }
 
-    private async Task OpenCommentImageDialog(CommentDto comment)
+    private async Task OpenCommentEditDialog(CommentDto comment)
     {
-        var parameters = new DialogParameters<CommentImageDialog>
+        var parameters = new DialogParameters<CommentEditDialog>
         {
-            { x => x.CommentId, comment.Id },
-            { x => x.AttachmentId, comment.Attachments.Count > 0 ? comment.Attachments[0].AttachmentId : null }
+            { x => x.Comment, comment }
         };
-        var dialog = await DialogService.ShowAsync<CommentImageDialog>("Edit Comment Image", parameters);
+        var dialog = await DialogService.ShowAsync<CommentEditDialog>("Edit Comment", parameters);
         var result = await dialog.Result;
 
-        if (result.Canceled) return;
-
-        if (result.Data is AttachmentDto attachment)
-            ReplaceCommentInState(comment.Id, comment with { Attachments = [attachment] });
-        else if (result.Data is true)
-            ReplaceCommentInState(comment.Id, comment with { Attachments = [] });
+        if (!result.Canceled && result.Data is CommentDto updated)
+            ReplaceCommentInState(comment.Id, updated);
     }
 
     private void ReplaceCommentInState(int commentId, CommentDto updated)

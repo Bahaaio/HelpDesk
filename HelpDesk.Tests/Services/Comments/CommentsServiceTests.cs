@@ -122,6 +122,67 @@ public class CommentsServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task Update_ChangesContentAndReturnsDto_WhenAuthorized()
+    {
+        // Arrange
+        const int commentId = 1;
+        var comment = new Comment
+        {
+            Id = commentId, TicketId = DefaultTicketId, AuthorId = CurrentUserId,
+            Content = "original"
+        };
+        _db.Comments.Add(comment);
+        await _db.SaveChangesAsync();
+
+        _authGuardMock
+            .Setup(g => g.Authorize(comment, It.IsAny<OwnerOrTechnicianRequirement>()))
+            .Returns(Task.CompletedTask);
+
+        var request = new UpdateCommentRequest("updated content");
+
+        // Act
+        var result = await _service.Update(commentId, request);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(request.Content, result.Content);
+
+        var savedComment = await _db.Comments.FindAsync(commentId);
+        Assert.NotNull(savedComment);
+        Assert.Equal(request.Content, savedComment!.Content);
+    }
+
+    [Fact]
+    public async Task Update_ThrowsException_WhenUnauthorized()
+    {
+        // Arrange
+        const int commentId = 1;
+        const int secondUserId = 2;
+
+        _db.Users.Add(new ApplicationUser
+            { Id = secondUserId, UserName = "test2", Email = "b@b.com" });
+
+        var comment = new Comment
+        {
+            Id = commentId, TicketId = DefaultTicketId, AuthorId = secondUserId, Content = "hello"
+        };
+        _db.Comments.Add(comment);
+        await _db.SaveChangesAsync();
+
+        _authGuardMock
+            .Setup(g => g.Authorize(comment, It.IsAny<OwnerOrTechnicianRequirement>()))
+            .ThrowsAsync(new UnauthorizedAccessException("User is not authorized."));
+
+        // Act & Assert
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(
+            () => _service.Update(commentId, new UpdateCommentRequest("hijacked")));
+
+        var unchangedComment = await _db.Comments.FindAsync(commentId);
+        Assert.NotNull(unchangedComment);
+        Assert.Equal("hello", unchangedComment!.Content);
+    }
+
+    [Fact]
     public async Task Delete_RemovesComment_WhenAuthorized()
     {
         // Arrange

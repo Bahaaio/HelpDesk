@@ -22,6 +22,13 @@ public interface ICommentsService
     Task<CommentDto> Create(int ticketId, CreateCommentRequest request);
 
     /// <summary>
+    ///     Updates a comment's content. Only the author or a technician may update.
+    /// </summary>
+    /// <param name="commentId">The ID of the comment to update.</param>
+    /// <param name="request">The new comment content.</param>
+    Task<CommentDto> Update(int commentId, UpdateCommentRequest request);
+
+    /// <summary>
     ///     Deletes a comment. Only the author or a technician may delete.
     /// </summary>
     /// <param name="commentId">The ID of the comment to delete.</param>

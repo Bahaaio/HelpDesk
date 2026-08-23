@@ -19,18 +19,18 @@ public class VotesService : IVotesService
         _user = user;
     }
 
-    public async Task Vote(int ticketId, VoteRequest request)
+    public async Task Vote(int issueId, VoteRequest request)
     {
-        var ticket = await _db.Tickets.FindOrThrowAsync(ticketId);
+        var issue = await _db.Issues.FindOrThrowAsync(issueId);
 
-        var existingVote = await _db.Votes.FindAsync(ticketId, _user.Id);
+        var existingVote = await _db.Votes.FindAsync(issueId, _user.Id);
 
         if (existingVote is null)
-            ticket.Votes.Add(new Vote
+            issue.Votes.Add(new Vote
             {
                 Value = request.Vote,
                 VoterId = _user.Id,
-                TicketId = ticketId
+                IssueId = issueId
             });
 
         else
@@ -39,18 +39,18 @@ public class VotesService : IVotesService
         await _db.SaveChangesAsync();
     }
 
-    public async Task DeleteUserVote(int ticketId)
+    public async Task DeleteUserVote(int issueId)
     {
         await _db.Votes
-            .Where(v => v.TicketId == ticketId && v.VoterId == _user.Id)
+            .Where(v => v.IssueId == issueId && v.VoterId == _user.Id)
             .ExecuteDeleteAsync();
     }
 
-    public async Task<VoteDto> GetUserVote(int ticketId)
+    public async Task<VoteDto> GetUserVote(int issueId)
     {
-        await _db.Tickets.ExistsOrThrowAsync(ticketId);
+        await _db.Issues.ExistsOrThrowAsync(issueId);
 
-        var vote = await _db.Votes.FindAsync(ticketId, _user.Id);
+        var vote = await _db.Votes.FindAsync(issueId, _user.Id);
 
         return new VoteDto(vote?.Value);
     }

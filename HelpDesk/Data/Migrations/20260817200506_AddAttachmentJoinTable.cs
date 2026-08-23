@@ -31,7 +31,7 @@ namespace HelpDesk.Data.Migrations
                     table.ForeignKey(
                         name: "FK_TicketAttachment_Tickets_OwnerId",
                         column: x => x.OwnerId,
-                        principalTable: "Tickets",
+                        principalTable: "Issues",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -98,7 +98,7 @@ namespace HelpDesk.Data.Migrations
                 name: "FK_Attachments_Tickets_TicketId",
                 table: "Attachments",
                 column: "TicketId",
-                principalTable: "Tickets",
+                principalTable: "Issues",
                 principalColumn: "Id",
                 onDelete: ReferentialAction.Cascade);
         }

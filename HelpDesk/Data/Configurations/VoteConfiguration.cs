@@ -8,7 +8,7 @@ public class VoteConfiguration : IEntityTypeConfiguration<Vote>
 {
     public void Configure(EntityTypeBuilder<Vote> builder)
     {
-        builder.HasKey(v => new { v.TicketId, v.VoterId });
+        builder.HasKey(v => new { v.IssueId, v.VoterId });
 
         builder.Property(v => v.Value)
             .IsRequired();
@@ -17,9 +17,9 @@ public class VoteConfiguration : IEntityTypeConfiguration<Vote>
             .IsRequired()
             .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-        builder.HasOne(v => v.Ticket)
+        builder.HasOne(v => v.Issue)
             .WithMany(t => t.Votes)
-            .HasForeignKey(v => v.TicketId)
+            .HasForeignKey(v => v.IssueId)
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(v => v.Voter)

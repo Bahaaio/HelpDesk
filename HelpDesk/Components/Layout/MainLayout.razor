@@ -30,7 +30,7 @@ else
         <MudAppBar Elevation="1">
             <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit"
                            Edge="Edge.Start" OnClick="ToggleDrawer" />
-            <MudText Typo="Typo.h6" Class="cursor-pointer" @onclick='() => Navigation.NavigateTo("/tickets")'>
+            <MudText Typo="Typo.h6" Class="cursor-pointer" @onclick='() => Navigation.NavigateTo("/issues")'>
                 HelpDesk
             </MudText>
             <MudSpacer />
@@ -50,19 +50,19 @@ else
 
         <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Docked" Elevation="2">
             <MudNavMenu>
-                <MudNavLink Href="/tickets" Icon="@Icons.Material.Filled.ConfirmationNumber"
+                <MudNavLink Href="/issues" Icon="@Icons.Material.Filled.BugReport"
                              Match="NavLinkMatch.Prefix">
-                    All Tickets
+                    All Issues
                 </MudNavLink>
-                <MudNavLink Href="/tickets/mine" Icon="@Icons.Material.Filled.Person"
+                <MudNavLink Href="/issues/mine" Icon="@Icons.Material.Filled.Person"
                              Match="NavLinkMatch.Prefix">
-                    My Tickets
+                    My Issues
                 </MudNavLink>
                 @if (AuthState.Role == "Technician")
                 {
-                    <MudNavLink Href="/tickets/assigned" Icon="@Icons.Material.Filled.Assignment"
+                    <MudNavLink Href="/issues/assigned" Icon="@Icons.Material.Filled.Assignment"
                                  Match="NavLinkMatch.Prefix">
-                        Assigned Tickets
+                        Assigned Issues
                     </MudNavLink>
                     <MudNavLink Href="/tags" Icon="@Icons.Material.Filled.Label"
                                  Match="NavLinkMatch.All">

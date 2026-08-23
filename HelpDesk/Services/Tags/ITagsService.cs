@@ -4,7 +4,7 @@ using HelpDesk.Dtos.Responses;
 namespace HelpDesk.Services.Tags;
 
 /// <summary>
-///     Manages ticket category tags. Only technicians may create or update tags.
+///     Manages issue category tags. Only technicians may create or update tags.
 /// </summary>
 public interface ITagsService
 {

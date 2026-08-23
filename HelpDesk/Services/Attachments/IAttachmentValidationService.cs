@@ -17,7 +17,7 @@ public interface IAttachmentValidationService
     void Validate(IFormFile file, AttachmentOptions options);
 
     /// <summary>
-    ///     Validates the number of attachments allowed per context (e.g., ticket).
+    ///     Validates the number of attachments allowed per context (e.g., issue).
     /// </summary>
     /// <param name="count">The current number of attachments.</param>
     /// <param name="maxCount">The maximum number of attachments allowed.</param>

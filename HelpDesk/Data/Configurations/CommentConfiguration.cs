@@ -20,9 +20,9 @@ public class CommentConfiguration : IEntityTypeConfiguration<Comment>
             .WithMany(a => a.Comments)
             .HasForeignKey(c => c.AuthorId);
 
-        builder.HasOne(c => c.Ticket)
+        builder.HasOne(c => c.Issue)
             .WithMany(t => t.Comments)
-            .HasForeignKey(c => c.TicketId)
+            .HasForeignKey(c => c.IssueId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

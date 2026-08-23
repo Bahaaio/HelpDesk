@@ -37,7 +37,7 @@ internal sealed class ApiDocumentTransformer : IOpenApiDocumentTransformer
         {
             Title = "HelpDesk API",
             Version = "v1",
-            Description = "API for managing IT tickets"
+            Description = "API for managing IT issues"
         };
         return Task.CompletedTask;
     }

@@ -174,7 +174,7 @@ namespace HelpDesk.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Tickets",
+                name: "Issues",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
@@ -218,7 +218,7 @@ namespace HelpDesk.Data.Migrations
                     table.ForeignKey(
                         name: "FK_Attachments_Tickets_TicketId",
                         column: x => x.TicketId,
-                        principalTable: "Tickets",
+                        principalTable: "Issues",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -246,7 +246,7 @@ namespace HelpDesk.Data.Migrations
                     table.ForeignKey(
                         name: "FK_Comments_Tickets_TicketId",
                         column: x => x.TicketId,
-                        principalTable: "Tickets",
+                        principalTable: "Issues",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -270,7 +270,7 @@ namespace HelpDesk.Data.Migrations
                     table.ForeignKey(
                         name: "FK_TagTicket_Tickets_TicketsId",
                         column: x => x.TicketsId,
-                        principalTable: "Tickets",
+                        principalTable: "Issues",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -298,7 +298,7 @@ namespace HelpDesk.Data.Migrations
                     table.ForeignKey(
                         name: "FK_Votes_Tickets_TicketId",
                         column: x => x.TicketId,
-                        principalTable: "Tickets",
+                        principalTable: "Issues",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -373,7 +373,7 @@ namespace HelpDesk.Data.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "IX_Tickets_AuthorId",
-                table: "Tickets",
+                table: "Issues",
                 column: "AuthorId");
 
             migrationBuilder.CreateIndex(
@@ -424,7 +424,7 @@ namespace HelpDesk.Data.Migrations
                 name: "Tags");
 
             migrationBuilder.DropTable(
-                name: "Tickets");
+                name: "Issues");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");

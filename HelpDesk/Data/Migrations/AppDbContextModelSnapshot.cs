@@ -143,14 +143,14 @@ namespace HelpDesk.Data.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-                    b.Property<int>("TicketId")
+                    b.Property<int>("IssueId")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
 
                     b.HasIndex("AuthorId");
 
-                    b.HasIndex("TicketId");
+                    b.HasIndex("IssueId");
 
                     b.ToTable("Comments");
                 });
@@ -191,32 +191,7 @@ namespace HelpDesk.Data.Migrations
                     b.ToTable("InviteCodes");
                 });
 
-            modelBuilder.Entity("HelpDesk.Models.Tag", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
-
-                    b.ToTable("Tags");
-                });
-
-            modelBuilder.Entity("HelpDesk.Models.Ticket", b =>
+            modelBuilder.Entity("HelpDesk.Models.Issue", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -254,14 +229,14 @@ namespace HelpDesk.Data.Migrations
 
                     b.HasIndex("AuthorId");
 
-                    b.ToTable("Tickets");
+                    b.ToTable("Issues");
                 });
 
-            modelBuilder.Entity("HelpDesk.Models.TicketAttachment", b =>
+            modelBuilder.Entity("HelpDesk.Models.IssueAttachment", b =>
                 {
                     b.Property<int>("OwnerId")
                         .HasColumnType("integer")
-                        .HasColumnName("TicketId");
+                        .HasColumnName("IssueId");
 
                     b.Property<Guid>("AttachmentId")
                         .HasColumnType("uuid");
@@ -271,10 +246,10 @@ namespace HelpDesk.Data.Migrations
                     b.HasIndex("AttachmentId")
                         .IsUnique();
 
-                    b.ToTable("TicketAttachment");
+                    b.ToTable("IssueAttachment");
                 });
 
-            modelBuilder.Entity("HelpDesk.Models.TicketStatusChange", b =>
+            modelBuilder.Entity("HelpDesk.Models.IssueStatusChange", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -294,7 +269,7 @@ namespace HelpDesk.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("TicketId")
+                    b.Property<int>("IssueId")
                         .HasColumnType("integer");
 
                     b.Property<string>("ToStatus")
@@ -305,14 +280,39 @@ namespace HelpDesk.Data.Migrations
 
                     b.HasIndex("ChangedByUserId");
 
-                    b.HasIndex("TicketId");
+                    b.HasIndex("IssueId");
 
-                    b.ToTable("TicketStatusChanges");
+                    b.ToTable("IssueStatusChanges");
+                });
+
+            modelBuilder.Entity("HelpDesk.Models.Tag", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Tags");
                 });
 
             modelBuilder.Entity("HelpDesk.Models.Vote", b =>
                 {
-                    b.Property<int>("TicketId")
+                    b.Property<int>("IssueId")
                         .HasColumnType("integer");
 
                     b.Property<int>("VoterId")
@@ -326,11 +326,26 @@ namespace HelpDesk.Data.Migrations
                     b.Property<int>("Value")
                         .HasColumnType("integer");
 
-                    b.HasKey("TicketId", "VoterId");
+                    b.HasKey("IssueId", "VoterId");
 
                     b.HasIndex("VoterId");
 
                     b.ToTable("Votes");
+                });
+
+            modelBuilder.Entity("IssueTag", b =>
+                {
+                    b.Property<int>("IssuesId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TagsId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("IssuesId", "TagsId");
+
+                    b.HasIndex("TagsId");
+
+                    b.ToTable("IssueTag");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<int>", b =>
@@ -465,21 +480,6 @@ namespace HelpDesk.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("TagTicket", b =>
-                {
-                    b.Property<int>("TagsId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("TicketsId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("TagsId", "TicketsId");
-
-                    b.HasIndex("TicketsId");
-
-                    b.ToTable("TagTicket");
-                });
-
             modelBuilder.Entity("HelpDesk.Models.Attachment", b =>
                 {
                     b.HasOne("HelpDesk.Models.ApplicationUser", "Uploader")
@@ -499,15 +499,15 @@ namespace HelpDesk.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("HelpDesk.Models.Ticket", "Ticket")
+                    b.HasOne("HelpDesk.Models.Issue", "Issue")
                         .WithMany("Comments")
-                        .HasForeignKey("TicketId")
+                        .HasForeignKey("IssueId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Author");
 
-                    b.Navigation("Ticket");
+                    b.Navigation("Issue");
                 });
 
             modelBuilder.Entity("HelpDesk.Models.CommentAttachment", b =>
@@ -529,15 +529,15 @@ namespace HelpDesk.Data.Migrations
                     b.Navigation("Comment");
                 });
 
-            modelBuilder.Entity("HelpDesk.Models.Ticket", b =>
+            modelBuilder.Entity("HelpDesk.Models.Issue", b =>
                 {
                     b.HasOne("HelpDesk.Models.ApplicationUser", "AssignedTo")
-                        .WithMany("AssignedTickets")
+                        .WithMany("AssignedIssues")
                         .HasForeignKey("AssignedToId")
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("HelpDesk.Models.ApplicationUser", "Author")
-                        .WithMany("CreatedTickets")
+                        .WithMany("CreatedIssues")
                         .HasForeignKey("AuthorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -547,7 +547,7 @@ namespace HelpDesk.Data.Migrations
                     b.Navigation("Author");
                 });
 
-            modelBuilder.Entity("HelpDesk.Models.TicketAttachment", b =>
+            modelBuilder.Entity("HelpDesk.Models.IssueAttachment", b =>
                 {
                     b.HasOne("HelpDesk.Models.Attachment", "Attachment")
                         .WithMany()
@@ -555,7 +555,7 @@ namespace HelpDesk.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("HelpDesk.Models.Ticket", "Ticket")
+                    b.HasOne("HelpDesk.Models.Issue", "Issue")
                         .WithMany("Attachments")
                         .HasForeignKey("OwnerId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -563,10 +563,10 @@ namespace HelpDesk.Data.Migrations
 
                     b.Navigation("Attachment");
 
-                    b.Navigation("Ticket");
+                    b.Navigation("Issue");
                 });
 
-            modelBuilder.Entity("HelpDesk.Models.TicketStatusChange", b =>
+            modelBuilder.Entity("HelpDesk.Models.IssueStatusChange", b =>
                 {
                     b.HasOne("HelpDesk.Models.ApplicationUser", "ChangedByUser")
                         .WithMany()
@@ -574,22 +574,22 @@ namespace HelpDesk.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("HelpDesk.Models.Ticket", "Ticket")
+                    b.HasOne("HelpDesk.Models.Issue", "Issue")
                         .WithMany("StatusChanges")
-                        .HasForeignKey("TicketId")
+                        .HasForeignKey("IssueId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("ChangedByUser");
 
-                    b.Navigation("Ticket");
+                    b.Navigation("Issue");
                 });
 
             modelBuilder.Entity("HelpDesk.Models.Vote", b =>
                 {
-                    b.HasOne("HelpDesk.Models.Ticket", "Ticket")
+                    b.HasOne("HelpDesk.Models.Issue", "Issue")
                         .WithMany("Votes")
-                        .HasForeignKey("TicketId")
+                        .HasForeignKey("IssueId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -599,9 +599,24 @@ namespace HelpDesk.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Ticket");
+                    b.Navigation("Issue");
 
                     b.Navigation("Voter");
+                });
+
+            modelBuilder.Entity("IssueTag", b =>
+                {
+                    b.HasOne("HelpDesk.Models.Issue", null)
+                        .WithMany()
+                        .HasForeignKey("IssuesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HelpDesk.Models.Tag", null)
+                        .WithMany()
+                        .HasForeignKey("TagsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
@@ -655,28 +670,13 @@ namespace HelpDesk.Data.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("TagTicket", b =>
-                {
-                    b.HasOne("HelpDesk.Models.Tag", null)
-                        .WithMany()
-                        .HasForeignKey("TagsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("HelpDesk.Models.Ticket", null)
-                        .WithMany()
-                        .HasForeignKey("TicketsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("HelpDesk.Models.ApplicationUser", b =>
                 {
-                    b.Navigation("AssignedTickets");
+                    b.Navigation("AssignedIssues");
 
                     b.Navigation("Comments");
 
-                    b.Navigation("CreatedTickets");
+                    b.Navigation("CreatedIssues");
 
                     b.Navigation("Votes");
                 });
@@ -686,7 +686,7 @@ namespace HelpDesk.Data.Migrations
                     b.Navigation("Attachments");
                 });
 
-            modelBuilder.Entity("HelpDesk.Models.Ticket", b =>
+            modelBuilder.Entity("HelpDesk.Models.Issue", b =>
                 {
                     b.Navigation("Attachments");
 

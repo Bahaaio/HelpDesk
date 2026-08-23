@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace HelpDesk.Controllers;
 
 [ApiController]
-[Route("api/tickets/{ticketId:int}/[controller]")]
+[Route("api/issues/{issueId:int}/[controller]")]
 public class CommentsController : ControllerBase
 {
     private readonly ICommentsService _commentsService;
@@ -17,22 +17,22 @@ public class CommentsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<CommentDto>>> GetAll(int ticketId) =>
-        Ok(await _commentsService.GetAll(ticketId));
+    public async Task<ActionResult<List<CommentDto>>> GetAll(int issueId) =>
+        Ok(await _commentsService.GetAll(issueId));
 
     [HttpPost]
-    public async Task<ActionResult<CommentDto>> Create(int ticketId, CreateCommentRequest request)
+    public async Task<ActionResult<CommentDto>> Create(int issueId, CreateCommentRequest request)
     {
-        var comment = await _commentsService.Create(ticketId, request);
+        var comment = await _commentsService.Create(issueId, request);
         return Created((string?)null, comment);
     }
 
     [HttpPut("{commentId:int}")]
-    public async Task<ActionResult<CommentDto>> Update(int ticketId, int commentId, UpdateCommentRequest request) =>
+    public async Task<ActionResult<CommentDto>> Update(int issueId, int commentId, UpdateCommentRequest request) =>
         Ok(await _commentsService.Update(commentId, request));
 
     [HttpDelete("{commentId:int}")]
-    public async Task<ActionResult> Delete(int ticketId, int commentId)
+    public async Task<ActionResult> Delete(int issueId, int commentId)
     {
         await _commentsService.Delete(commentId);
         return NoContent();

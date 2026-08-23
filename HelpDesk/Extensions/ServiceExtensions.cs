@@ -6,7 +6,7 @@ using HelpDesk.Services.Comments;
 using HelpDesk.Services.Invites;
 using HelpDesk.Services.Storage;
 using HelpDesk.Services.Tags;
-using HelpDesk.Services.Tickets;
+using HelpDesk.Services.Issues;
 using HelpDesk.Services.Users;
 using HelpDesk.Services.Votes;
 using Microsoft.EntityFrameworkCore;
@@ -35,14 +35,14 @@ public static class ServiceExtensions
             // attachments
             services.AddScoped<IAttachmentsReader, AttachmentsReader>();
             services.AddScoped<IAttachmentValidationService, AttachmentValidationService>();
-            services.AddScoped<IAttachmentsService<Ticket>, TicketAttachmentsService>();
+            services.AddScoped<IAttachmentsService<Issue>, IssueAttachmentsService>();
             services.AddScoped<IAttachmentsService<Comment>, CommentAttachmentsService>();
 
-            // tickets
-            services.AddScoped<ITicketsService, TicketsService>();
-            services.AddScoped<ITicketTagsService, TicketTagsService>();
-            services.AddScoped<ITicketAssignmentsService, TicketAssignmentsService>();
-            services.AddScoped<ITicketStatusService, TicketStatusService>();
+            // issues
+            services.AddScoped<IIssuesService, IssuesService>();
+            services.AddScoped<IIssueTagsService, IssueTagsService>();
+            services.AddScoped<IIssueAssignmentsService, IssueAssignmentsService>();
+            services.AddScoped<IIssueStatusService, IssueStatusService>();
 
             // misc
             services.AddScoped<ICommentsService, CommentsService>();

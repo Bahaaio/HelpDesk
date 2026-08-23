@@ -1,0 +1,1011 @@
+@page "/issues/{Id:int}"
+@rendermode InteractiveServer
+@inject IIssuesService IssuesService
+@inject IIssueStatusService IssueStatusService
+@inject IVotesService VotesService
+@inject ICommentsService CommentsService
+@inject ITagsService TagsService
+@inject IIssueTagsService IssueTagsService
+@inject IIssueAttachmentsClient AttachmentsClient
+@inject ICommentAttachmentsClient CommentAttachmentsClient
+@inject IOptions<CommentAttachmentOptions> CommentAttachmentOptions
+@inject IOptions<IssueAttachmentOptions> IssueAttachmentOptions
+@inject IIssueAssignmentsService IssueAssignmentsService
+@inject AuthState AuthState
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject NavigationManager Navigation
+@inject ILogger<IssueDetails> Logger
+
+<PageTitle>Issue #@Id - HelpDesk</PageTitle>
+
+@if (_loading)
+{
+    <MudProgressCircular Indeterminate="true" Class="d-flex justify-center ma-8" />
+}
+else if (_issue is null)
+{
+    <MudContainer Class="text-center pa-8">
+        <MudIcon Icon="@Icons.Material.Filled.ErrorOutline" Size="Size.Large" Color="Color.Error" />
+        <MudText Typo="Typo.h6" Class="mt-2">Issue not found</MudText>
+        <MudButton Href="/issues" Class="mt-4" Variant="Variant.Outlined">Back to Issues</MudButton>
+    </MudContainer>
+}
+else
+{
+    <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-2">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Href="/issues" />
+            <MudText Typo="Typo.h4">
+                <span style="opacity: 0.5; font-weight: 400;">#@_issue.Id</span>
+                @_issue.Title
+            </MudText>
+            <MudSpacer />
+            @if (_canEdit)
+            {
+                <MudTooltip Text="Edit issue">
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Inherit"
+                                   OnClick="OpenEditDialog" />
+                </MudTooltip>
+                <MudTooltip Text="Delete issue">
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                                   OnClick="() => _deleteDialogVisible = true" />
+                </MudTooltip>
+            }
+            @if (_issue.Status == Status.Open)
+            {
+                <MudChip T="string" Color="Color.Success" Size="Size.Medium">Open</MudChip>
+            }
+            else
+            {
+                <MudChip T="string" Color="Color.Default" Size="Size.Medium">Closed</MudChip>
+            }
+        </MudStack>
+
+        <MudPaper Class="pa-4 mb-4">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
+                <MudAvatar Size="Size.Small" Color="Color.Primary">
+                    @(_issue.AuthorUsername?[..1].ToUpper() ?? "?")
+                </MudAvatar>
+                <MudText Typo="Typo.body2">@_issue.AuthorUsername</MudText>
+                <MudSpacer />
+                <MudText Typo="Typo.caption" Color="Color.Default">
+                    @_issue.CreatedAt.ToString("MMM dd, yyyy HH:mm")
+                </MudText>
+            </MudStack>
+
+            @if (!string.IsNullOrEmpty(_issue.Description))
+            {
+                <MudText Typo="Typo.body1" Class="mt-2">@_issue.Description</MudText>
+            }
+
+            <MudStack Row="true" Class="mt-4" AlignItems="AlignItems.Center">
+                @foreach (var tag in _issue.Tags)
+                {
+                    <MudChip T="string" Variant="Variant.Outlined" Size="Size.Small">@tag</MudChip>
+                }
+            </MudStack>
+        </MudPaper>
+
+        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+            <MudText Typo="Typo.h6">Status</MudText>
+            <MudSpacer />
+            @if (_canUpdateStatus)
+            {
+                <MudButtonGroup Variant="Variant.Outlined" Size="Size.Small">
+                    <MudButton OnClick="() => SetStatus(Status.Open)"
+                               Color="@(_issue.Status == Status.Open ? Color.Success : Color.Default)"
+                               Disabled="_issue.Status == Status.Open">
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Class="mr-1" />
+                        Open
+                    </MudButton>
+                    <MudButton OnClick="() => SetStatus(Status.Closed)"
+                               Color="@(_issue.Status == Status.Closed ? Color.Error : Color.Default)"
+                               Disabled="_issue.Status == Status.Closed">
+                        <MudIcon Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Class="mr-1" />
+                        Close
+                    </MudButton>
+                </MudButtonGroup>
+            }
+            else
+            {
+                <MudText Typo="Typo.body2" Color="Color.Default">
+                    @(_issue.Status == Status.Open ? "Open" : "Closed")
+                </MudText>
+            }
+        </MudStack>
+
+        @if (!string.IsNullOrEmpty(_issue.AssignedToUsername) || AuthState.Role == "Technician")
+        {
+            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+                <MudText Typo="Typo.h6">Assigned to</MudText>
+                <MudSpacer />
+                @if (!string.IsNullOrEmpty(_issue.AssignedToUsername))
+                {
+                    <MudStack Row="true" AlignItems="AlignItems.Center">
+                        <MudAvatar Size="Size.Small" Color="Color.Primary">
+                            @(_issue.AssignedToUsername?[..1].ToUpper() ?? "?")
+                        </MudAvatar>
+                        <MudText Typo="Typo.body2">@_issue.AssignedToUsername</MudText>
+                        @if (AuthState.Role == "Technician" && _isAssignedToCurrentUser && _issue.Status == Status.Open)
+                        {
+                            <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error"
+                                       OnClick="UnassignAsync" Disabled="_assigning"
+                                       StartIcon="@Icons.Material.Filled.PersonRemove">
+                                Unassign
+                            </MudButton>
+                        }
+                    </MudStack>
+                }
+                else
+                {
+                    @if (AuthState.Role == "Technician" && _issue.Status == Status.Open)
+                    {
+                        <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Primary"
+                                   OnClick="AssignAsync" Disabled="_assigning"
+                                   StartIcon="@Icons.Material.Filled.PersonAdd">
+                            Self Assign
+                        </MudButton>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2" Color="Color.Default">Unassigned</MudText>
+                    }
+                }
+            </MudStack>
+        }
+
+        <MudDivider Class="mb-4" />
+
+        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
+            <MudText Typo="Typo.h6">Attachments (@_attachments.Count)</MudText>
+        </MudStack>
+
+        @if (_attachments.Count > 0)
+        {
+            <MudGrid Class="mb-4">
+                @foreach (var attachment in _attachments)
+                {
+                    <MudItem xs="6" sm="4" md="3">
+                        <MudPaper Class="pa-1 relative" Style="cursor: pointer;"
+                                   @onclick="() => OpenPreview(attachment.AttachmentId)">
+                            <img src="@($"/api/attachments/{attachment.AttachmentId}")"
+                                 alt="@attachment.OriginalFileName"
+                                 style="width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; display: block;"
+                                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+                            <div style="display: none; width: 100%; aspect-ratio: 1; align-items: center; justify-content: center; flex-direction: column; background: var(--mud-palette-surface); border-radius: 8px; padding: 8px;">
+                                <MudIcon Icon="@Icons.Material.Filled.InsertDriveFile" Size="Size.Large" Color="Color.Default" />
+                                <MudText Typo="Typo.caption" Align="Align.Center" Class="mt-1"
+                                         Style="word-break: break-all; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                                    @attachment.OriginalFileName
+                                </MudText>
+                            </div>
+                        </MudPaper>
+                    </MudItem>
+                }
+            </MudGrid>
+        }
+
+        <MudDivider Class="mb-4" />
+
+        <MudText Typo="Typo.h6" Class="mb-2">Votes</MudText>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+            <MudTooltip Text="Upvote">
+                <MudIconButton Icon="@Icons.Material.Filled.ThumbUp"
+                               Color="@(_currentVote == VoteValue.Upvote ? Color.Success : Color.Default)"
+                               OnClick="() => VoteAsync(VoteValue.Upvote)"
+                               Disabled="!AuthState.IsAuthenticated" />
+            </MudTooltip>
+            <MudText Typo="Typo.h6" Class="mx-2">@_issue.VoteScore</MudText>
+            <MudTooltip Text="Downvote">
+                <MudIconButton Icon="@Icons.Material.Filled.ThumbDown"
+                               Color="@(_currentVote == VoteValue.Downvote ? Color.Error : Color.Default)"
+                               OnClick="() => VoteAsync(VoteValue.Downvote)"
+                               Disabled="!AuthState.IsAuthenticated" />
+            </MudTooltip>
+        </MudStack>
+
+        <MudDivider Class="mb-4" />
+
+        <MudText Typo="Typo.h6" Class="mb-2">Activity</MudText>
+
+        @if (_timeline.Count == 0)
+        {
+            <MudPaper Class="pa-4 mb-4 text-center">
+                <MudText Typo="Typo.body2" Color="Color.Default">No activity yet</MudText>
+            </MudPaper>
+        }
+        else
+        {
+            @foreach (var item in _timeline)
+            {
+                @if (item.Type == TimelineItemType.StatusChange && item.StatusChange is not null)
+                {
+                    var sc = item.StatusChange;
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2 ml-4"
+                              Style="opacity: 0.7;">
+                        <MudIcon Icon="@Icons.Material.Filled.SwapHoriz" Size="Size.Small" Color="Color.Default" />
+                        <MudText Typo="Typo.body2">
+                            <strong>@sc.ChangedByUsername</strong> changed status from
+                            <MudChip T="string" Size="Size.Small"
+                                     Color="@(sc.FromStatus == Status.Open ? Color.Success : Color.Default)"
+                                     Variant="Variant.Outlined"
+                                     Style="height: 18px; font-size: 0.7rem; pointer-events: none;">
+                                @(sc.FromStatus == Status.Open ? "Open" : "Closed")
+                            </MudChip>
+                            to
+                            <MudChip T="string" Size="Size.Small"
+                                     Color="@(sc.ToStatus == Status.Open ? Color.Success : Color.Default)"
+                                     Variant="Variant.Outlined"
+                                     Style="height: 18px; font-size: 0.7rem; pointer-events: none;">
+                                @(sc.ToStatus == Status.Open ? "Open" : "Closed")
+                            </MudChip>
+                        </MudText>
+                        <MudSpacer />
+                        <MudText Typo="Typo.caption" Color="Color.Default">
+                            @sc.ChangedAt.ToString("MMM dd, yyyy HH:mm")
+                        </MudText>
+                    </MudStack>
+                }
+                else if (item.Type == TimelineItemType.Comment && item.Comment is not null)
+                {
+                    var comment = item.Comment;
+                    <MudPaper Class="pa-3 mb-2">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-1">
+                            <MudAvatar Size="Size.Small" Color="Color.Primary">
+                                @comment.AuthorUsername[..1].ToUpper()
+                            </MudAvatar>
+                            <MudText Typo="Typo.subtitle2">@comment.AuthorUsername</MudText>
+                            <MudSpacer />
+                            <MudText Typo="Typo.caption" Color="Color.Default">
+                                @comment.CreatedAt.ToString("MMM dd, yyyy HH:mm")
+                            </MudText>
+                            @if (AuthState.Username == comment.AuthorUsername || AuthState.Role == "Technician")
+                            {
+                                <MudTooltip Text="Edit">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                                   Color="Color.Inherit"
+                                                   OnClick="() => OpenCommentEditDialog(comment)" />
+                                </MudTooltip>
+                                <MudTooltip Text="Delete">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                   Color="Color.Error"
+                                                   OnClick="() => DeleteComment(comment.Id)" />
+                                </MudTooltip>
+                            }
+                        </MudStack>
+                        <div Class="ml-8" style="line-height: 1.6;">
+                            @foreach (var seg in ParseComment(comment.Content))
+                            {
+                                @if (seg.IsReference && _referencedIssues.TryGetValue(seg.IssueId, out var refIssue))
+                                {
+                                    <MudLink Href="@($"/issues/{seg.IssueId}")" Target="_blank"
+                                             Style="vertical-align: middle; text-decoration: none;">
+                                        <MudChip T="string" Size="Size.Small"
+                                                 Color="@(refIssue.Status == Status.Open ? Color.Success : Color.Default)"
+                                                 Variant="Variant.Outlined"
+                                                 Style="height: 20px; font-size: 0.7rem; vertical-align: middle; pointer-events: none;">
+                                            @(refIssue.Status == Status.Open ? "Open" : "Closed")
+                                        </MudChip>
+                                        <span style="font-size: 0.875rem; text-decoration: underline;">
+                                            #@seg.IssueId
+                                        </span>
+                                        <span style="font-size: 0.875rem;">
+                                            @(refIssue.Title.Length > 30 ? refIssue.Title[..30] + "..." : refIssue.Title)
+                                        </span>
+                                    </MudLink>
+                                }
+                                else if (seg.IsReference)
+                                {
+                                    <span style="font-size: 0.875rem;"><strong>@seg.Text</strong></span>
+                                }
+                                else
+                                {
+                                    <span style="font-size: 0.875rem;">@seg.Text</span>
+                                }
+                            }
+                        </div>
+                        @if (comment.Attachments.Count > 0)
+                        {
+                            var attachment = comment.Attachments[0];
+                            <MudStack Row="true" Class="mt-2 ml-8">
+                                <MudPaper Class="pa-1 relative" Style="cursor: pointer; width: 96px; height: 96px;"
+                                          @onclick="() => OpenPreview(attachment.AttachmentId)">
+                                    <img src="@($"/api/attachments/{attachment.AttachmentId}")"
+                                         alt="@attachment.OriginalFileName"
+                                         style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px; display: block;" />
+                                </MudPaper>
+                            </MudStack>
+                        }
+                    </MudPaper>
+                }
+            }
+        }
+
+        @if (AuthState.IsAuthenticated)
+        {
+            <MudPaper Class="pa-4 mt-4">
+                <MudTextField @bind-Value="_newComment" Label="Add a comment"
+                              Lines="3" MaxLength="2000" />
+
+                <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2 gap-2">
+                    <MudFileUpload T="IBrowserFile"
+                                   Accept="@string.Join(',', CommentAttachmentOptions.Value.AllowedExtensions)"
+                                   FilesChanged="OnNewCommentImageSelected">
+                        <ActivatorContent>
+                            <MudButton Variant="Variant.Outlined" Size="Size.Small"
+                                       StartIcon="@Icons.Material.Filled.Image">
+                                Attach Image
+                            </MudButton>
+                        </ActivatorContent>
+                    </MudFileUpload>
+                    @if (_newCommentImage is not null)
+                    {
+                        @if (_newCommentImagePreviewUrl is not null)
+                        {
+                            <img src="@_newCommentImagePreviewUrl"
+                                 alt="@_newCommentImage.Name"
+                                 style="width: 48px; height: 48px; object-fit: cover; border-radius: 4px; display: block;" />
+                        }
+                        <MudText Typo="Typo.caption">@_newCommentImage.Name</MudText>
+                        <MudTooltip Text="Remove image">
+                            <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
+                                           Color="Color.Error" OnClick="ClearNewCommentImage" />
+                        </MudTooltip>
+                    }
+                </MudStack>
+
+                <MudButton OnClick="AddCommentAsync" Color="Color.Primary" Variant="Variant.Filled"
+                           Class="mt-2" Disabled="string.IsNullOrWhiteSpace(_newComment) || _submittingComment">
+                    @if (_submittingComment)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    }
+                    Post Comment
+                </MudButton>
+            </MudPaper>
+        }
+    </MudContainer>
+}
+
+<MudDialog @bind-Visible="_editDialogOpen" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Edit Issue</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="_editTitle" Label="Title" Required="true" MaxLength="200"
+                      Class="mb-4" FullWidth="true" />
+        <MudTextField @bind-Value="_editDescription" Label="Description" Lines="5" MaxLength="2000"
+                      Class="mb-4" FullWidth="true" />
+        @if (AuthState.Role == "Technician")
+        {
+            <MudSelect T="string" Label="Tags" MultiSelection="true"
+                       SelectedValues="_editSelectedTags" SelectedValuesChanged="OnEditTagsChanged">
+                @foreach (var tag in _allTags)
+                {
+                    <MudSelectItem Value="@tag.Name">@tag.Name</MudSelectItem>
+                }
+            </MudSelect>
+        }
+
+        <MudDivider Class="my-4" />
+
+        <MudText Typo="Typo.subtitle1" Class="mb-2">Attachments</MudText>
+
+        @if (_attachments.Count > 0)
+        {
+            var visibleAttachments = _attachments.Where(a => !_editDeletedAttachmentIds.Contains(a.AttachmentId)).ToList();
+            @if (visibleAttachments.Count > 0)
+            {
+                <MudText Typo="Typo.body2" Class="mb-1" Color="Color.Default">Current (@visibleAttachments.Count)</MudText>
+                <MudStack Row="true" Wrap="Wrap.Wrap" Class="mb-2 gap-2">
+                    @foreach (var attachment in visibleAttachments)
+                    {
+                        <MudPaper Class="pa-1 relative" Style="width: 80px; height: 80px;">
+                            <img src="@($"/api/attachments/{attachment.AttachmentId}")"
+                                 alt="@attachment.OriginalFileName"
+                                 style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px; display: block;"
+                                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+                            <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background: var(--mud-palette-surface); border-radius: 4px;">
+                                <MudIcon Icon="@Icons.Material.Filled.InsertDriveFile" Size="Size.Small" />
+                            </div>
+                            <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
+                                           Color="Color.Error"
+                                           Style="position: absolute; top: 2px; right: 2px;"
+                                           OnClick="() => _editDeletedAttachmentIds.Add(attachment.AttachmentId)" />
+                        </MudPaper>
+                    }
+                </MudStack>
+            }
+        }
+
+        <MudFileUpload @bind-Files="EditFiles" Multiple="true"
+                       Accept="@string.Join(',', IssueAttachmentOptions.Value.AllowedExtensions)">
+            <ActivatorContent>
+                <MudButton Variant="Variant.Outlined" Size="Size.Small"
+                           StartIcon="@Icons.Material.Filled.AttachFile">
+                    Add Files
+                </MudButton>
+            </ActivatorContent>
+        </MudFileUpload>
+
+        @if (_editFiles is { Count: > 0 })
+        {
+            <MudText Typo="Typo.body2" Class="mt-2 mb-1" Color="Color.Default">New (@_editFiles.Count)</MudText>
+            <MudGrid Class="mb-2">
+                @foreach (var file in _editFiles)
+                {
+                    <MudItem xs="4" sm="3">
+                        <MudPaper Class="pa-1 relative" Style="width: 80px; height: 80px;">
+                            @if (_editPreviewUrls.TryGetValue(file, out var dataUrl) && dataUrl is not null)
+                            {
+                                <img src="@dataUrl"
+                                     alt="@file.Name"
+                                     style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px; display: block;" />
+                            }
+                            else
+                            {
+                                <div style="width: 100%; height: 100%; align-items: center; justify-content: center; flex-direction: column; background: var(--mud-palette-surface); border-radius: 4px; display: flex;">
+                                    <MudIcon Icon="@Icons.Material.Filled.InsertDriveFile" Size="Size.Small" />
+                                </div>
+                            }
+                        </MudPaper>
+                    </MudItem>
+                }
+            </MudGrid>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _editDialogOpen = false">Cancel</MudButton>
+        <MudButton OnClick="SaveEditAsync" Color="Color.Primary" Disabled="_savingEdit">
+            @if (_savingEdit)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+            }
+            Save
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+<MudDialog @bind-Visible="_deleteDialogVisible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Delete Issue</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText>Are you sure you want to delete <strong>@_issue?.Title</strong>? This action cannot be undone.</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _deleteDialogVisible = false">Cancel</MudButton>
+        <MudButton OnClick="DeleteIssueAsync" Color="Color.Error" Disabled="_deleting">
+            @if (_deleting)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+            }
+            Delete
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private IssueDto? _issue;
+    private List<AttachmentDto> _attachments = new();
+    private List<CommentDto> _comments = new();
+    private List<StatusChangeDto> _statusChanges = new();
+    private List<TimelineItem> _timeline = new();
+    private VoteValue? _currentVote;
+    private bool _loading = true;
+    private string _newComment = "";
+    private bool _submittingComment;
+    private IBrowserFile? _newCommentImage;
+    private string? _newCommentImagePreviewUrl;
+    private bool _canUpdateStatus;
+    private bool _canEdit;
+    private bool _isAssignedToCurrentUser;
+    private bool _assigning;
+
+    private bool _editDialogOpen;
+    private string _editTitle = "";
+    private string? _editDescription;
+    private bool _savingEdit;
+    private List<TagDto> _allTags = new();
+    private HashSet<string> _editSelectedTags = new();
+    private IReadOnlyList<IBrowserFile>? _editFiles;
+    private Dictionary<IBrowserFile, string?> _editPreviewUrls = new();
+    private HashSet<Guid> _editDeletedAttachmentIds = new();
+    private DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+    private bool _deleteDialogVisible;
+    private bool _deleting;
+
+    private Dictionary<int, IssueDto> _referencedIssues = new();
+    private static readonly System.Text.RegularExpressions.Regex _issueRefRegex = new(@"#(\d+)", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _issue = await IssuesService.GetById(Id);
+            _attachments = await AttachmentsClient.GetAll(Id);
+            _comments = await CommentsService.GetAll(Id);
+
+            try
+            {
+                _statusChanges = await IssueStatusService.GetStatusHistory(Id);
+            }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load issue {IssueId}", Id);
+            Snackbar.Add($"Failed to load issue: {ex.Message}", Severity.Error);
+        }
+
+            try
+            {
+                var voteDto = await VotesService.GetUserVote(Id);
+                _currentVote = voteDto.Vote;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Failed to load vote for issue {IssueId}", Id);
+            }
+
+            _canUpdateStatus = AuthState.IsAuthenticated
+                && (AuthState.Role == "Technician" || AuthState.Username == _issue?.AuthorUsername);
+            _canEdit = AuthState.IsAuthenticated
+                && (AuthState.Role == "Technician" || AuthState.Username == _issue?.AuthorUsername);
+            _isAssignedToCurrentUser = AuthState.IsAuthenticated
+                && _issue?.AssignedToUsername == AuthState.Username;
+
+            if (_canEdit && AuthState.Role == "Technician")
+            {
+                _allTags = await TagsService.GetAll();
+            }
+
+            await LoadReferencedIssues();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load issue {IssueId}", Id);
+        }
+
+        BuildTimeline();
+        _loading = false;
+    }
+
+    private void OpenEditDialog()
+    {
+        if (_issue is null) return;
+        _editTitle = _issue.Title;
+        _editDescription = _issue.Description;
+        _editSelectedTags = new HashSet<string>(_issue.Tags);
+        _editFiles = null;
+        _editPreviewUrls.Clear();
+        _editDeletedAttachmentIds.Clear();
+        _editDialogOpen = true;
+    }
+
+    private void OnEditTagsChanged(IEnumerable<string> values)
+    {
+        _editSelectedTags = new HashSet<string>(values);
+    }
+
+    private IReadOnlyList<IBrowserFile>? EditFiles
+    {
+        get => _editFiles;
+        set
+        {
+            _editFiles = value;
+            _ = LoadEditPreviews();
+        }
+    }
+
+    private static readonly string[] ImageTypes = { "image/jpeg", "image/png", "image/gif", "image/webp" };
+
+    private async Task LoadEditPreviews()
+    {
+        if (_editFiles is null) return;
+
+        var current = new HashSet<IBrowserFile>(_editFiles);
+
+        foreach (var file in current)
+        {
+            if (_editPreviewUrls.ContainsKey(file)) continue;
+
+            if (file.ContentType is not null && ImageTypes.Contains(file.ContentType))
+            {
+                try
+                {
+                    using var stream = file.OpenReadStream(maxAllowedSize: IssueAttachmentOptions.Value.MaxSizeBytes);
+                    using var ms = new MemoryStream();
+                    await stream.CopyToAsync(ms);
+                    _editPreviewUrls[file] = $"data:{file.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}";
+                }
+                catch
+                {
+                    _editPreviewUrls[file] = null;
+                }
+            }
+            else
+            {
+                _editPreviewUrls[file] = null;
+            }
+        }
+
+        foreach (var key in _editPreviewUrls.Keys.ToList())
+        {
+            if (!current.Contains(key))
+                _editPreviewUrls.Remove(key);
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task SaveEditAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_editTitle) || _issue is null) return;
+
+        _savingEdit = true;
+        try
+        {
+            var updated = await IssuesService.Update(Id, new UpdateIssueRequest
+            {
+                Title = _editTitle,
+                Description = _editDescription
+            });
+            _issue = updated;
+
+            if (AuthState.Role == "Technician")
+            {
+                await IssueTagsService.UpdateTags(Id, _editSelectedTags.ToList());
+            }
+
+            foreach (var attachmentId in _editDeletedAttachmentIds)
+            {
+                try
+                {
+                    await AttachmentsClient.Delete(Id, attachmentId);                }
+                catch { }
+            }
+
+            if (_editFiles is { Count: > 0 })
+            {
+                foreach (var file in _editFiles)
+                {
+                    try
+                    {
+                        await AttachmentsClient.Add(Id, file);
+                    }
+                    catch { }
+                }
+            }
+
+            var refreshed = await IssuesService.GetById(Id);
+            _issue = refreshed;
+            _attachments = await AttachmentsClient.GetAll(Id);
+
+            _editDialogOpen = false;
+            Snackbar.Add("Issue updated", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _savingEdit = false;
+        }
+    }
+
+    private async Task DeleteAttachment(Guid attachmentId)
+    {
+        try
+        {
+            await AttachmentsClient.Delete(Id, attachmentId);
+            var refreshed = await IssuesService.GetById(Id);
+            _issue = refreshed;
+            _attachments = await AttachmentsClient.GetAll(Id);
+            Snackbar.Add("Attachment deleted", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task OpenPreview(Guid attachmentId)
+    {
+        var parameters = new DialogParameters<AttachmentPreviewDialog>
+        {
+            { x => x.AttachmentId, attachmentId }
+        };
+        await DialogService.ShowAsync<AttachmentPreviewDialog>(string.Empty, parameters);
+    }
+
+    private async Task SetStatus(Status status)
+    {
+        try
+        {
+            await IssueStatusService.UpdateStatus(Id, new UpdateIssueStatusRequest(status));
+            _issue = _issue! with { Status = status };
+            Snackbar.Add($"Issue status changed to {status}", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task AssignAsync()
+    {
+        _assigning = true;
+        try
+        {
+            await IssueAssignmentsService.AssignCurrentUser(Id);
+            var refreshed = await IssuesService.GetById(Id);
+            _issue = refreshed;
+            _attachments = await AttachmentsClient.GetAll(Id);
+            _isAssignedToCurrentUser = _issue?.AssignedToUsername == AuthState.Username;
+            Snackbar.Add("Issue assigned to you", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _assigning = false;
+        }
+    }
+
+    private async Task UnassignAsync()
+    {
+        _assigning = true;
+        try
+        {
+            await IssueAssignmentsService.UnassignCurrentUser(Id);
+            var refreshed = await IssuesService.GetById(Id);
+            _issue = refreshed;
+            _attachments = await AttachmentsClient.GetAll(Id);
+            _isAssignedToCurrentUser = false;
+            Snackbar.Add("Issue unassigned", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _assigning = false;
+        }
+    }
+
+    private async Task VoteAsync(VoteValue value)
+    {
+        try
+        {
+            if (_currentVote == value)
+            {
+                await VotesService.DeleteUserVote(Id);
+                _currentVote = null;
+            }
+            else
+            {
+                await VotesService.Vote(Id, new VoteRequest(value));
+                _currentVote = value;
+            }
+
+            var updated = await IssuesService.GetById(Id);
+            _issue = updated;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task AddCommentAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_newComment)) return;
+
+        _submittingComment = true;
+        try
+        {
+            var comment = await CommentsService.Create(Id, new CreateCommentRequest(_newComment));
+
+            if (_newCommentImage is not null)
+            {
+                try
+                {
+                    var attachment = await CommentAttachmentsClient.Add(comment.Id, _newCommentImage);
+                    comment = comment with { Attachments = [attachment] };
+                }
+                catch (Exception ex)
+                {
+                    Snackbar.Add($"Comment posted but image upload failed: {ex.Message}", Severity.Warning);
+                }
+            }
+
+            _comments.Add(comment);
+            _newComment = "";
+            ClearNewCommentImage();
+            BuildTimeline();
+            await LoadReferencedIssues();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _submittingComment = false;
+        }
+    }
+
+    private async Task OnNewCommentImageSelected(IBrowserFile? file)
+    {
+        _newCommentImagePreviewUrl = null;
+
+        if (file is null)
+        {
+            _newCommentImage = null;
+            return;
+        }
+
+        var extension = Path.GetExtension(file.Name).ToLowerInvariant();
+        var allowedExtensions = CommentAttachmentOptions.Value.AllowedExtensions;
+        if (!allowedExtensions.Contains(extension))
+        {
+            Snackbar.Add($"Only {string.Join(", ", allowedExtensions)} files are allowed", Severity.Error);
+            return;
+        }
+
+        var maxSizeBytes = CommentAttachmentOptions.Value.MaxSizeBytes;
+        if (file.Size > maxSizeBytes)
+        {
+            Snackbar.Add($"Image must be {maxSizeBytes / 1024 / 1024} MB or smaller", Severity.Error);
+            return;
+        }
+
+        try
+        {
+            await using var stream = file.OpenReadStream(maxSizeBytes);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            _newCommentImagePreviewUrl = $"data:{file.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}";
+            _newCommentImage = file;
+        }
+        catch
+        {
+            Snackbar.Add("Failed to read the selected file", Severity.Error);
+        }
+    }
+
+    private void ClearNewCommentImage()
+    {
+        _newCommentImage = null;
+        _newCommentImagePreviewUrl = null;
+    }
+
+    private async Task OpenCommentEditDialog(CommentDto comment)
+    {
+        var parameters = new DialogParameters<CommentEditDialog>
+        {
+            { x => x.Comment, comment }
+        };
+        var dialog = await DialogService.ShowAsync<CommentEditDialog>("Edit Comment", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is CommentDto updated)
+            ReplaceCommentInState(comment.Id, updated);
+    }
+
+    private void ReplaceCommentInState(int commentId, CommentDto updated)
+    {
+        var index = _comments.FindIndex(c => c.Id == commentId);
+        if (index >= 0)
+            _comments[index] = updated;
+
+        for (var i = 0; i < _timeline.Count; i++)
+        {
+            if (_timeline[i].Type == TimelineItemType.Comment && _timeline[i].Comment?.Id == commentId)
+                _timeline[i] = _timeline[i] with { Comment = updated };
+        }
+    }
+
+    private async Task DeleteComment(int commentId)
+    {
+        try
+        {
+            await CommentsService.Delete(commentId);
+            _comments.RemoveAll(c => c.Id == commentId);
+            BuildTimeline();
+            Snackbar.Add("Comment deleted", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task LoadReferencedIssues()
+    {
+        var ids = new HashSet<int>();
+        foreach (var comment in _comments)
+        {
+            foreach (System.Text.RegularExpressions.Match m in _issueRefRegex.Matches(comment.Content))
+            {
+                if (int.TryParse(m.Groups[1].Value, out var tid) && tid != Id)
+                    ids.Add(tid);
+            }
+        }
+
+        foreach (var tid in ids)
+        {
+            if (!_referencedIssues.ContainsKey(tid))
+            {
+                try
+                {
+                    var t = await IssuesService.GetById(tid);
+                    _referencedIssues[tid] = t;
+                }
+                catch { }
+            }
+        }
+    }
+
+    private List<CommentSegment> ParseComment(string content)
+    {
+        var segments = new List<CommentSegment>();
+        var lastEnd = 0;
+        foreach (System.Text.RegularExpressions.Match m in _issueRefRegex.Matches(content))
+        {
+            if (m.Index > lastEnd)
+                segments.Add(new CommentSegment(false, content[lastEnd..m.Index], 0));
+
+            if (int.TryParse(m.Groups[1].Value, out var tid))
+                segments.Add(new CommentSegment(true, m.Value, tid));
+
+            lastEnd = m.Index + m.Length;
+        }
+
+        if (lastEnd < content.Length)
+            segments.Add(new CommentSegment(false, content[lastEnd..], 0));
+
+        return segments;
+    }
+
+    private record CommentSegment(bool IsReference, string Text, int IssueId);
+
+    private void BuildTimeline()
+    {
+        _timeline = new List<TimelineItem>();
+        foreach (var c in _comments)
+            _timeline.Add(new TimelineItem(c.CreatedAt, TimelineItemType.Comment, Comment: c));
+        foreach (var s in _statusChanges)
+            _timeline.Add(new TimelineItem(s.ChangedAt, TimelineItemType.StatusChange, StatusChange: s));
+        _timeline.Sort((a, b) => a.Timestamp.CompareTo(b.Timestamp));
+    }
+
+    private record TimelineItem(DateTime Timestamp, TimelineItemType Type, CommentDto? Comment = null, StatusChangeDto? StatusChange = null);
+    private enum TimelineItemType { Comment, StatusChange }
+
+    private async Task DeleteIssueAsync()
+    {
+        _deleting = true;
+        try
+        {
+            await IssuesService.Delete(Id);
+            Snackbar.Add("Issue deleted", Severity.Success);
+            Navigation.NavigateTo("/issues");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _deleting = false;
+        }
+    }
+}

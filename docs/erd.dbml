@@ -5,7 +5,7 @@ Table User {
   PasswordHash varchar
 }
 
-Table Ticket {
+Table Issue {
   Id int [pk, increment]
   Title varchar(120)
   Description varchar(2000)
@@ -13,7 +13,7 @@ Table Ticket {
   CreatedAt datetime
 
   AuthorId int [ref: > User.Id]
-  AssignedToId int [ref: > User.Id, note: 'nullable']
+  AssigneeId int [ref: > User.Id, note: 'nullable']
 }
 
 Table Comment {
@@ -22,7 +22,7 @@ Table Comment {
   CreatedAt datetime
 
   AuthorId int [ref: > User.Id]
-  TicketId int [ref: > Ticket.Id]
+  IssueId int [ref: > Issue.Id]
 }
 
 Table Attachment {
@@ -34,12 +34,12 @@ Table Attachment {
   UploaderId int [ref: > User.Id]
 }
 
-Table TicketAttachment {
-  TicketId int [ref: > Ticket.Id]
+Table IssueAttachment {
+  IssueId int [ref: > Issue.Id]
   AttachmentId UUID [ref: > Attachment.Id, unique]
 
   indexes {
-    (TicketId, AttachmentId) [pk]
+    (IssueId, AttachmentId) [pk]
   }
 }
 
@@ -58,33 +58,33 @@ Table Tag {
   Description varchar(2000)
 }
 
-Table TicketTag {
-  TicketId int [ref: > Ticket.Id]
+Table IssueTag {
+  IssueId int [ref: > Issue.Id]
   TagId int [ref: > Tag.Id]
 
   indexes {
-    (TicketId, TagId) [pk]
+    (IssueId, TagId) [pk]
   }
 }
 
 Table Vote {
-  TicketId int [ref: > Ticket.Id]
+  IssueId int [ref: > Issue.Id]
   VoterId int [ref: > User.Id]
   Value int // 1 (Upvote) or -1 (Downvote)
   CreatedAt datetime
 
   indexes {
-    (TicketId, VoterId) [pk]
+    (IssueId, VoterId) [pk]
   }
 }
 
-Table TicketStatusChange {
+Table IssueStatusChange {
   Id int [pk, increment]
   FromStatus varchar
   ToStatus varchar
   ChangedAt datetime
 
-  TicketId int [ref: > Ticket.Id]
+  IssueId int [ref: > Issue.Id]
   ChangedByUserId int [ref: > User.Id]
 }
 

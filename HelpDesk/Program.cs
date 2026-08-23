@@ -41,7 +41,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapGet("/", () => Results.Redirect("/tickets")).AllowAnonymous();
+app.MapGet("/", () => Results.Redirect("/issues")).AllowAnonymous();
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode().AllowAnonymous();
 
 app.Run();

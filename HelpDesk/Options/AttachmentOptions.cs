@@ -19,7 +19,7 @@ public abstract class AttachmentOptions
     public long MaxSizeBytes { get; set; }
 
     /// <summary>
-    ///     The maximum number of attachments allowed per ticket.
+    ///     The maximum number of attachments allowed per issue.
     /// </summary>
     [Range(1, int.MaxValue)]
     public int MaxCount { get; set; }

@@ -13,8 +13,8 @@ public class Comment : IOwnedByUser, IEntity<int>
     public required int AuthorId { get; set; }
     public ApplicationUser Author { get; set; } = null!;
 
-    public required int TicketId { get; set; }
-    public Ticket Ticket { get; set; } = null!;
+    public required int IssueId { get; set; }
+    public Issue Issue { get; set; } = null!;
 
     public ICollection<CommentAttachment> Attachments { get; set; } = [];
 }

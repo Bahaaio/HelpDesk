@@ -4,22 +4,22 @@ using HelpDesk.Dtos.Responses;
 namespace HelpDesk.Services.Comments;
 
 /// <summary>
-///     Manages comments on helpdesk tickets.
+///     Manages comments on helpdesk issues.
 /// </summary>
 public interface ICommentsService
 {
     /// <summary>
-    ///     Returns all comments for a given ticket, ordered by most recent.
+    ///     Returns all comments for a given issue, ordered by most recent.
     /// </summary>
-    /// <param name="ticketId">The ID of the ticket to get comments for.</param>
-    Task<List<CommentDto>> GetAll(int ticketId);
+    /// <param name="issueId">The ID of the issue to get comments for.</param>
+    Task<List<CommentDto>> GetAll(int issueId);
 
     /// <summary>
-    ///     Adds a comment to a ticket as the current user.
+    ///     Adds a comment to a issue as the current user.
     /// </summary>
-    /// <param name="ticketId">The ID of the ticket to comment on.</param>
+    /// <param name="issueId">The ID of the issue to comment on.</param>
     /// <param name="request">The comment content.</param>
-    Task<CommentDto> Create(int ticketId, CreateCommentRequest request);
+    Task<CommentDto> Create(int issueId, CreateCommentRequest request);
 
     /// <summary>
     ///     Updates a comment's content. Only the author or a technician may update.

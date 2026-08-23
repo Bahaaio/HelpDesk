@@ -23,7 +23,7 @@ namespace HelpDesk.Data.Migrations
                 name: "FK_TicketAttachment_Tickets_TicketId",
                 table: "TicketAttachment",
                 column: "TicketId",
-                principalTable: "Tickets",
+                principalTable: "Issues",
                 principalColumn: "Id",
                 onDelete: ReferentialAction.Cascade);
         }
@@ -44,7 +44,7 @@ namespace HelpDesk.Data.Migrations
                 name: "FK_TicketAttachment_Tickets_OwnerId",
                 table: "TicketAttachment",
                 column: "OwnerId",
-                principalTable: "Tickets",
+                principalTable: "Issues",
                 principalColumn: "Id",
                 onDelete: ReferentialAction.Cascade);
         }

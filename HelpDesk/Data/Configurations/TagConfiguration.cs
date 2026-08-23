@@ -18,7 +18,7 @@ internal class TagConfiguration : IEntityTypeConfiguration<Tag>
         builder.Property(t => t.Description)
             .HasMaxLength(2000);
 
-        builder.HasMany(t => t.Tickets)
+        builder.HasMany(t => t.Issues)
             .WithMany(t => t.Tags);
     }
 }

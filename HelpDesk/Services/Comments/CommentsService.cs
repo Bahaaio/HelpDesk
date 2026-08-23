@@ -25,34 +25,34 @@ public class CommentsService : ICommentsService
         _logger = logger;
     }
 
-    public async Task<List<CommentDto>> GetAll(int ticketId)
+    public async Task<List<CommentDto>> GetAll(int issueId)
     {
-        await _db.Tickets.ExistsOrThrowAsync(ticketId);
+        await _db.Issues.ExistsOrThrowAsync(issueId);
 
         return await _db.Comments
             .AsNoTracking()
-            .Where(c => c.TicketId == ticketId)
+            .Where(c => c.IssueId == issueId)
             .OrderByDescending(c => c.CreatedAt)
             .Select(CommentMapper.ToDtoExpression)
             .ToListAsync();
     }
 
-    public async Task<CommentDto> Create(int ticketId, CreateCommentRequest request)
+    public async Task<CommentDto> Create(int issueId, CreateCommentRequest request)
     {
-        await _db.Tickets.ExistsOrThrowAsync(ticketId);
+        await _db.Issues.ExistsOrThrowAsync(issueId);
 
         var comment = new Comment
         {
             Content = request.Content,
-            TicketId = ticketId,
+            IssueId = issueId,
             AuthorId = _user.Id
         };
 
         _db.Comments.Add(comment);
         await _db.SaveChangesAsync();
 
-        _logger.LogInformation("User {userId} created comment {commentId} on ticket {ticketId}",
-            _user.Id, comment.Id, ticketId);
+        _logger.LogInformation("User {userId} created comment {commentId} on issue {issueId}",
+            _user.Id, comment.Id, issueId);
 
         await _db.Entry(comment).Reference(c => c.Author).LoadAsync();
 

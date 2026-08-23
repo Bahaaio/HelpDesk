@@ -12,18 +12,18 @@ namespace HelpDesk.Data.Migrations
         {
             migrationBuilder.AddColumn<int>(
                 name: "AssignedToId",
-                table: "Tickets",
+                table: "Issues",
                 type: "integer",
                 nullable: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Tickets_AssignedToId",
-                table: "Tickets",
+                table: "Issues",
                 column: "AssignedToId");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_Tickets_AspNetUsers_AssignedToId",
-                table: "Tickets",
+                table: "Issues",
                 column: "AssignedToId",
                 principalTable: "AspNetUsers",
                 principalColumn: "Id",
@@ -35,15 +35,15 @@ namespace HelpDesk.Data.Migrations
         {
             migrationBuilder.DropForeignKey(
                 name: "FK_Tickets_AspNetUsers_AssignedToId",
-                table: "Tickets");
+                table: "Issues");
 
             migrationBuilder.DropIndex(
                 name: "IX_Tickets_AssignedToId",
-                table: "Tickets");
+                table: "Issues");
 
             migrationBuilder.DropColumn(
                 name: "AssignedToId",
-                table: "Tickets");
+                table: "Issues");
         }
     }
 }

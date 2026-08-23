@@ -11,8 +11,8 @@ public class Vote : IOwnedByUser
     public required int VoterId { get; set; }
     public ApplicationUser Voter { get; set; } = null!;
 
-    public required int TicketId { get; set; }
-    public Ticket Ticket { get; set; } = null!;
+    public required int IssueId { get; set; }
+    public Issue Issue { get; set; } = null!;
 
     public int OwnerId => VoterId;
 }

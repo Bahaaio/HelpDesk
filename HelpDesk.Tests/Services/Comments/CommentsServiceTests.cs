@@ -16,7 +16,7 @@ namespace HelpDesk.Tests.Services.Comments;
 public class CommentsServiceTests : IDisposable
 {
     private const int CurrentUserId = 123;
-    private const int DefaultTicketId = 1; // Added a constant for the default ticket
+    private const int DefaultIssueId = 1; // Added a constant for the default issue
 
     private readonly Mock<IAuthorizationGuard> _authGuardMock;
     private readonly SqliteConnection _connection;
@@ -50,8 +50,8 @@ public class CommentsServiceTests : IDisposable
         _db.Users.Add(new ApplicationUser
             { Id = CurrentUserId, UserName = "test", Email = "a@b.com" });
 
-        _db.Tickets.Add(
-            new Ticket { Id = DefaultTicketId, Title = "new", AuthorId = CurrentUserId });
+        _db.Issues.Add(
+            new Issue { Id = DefaultIssueId, Title = "new", AuthorId = CurrentUserId });
 
         _db.SaveChanges();
     }
@@ -65,25 +65,25 @@ public class CommentsServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task GetAll_ReturnsOrderedComments_WhenTicketExists()
+    public async Task GetAll_ReturnsOrderedComments_WhenIssueExists()
     {
-        // Arrange (Ticket is already seeded in constructor)
+        // Arrange (Issue is already seeded in constructor)
         _db.Comments.AddRange(
             new Comment
             {
-                Id = 1, TicketId = DefaultTicketId, Content = "Oldest",
+                Id = 1, IssueId = DefaultIssueId, Content = "Oldest",
                 CreatedAt = DateTime.UtcNow.AddMinutes(-10), AuthorId = CurrentUserId
             },
             new Comment
             {
-                Id = 2, TicketId = DefaultTicketId, Content = "Newest", CreatedAt = DateTime.UtcNow,
+                Id = 2, IssueId = DefaultIssueId, Content = "Newest", CreatedAt = DateTime.UtcNow,
                 AuthorId = CurrentUserId
             }
         );
         await _db.SaveChangesAsync();
 
         // Act
-        var result = await _service.GetAll(DefaultTicketId);
+        var result = await _service.GetAll(DefaultIssueId);
 
         // Assert
         Assert.NotNull(result);
@@ -92,30 +92,30 @@ public class CommentsServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task GetAll_ThrowsNotFoundException_WhenTicketDoesNotExist()
+    public async Task GetAll_ThrowsNotFoundException_WhenIssueDoesNotExist()
     {
         // Arrange
-        const int nonExistentTicketId = 999;
+        const int nonExistentIssueId = 999;
 
         // Act & Assert
-        await Assert.ThrowsAsync<NotFoundException>(() => _service.GetAll(nonExistentTicketId));
+        await Assert.ThrowsAsync<NotFoundException>(() => _service.GetAll(nonExistentIssueId));
     }
 
     [Fact]
-    public async Task Create_AddsCommentAndReturnsDto_WhenTicketExists()
+    public async Task Create_AddsCommentAndReturnsDto_WhenIssueExists()
     {
         // Arrange
         var request = new CreateCommentRequest("Test comment content");
 
         // Act
-        var result = await _service.Create(DefaultTicketId, request);
+        var result = await _service.Create(DefaultIssueId, request);
 
         // Assert
         Assert.NotNull(result);
         Assert.Equal(request.Content, result.Content);
 
         var savedComment =
-            await _db.Comments.FirstOrDefaultAsync(c => c.TicketId == DefaultTicketId);
+            await _db.Comments.FirstOrDefaultAsync(c => c.IssueId == DefaultIssueId);
         Assert.NotNull(savedComment);
         Assert.Equal(request.Content, savedComment.Content);
         Assert.Equal(CurrentUserId, savedComment.AuthorId);
@@ -128,7 +128,7 @@ public class CommentsServiceTests : IDisposable
         const int commentId = 1;
         var comment = new Comment
         {
-            Id = commentId, TicketId = DefaultTicketId, AuthorId = CurrentUserId,
+            Id = commentId, IssueId = DefaultIssueId, AuthorId = CurrentUserId,
             Content = "original"
         };
         _db.Comments.Add(comment);
@@ -164,7 +164,7 @@ public class CommentsServiceTests : IDisposable
 
         var comment = new Comment
         {
-            Id = commentId, TicketId = DefaultTicketId, AuthorId = secondUserId, Content = "hello"
+            Id = commentId, IssueId = DefaultIssueId, AuthorId = secondUserId, Content = "hello"
         };
         _db.Comments.Add(comment);
         await _db.SaveChangesAsync();
@@ -189,7 +189,7 @@ public class CommentsServiceTests : IDisposable
         const int commentId = 1;
         var comment = new Comment
         {
-            Id = commentId, TicketId = DefaultTicketId, AuthorId = CurrentUserId,
+            Id = commentId, IssueId = DefaultIssueId, AuthorId = CurrentUserId,
             Content = "comment"
         };
         _db.Comments.Add(comment);
@@ -218,13 +218,13 @@ public class CommentsServiceTests : IDisposable
         const int commentId = 1;
         const int secondUserId = 2;
 
-        // Add the second user and their comment (Ticket is already seeded)
+        // Add the second user and their comment (Issue is already seeded)
         _db.Users.Add(new ApplicationUser
             { Id = secondUserId, UserName = "test2", Email = "b@b.com" });
 
         var comment = new Comment
         {
-            Id = commentId, TicketId = DefaultTicketId, AuthorId = secondUserId, Content = "hello"
+            Id = commentId, IssueId = DefaultIssueId, AuthorId = secondUserId, Content = "hello"
         };
         _db.Comments.Add(comment);
 

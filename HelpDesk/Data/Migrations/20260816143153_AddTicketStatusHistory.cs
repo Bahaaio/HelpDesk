@@ -36,7 +36,7 @@ namespace HelpDesk.Data.Migrations
                     table.ForeignKey(
                         name: "FK_TicketStatusChanges_Tickets_TicketId",
                         column: x => x.TicketId,
-                        principalTable: "Tickets",
+                        principalTable: "Issues",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });

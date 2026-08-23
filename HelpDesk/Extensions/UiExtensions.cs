@@ -12,7 +12,7 @@ public static class UiExtensions
             services.AddRazorComponents().AddInteractiveServerComponents();
             services.AddMudServices();
             services.AddScoped<AuthState>();
-            services.AddScoped<ITicketAttachmentsClient, TicketAttachmentsClient>();
+            services.AddScoped<IIssueAttachmentsClient, IssueAttachmentsClient>();
             services.AddScoped<ICommentAttachmentsClient, CommentAttachmentsClient>();
         }
     }

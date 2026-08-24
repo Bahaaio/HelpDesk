@@ -35,12 +35,13 @@
             <MudFileUpload T="IBrowserFile"
                            Accept="@string.Join(',', CommentAttachmentOptions.Value.AllowedExtensions)"
                            FilesChanged="OnFileSelected">
-                <ActivatorContent>
+                <CustomContent Context="fileUpload">
                     <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Image"
-                               Size="Size.Small">
+                               Size="Size.Small"
+                               OnClick="@fileUpload.OpenFilePickerAsync">
                         @(Comment.Attachments.Count > 0 ? "Replace Image" : "Attach Image")
                     </MudButton>
-                </ActivatorContent>
+                </CustomContent>
             </MudFileUpload>
             @if (_selectedFile is not null)
             {

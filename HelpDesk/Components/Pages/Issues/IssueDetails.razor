@@ -354,12 +354,13 @@ else
                     <MudFileUpload T="IBrowserFile"
                                    Accept="@string.Join(',', CommentAttachmentOptions.Value.AllowedExtensions)"
                                    FilesChanged="OnNewCommentImageSelected">
-                        <ActivatorContent>
+                        <CustomContent Context="fileUpload">
                             <MudButton Variant="Variant.Outlined" Size="Size.Small"
-                                       StartIcon="@Icons.Material.Filled.Image">
+                                       StartIcon="@Icons.Material.Filled.Image"
+                                       OnClick="@fileUpload.OpenFilePickerAsync">
                                 Attach Image
                             </MudButton>
-                        </ActivatorContent>
+                        </CustomContent>
                     </MudFileUpload>
                     @if (_newCommentImage is not null)
                     {
@@ -447,14 +448,15 @@ else
             }
         }
 
-        <MudFileUpload @bind-Files="EditFiles" Multiple="true"
+        <MudFileUpload @bind-Files="EditFiles" AppendMultipleFiles
                        Accept="@string.Join(',', IssueAttachmentOptions.Value.AllowedExtensions)">
-            <ActivatorContent>
+            <CustomContent Context="fileUpload">
                 <MudButton Variant="Variant.Outlined" Size="Size.Small"
-                           StartIcon="@Icons.Material.Filled.AttachFile">
+                           StartIcon="@Icons.Material.Filled.AttachFile"
+                           OnClick="@fileUpload.OpenFilePickerAsync">
                     Add Files
                 </MudButton>
-            </ActivatorContent>
+            </CustomContent>
         </MudFileUpload>
 
         @if (_editFiles is { Count: > 0 })
@@ -935,7 +937,9 @@ else
         var dialog = await DialogService.ShowAsync<CommentEditDialog>("Edit Comment", parameters);
         var result = await dialog.Result;
 
-        if (!result.Canceled && result.Data is CommentDto updated)
+        if (result is null || result.Canceled) return;
+
+        if (result.Data is CommentDto updated)
             ReplaceCommentInState(comment.Id, updated);
     }
 

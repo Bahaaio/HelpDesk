@@ -18,7 +18,7 @@
         <MudTextField @bind-Value="_searchText" Placeholder="Search issues..."
                       Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
                       Style="max-width: 300px;" Immediate="true"
-                      DebounceInterval="300" OnDebounceIntervalClicked="LoadIssues"/>
+                      DebounceInterval="300"/>
 
         <MudSelect T="string" @bind-Value="_selectedStatus" Label="Status" Style="width: 150px;"
                    SelectedValuesChanged="_ => LoadIssues()">

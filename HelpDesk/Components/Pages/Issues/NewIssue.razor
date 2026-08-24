@@ -23,14 +23,15 @@
         <MudTextField @bind-Value="_description" Label="Description" Lines="5" MaxLength="2000"
                       Class="mb-4" FullWidth="true"/>
 
-        <MudFileUpload @bind-Files="Files" Multiple="true"
+        <MudFileUpload @bind-Files="Files" AppendMultipleFiles
                        Accept="@string.Join(',', IssueAttachmentOptions.Value.AllowedExtensions)"
                        Class="mb-4">
-            <ActivatorContent>
-                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.AttachFile">
+            <CustomContent Context="fileUpload">
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.AttachFile"
+                           OnClick="@fileUpload.OpenFilePickerAsync">
                     Attach Files
                 </MudButton>
-            </ActivatorContent>
+            </CustomContent>
         </MudFileUpload>
 
         @if (_files is { Count: > 0 })

@@ -8,12 +8,12 @@ public class CommentAttachmentConfiguration : IEntityTypeConfiguration<CommentAt
 {
     public void Configure(EntityTypeBuilder<CommentAttachment> builder)
     {
-        builder.Property(ta => ta.OwnerId)
+        builder.Property(ta => ta.ParentId)
             .HasColumnName("CommentId");
 
         builder.HasOne(ta => ta.Comment)
             .WithMany(c => c.Attachments)
-            .HasForeignKey(ta => ta.OwnerId)
+            .HasForeignKey(ta => ta.ParentId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

@@ -26,12 +26,12 @@ public class CommentAttachmentsService : AttachmentsService<Comment, CommentAtta
 
     protected override AttachmentOptions AttachmentOptions { get; }
 
-    public override async Task<AttachmentDto> Add(int ownerId, IFormFile file)
+    public override async Task<AttachmentDto> Add(int parentId, IFormFile file)
     {
-        var comment = await GetOwnerEntity(ownerId);
+        var comment = await GetOwnerEntity(parentId);
         await _authGuard.AuthorizeOwnerOrTechnician(comment);
 
-        return await base.Add(ownerId, file);
+        return await base.Add(parentId, file);
     }
 
     public override async Task Delete(Guid attachmentId)

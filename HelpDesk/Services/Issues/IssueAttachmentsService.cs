@@ -26,12 +26,12 @@ public class IssueAttachmentsService : AttachmentsService<Issue, IssueAttachment
 
     protected override AttachmentOptions AttachmentOptions { get; }
 
-    public override async Task<AttachmentDto> Add(int ownerId, IFormFile file)
+    public override async Task<AttachmentDto> Add(int parentId, IFormFile file)
     {
-        var issue = await GetOwnerEntity(ownerId);
+        var issue = await GetOwnerEntity(parentId);
         await _authGuard.AuthorizeOwnerOrTechnician(issue);
 
-        return await base.Add(ownerId, file);
+        return await base.Add(parentId, file);
     }
 
     public override async Task Delete(Guid attachmentId)

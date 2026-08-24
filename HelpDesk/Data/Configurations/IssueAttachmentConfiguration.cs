@@ -8,12 +8,12 @@ public class IssueAttachmentConfiguration : IEntityTypeConfiguration<IssueAttach
 {
     public void Configure(EntityTypeBuilder<IssueAttachment> builder)
     {
-        builder.Property(ta => ta.OwnerId)
+        builder.Property(ta => ta.ParentId)
             .HasColumnName("IssueId");
 
         builder.HasOne(ta => ta.Issue)
             .WithMany(i => i.Attachments)
-            .HasForeignKey(ta => ta.OwnerId)
+            .HasForeignKey(ta => ta.ParentId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

@@ -19,49 +19,41 @@ namespace HelpDesk.Services.Attachments;
 ///     This class does not implement any authorization logic.
 ///     You must implement authorization logic in the derived classes.
 /// </remarks>
-/// <typeparam name="TOwner">The owner of the attachment.</typeparam>
+/// <typeparam name="TParent">The parent resource that owns attachments.</typeparam>
 /// <typeparam name="TAttachment">The attachment type.</typeparam>
-public abstract class AttachmentsService<TOwner, TAttachment> : IAttachmentsService<TOwner>
-    where TOwner : class, IOwnedByUser, IEntity<int>
-    where TAttachment : Attachment, new()
+public abstract class AttachmentsService<TParent, TAttachment> : IAttachmentsService<TParent>
+    where TParent : class, IOwnedByUser, IEntity<int>
+    where TAttachment : Attachment, IHasParent<TParent>, new()
 {
     private readonly IAttachmentValidationService _attachmentValidationService;
     private readonly DbSet<TAttachment> _attachmentsSet;
     private readonly AppDbContext _db;
-    private readonly ILogger<AttachmentsService<TOwner, TAttachment>> _logger;
-    private readonly DbSet<TOwner> _ownerSet;
+    private readonly ILogger<AttachmentsService<TParent, TAttachment>> _logger;
+    private readonly DbSet<TParent> _parentSet;
     private readonly IStorageService _storageService;
     private readonly ICurrentUser _user;
 
     protected AttachmentsService(IStorageService storageService, AppDbContext db, ICurrentUser user,
-        ILogger<AttachmentsService<TOwner, TAttachment>> logger,
+        ILogger<AttachmentsService<TParent, TAttachment>> logger,
         IAttachmentValidationService attachmentValidationService)
     {
         _storageService = storageService;
         _db = db;
         _logger = logger;
         _attachmentValidationService = attachmentValidationService;
-        _ownerSet = db.Set<TOwner>();
+        _parentSet = db.Set<TParent>();
         _user = user;
         _attachmentsSet = db.Set<TAttachment>();
     }
 
     protected abstract AttachmentOptions AttachmentOptions { get; }
 
-    public async Task<List<AttachmentDto>> GetAll(int ownerId)
-    {
-        return await _attachmentsSet
-            .Where(a => a.OwnerId == ownerId)
-            .Select(a => a.ToDto())
-            .ToListAsync();
-    }
-
-    public virtual async Task<AttachmentDto> Add(int ownerId, IFormFile file)
+    public virtual async Task<AttachmentDto> Add(int parentId, IFormFile file)
     {
         _attachmentValidationService.Validate(file, AttachmentOptions);
-        await _ownerSet.ExistsOrThrowAsync(ownerId);
+        await _parentSet.ExistsOrThrowAsync(parentId);
 
-        var count = await _attachmentsSet.CountAsync(a => a.OwnerId == ownerId);
+        var count = await _attachmentsSet.CountAsync(a => a.ParentId == parentId);
         _attachmentValidationService.ValidateCount(count + 1, AttachmentOptions.MaxCount);
 
         var guid = Guid.NewGuid();
@@ -70,7 +62,7 @@ public abstract class AttachmentsService<TOwner, TAttachment> : IAttachmentsServ
         var attachment = new TAttachment
         {
             Id = guid,
-            OwnerId = ownerId,
+            ParentId = parentId,
             ContentType = file.ContentType,
             OriginalFileName = file.FileName,
             UploaderId = _user.Id
@@ -80,8 +72,8 @@ public abstract class AttachmentsService<TOwner, TAttachment> : IAttachmentsServ
         await _db.SaveChangesAsync();
 
         _logger.LogInformation(
-            "User {userId} added attachment {attachmentId} to owner {OwnerId}",
-            _user.Id, attachment.Id, ownerId);
+            "User {userId} added attachment {attachmentId} to parent {ParentId}",
+            _user.Id, attachment.Id, parentId);
 
         return attachment.ToDto();
     }
@@ -99,10 +91,10 @@ public abstract class AttachmentsService<TOwner, TAttachment> : IAttachmentsServ
             _user.Id, attachmentId);
     }
 
-    public virtual async Task DeleteAll(int ownerId)
+    public virtual async Task DeleteAll(int parentId)
     {
         var attachmentIds = await _attachmentsSet
-            .Where(a => a.OwnerId == ownerId)
+            .Where(a => a.ParentId == parentId)
             .Select(a => a.Id.ToString())
             .ToListAsync();
 
@@ -110,7 +102,7 @@ public abstract class AttachmentsService<TOwner, TAttachment> : IAttachmentsServ
             await _storageService.DeleteFile(id);
 
         await _attachmentsSet
-            .Where(a => a.OwnerId == ownerId)
+            .Where(a => a.ParentId == parentId)
             .ExecuteDeleteAsync();
     }
 
@@ -121,12 +113,12 @@ public abstract class AttachmentsService<TOwner, TAttachment> : IAttachmentsServ
     /// <param name="attachmentId">The ID of the attachment.</param>
     /// <returns>The owner entity.</returns>
     /// <exception cref="NotFoundException">Thrown if the attachment is not found.</exception>
-    protected async Task<TOwner> GetOwnerEntity(Guid attachmentId)
+    protected async Task<TParent> GetOwnerEntity(Guid attachmentId)
     {
-        return await _ownerSet.Where(o =>
+        return await _parentSet.Where(o =>
                    o.Id == _attachmentsSet
                        .Where(a => a.Id == attachmentId)
-                       .Select(a => a.OwnerId)
+                       .Select(a => a.ParentId)
                        .FirstOrDefault()
                ).SingleOrDefaultAsync() ??
                throw new NotFoundException($"Attachment with id: {attachmentId} not found");
@@ -135,8 +127,8 @@ public abstract class AttachmentsService<TOwner, TAttachment> : IAttachmentsServ
     /// <summary>
     ///     Gets the owner entity of the attachment.
     /// </summary>
-    /// <param name="ownerId">The ID of the owner.</param>
+    /// <param name="parentId">The ID of the parent resource.</param>
     /// <returns>The owner entity.</returns>
-    protected async Task<TOwner> GetOwnerEntity(int ownerId) =>
-        await _ownerSet.FindOrThrowAsync(ownerId);
+    protected async Task<TParent> GetOwnerEntity(int parentId) =>
+        await _parentSet.FindOrThrowAsync(parentId);
 }

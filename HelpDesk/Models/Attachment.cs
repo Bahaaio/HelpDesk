@@ -8,7 +8,7 @@ namespace HelpDesk.Models;
 public abstract class Attachment : IOwnedByUser, IEntity<Guid>
 {
     public Guid Id { get; set; }
-    public int OwnerId { get; set; }
+    public int OwnerId => UploaderId;
     public DateTime CreatedAt { get; set; }
     public string ContentType { get; set; }
     public string OriginalFileName { get; set; }

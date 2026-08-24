@@ -1,7 +1,8 @@
-using HelpDesk.Dtos.Responses;
-using HelpDesk.Models;
-using HelpDesk.Options;
-using HelpDesk.Services.Attachments;
+using HelpDesk.Modules.Attachments.Dtos;
+using HelpDesk.Modules.Attachments.Models;
+using HelpDesk.Modules.Attachments.Services;
+using HelpDesk.Modules.Comments.Models;
+using HelpDesk.Modules.Comments;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.Extensions.Options;
 

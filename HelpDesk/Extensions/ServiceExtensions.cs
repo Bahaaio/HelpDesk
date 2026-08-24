@@ -1,15 +1,15 @@
-using HelpDesk.Authorization;
 using HelpDesk.Data;
-using HelpDesk.Models;
-using HelpDesk.Services.Attachments;
-using HelpDesk.Services.Auth;
-using HelpDesk.Services.Comments;
-using HelpDesk.Services.Invites;
-using HelpDesk.Services.Issues;
-using HelpDesk.Services.Storage;
-using HelpDesk.Services.Tags;
-using HelpDesk.Services.Users;
-using HelpDesk.Services.Votes;
+using HelpDesk.Modules.Attachments.Dtos;
+using HelpDesk.Modules.Attachments.Models;
+using HelpDesk.Modules.Attachments;
+using HelpDesk.Modules.Attachments.Services;
+using HelpDesk.Modules.Auth;
+using HelpDesk.Modules.Comments;
+using HelpDesk.Modules.Invites;
+using HelpDesk.Modules.Issues;
+using HelpDesk.Modules.Storage;
+using HelpDesk.Modules.Tags;
+using HelpDesk.Modules.Users;
 using Microsoft.EntityFrameworkCore;
 
 namespace HelpDesk.Extensions;
@@ -24,33 +24,19 @@ public static class ServiceExtensions
                 options.UseNpgsql(configuration.GetConnectionString("Default")));
         }
 
-        public void AddApplicationServices()
+        /// <summary>
+        ///     Registers every feature module.
+        /// </summary>
+        public void AddModules()
         {
-            // auth
-            services.AddScoped<ICurrentUser, CurrentUser>();
-            services.AddScoped<IAuthorizationGuard, AuthorizationGuard>();
-            services.AddScoped<IInvitesService, InvitesService>();
-            services.AddScoped<IAuthService, AuthService>();
-            services.AddSingleton<ITokensService, TokensService>();
-
-            // attachments
-            services.AddScoped<IAttachmentsReader, AttachmentsReader>();
-            services.AddScoped<IAttachmentValidationService, AttachmentValidationService>();
-            services.AddScoped<IAttachmentsService<Issue>, IssueAttachmentsService>();
-            services.AddScoped<IAttachmentsService<Comment>, CommentAttachmentsService>();
-
-            // issues
-            services.AddScoped<IIssuesService, IssuesService>();
-            services.AddScoped<IIssueTagsService, IssueTagsService>();
-            services.AddScoped<IIssueAssignmentsService, IssueAssignmentsService>();
-            services.AddScoped<IIssueStatusService, IssueStatusService>();
-
-            // misc
-            services.AddScoped<ICommentsService, CommentsService>();
-            services.AddScoped<ITagsService, TagsService>();
-            services.AddScoped<IVotesService, VotesService>();
-            services.AddScoped<IUsersService, UsersService>();
-            services.AddScoped<IStorageService, LocalStorageService>();
+            services.AddStorageModule();
+            services.AddAttachmentsModule();
+            services.AddAuthModule();
+            services.AddUsersModule();
+            services.AddInvitesModule();
+            services.AddTagsModule();
+            services.AddIssuesModule();
+            services.AddCommentsModule();
         }
     }
 }

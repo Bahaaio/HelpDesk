@@ -1,4 +1,4 @@
-using HelpDesk.Services.Auth;
+using HelpDesk.Modules.Auth.Services;
 
 namespace HelpDesk.ClientServices;
 

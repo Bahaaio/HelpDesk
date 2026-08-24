@@ -1,4 +1,14 @@
 @page "/issues/{Id:int}"
+@using System.Text.RegularExpressions
+@using HelpDesk.Modules.Comments.Dtos
+@using HelpDesk.Modules.Comments.Dtos.Requests
+@using HelpDesk.Modules.Comments.Services
+@using HelpDesk.Modules.Issues.Dtos
+@using HelpDesk.Modules.Issues.Dtos.Requests
+@using HelpDesk.Modules.Issues.Enums
+@using HelpDesk.Modules.Issues.Services
+@using HelpDesk.Modules.Issues.Votes
+@using HelpDesk.Modules.Tags
 @rendermode InteractiveServer
 @inject IIssuesService IssuesService
 @inject IIssueStatusService IssueStatusService
@@ -21,12 +31,12 @@
 
 @if (_loading)
 {
-    <MudProgressCircular Indeterminate="true" Class="d-flex justify-center ma-8" />
+    <MudProgressCircular Indeterminate="true" Class="d-flex justify-center ma-8"/>
 }
 else if (_issue is null)
 {
     <MudContainer Class="text-center pa-8">
-        <MudIcon Icon="@Icons.Material.Filled.ErrorOutline" Size="Size.Large" Color="Color.Error" />
+        <MudIcon Icon="@Icons.Material.Filled.ErrorOutline" Size="Size.Large" Color="Color.Error"/>
         <MudText Typo="Typo.h6" Class="mt-2">Issue not found</MudText>
         <MudButton Href="/issues" Class="mt-4" Variant="Variant.Outlined">Back to Issues</MudButton>
     </MudContainer>
@@ -35,21 +45,21 @@ else
 {
     <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-2">
         <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
-            <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Href="/issues" />
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Href="/issues"/>
             <MudText Typo="Typo.h4">
                 <span style="opacity: 0.5; font-weight: 400;">#@_issue.Id</span>
                 @_issue.Title
             </MudText>
-            <MudSpacer />
+            <MudSpacer/>
             @if (_canEdit)
             {
                 <MudTooltip Text="Edit issue">
                     <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Inherit"
-                                   OnClick="OpenEditDialog" />
+                                   OnClick="OpenEditDialog"/>
                 </MudTooltip>
                 <MudTooltip Text="Delete issue">
                     <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
-                                   OnClick="() => _deleteDialogVisible = true" />
+                                   OnClick="() => _deleteDialogVisible = true"/>
                 </MudTooltip>
             }
             @if (_issue.Status == Status.Open)
@@ -68,7 +78,7 @@ else
                     @(_issue.AuthorUsername?[..1].ToUpper() ?? "?")
                 </MudAvatar>
                 <MudText Typo="Typo.body2">@_issue.AuthorUsername</MudText>
-                <MudSpacer />
+                <MudSpacer/>
                 <MudText Typo="Typo.caption" Color="Color.Default">
                     @_issue.CreatedAt.ToString("MMM dd, yyyy HH:mm")
                 </MudText>
@@ -89,20 +99,22 @@ else
 
         <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
             <MudText Typo="Typo.h6">Status</MudText>
-            <MudSpacer />
+            <MudSpacer/>
             @if (_canUpdateStatus)
             {
                 <MudButtonGroup Variant="Variant.Outlined" Size="Size.Small">
                     <MudButton OnClick="() => SetStatus(Status.Open)"
                                Color="@(_issue.Status == Status.Open ? Color.Success : Color.Default)"
                                Disabled="_issue.Status == Status.Open">
-                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Class="mr-1" />
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small"
+                                 Class="mr-1"/>
                         Open
                     </MudButton>
                     <MudButton OnClick="() => SetStatus(Status.Closed)"
                                Color="@(_issue.Status == Status.Closed ? Color.Error : Color.Default)"
                                Disabled="_issue.Status == Status.Closed">
-                        <MudIcon Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Class="mr-1" />
+                        <MudIcon Icon="@Icons.Material.Filled.Cancel" Size="Size.Small"
+                                 Class="mr-1"/>
                         Close
                     </MudButton>
                 </MudButtonGroup>
@@ -119,7 +131,7 @@ else
         {
             <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
                 <MudText Typo="Typo.h6">Assigned to</MudText>
-                <MudSpacer />
+                <MudSpacer/>
                 @if (!string.IsNullOrEmpty(_issue.AssignedToUsername))
                 {
                     <MudStack Row="true" AlignItems="AlignItems.Center">
@@ -129,7 +141,8 @@ else
                         <MudText Typo="Typo.body2">@_issue.AssignedToUsername</MudText>
                         @if (AuthState.Role == "Technician" && _isAssignedToCurrentUser && _issue.Status == Status.Open)
                         {
-                            <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error"
+                            <MudButton Variant="Variant.Outlined" Size="Size.Small"
+                                       Color="Color.Error"
                                        OnClick="UnassignAsync" Disabled="_assigning"
                                        StartIcon="@Icons.Material.Filled.PersonRemove">
                                 Unassign
@@ -141,7 +154,8 @@ else
                 {
                     @if (AuthState.Role == "Technician" && _issue.Status == Status.Open)
                     {
-                        <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Primary"
+                        <MudButton Variant="Variant.Outlined" Size="Size.Small"
+                                   Color="Color.Primary"
                                    OnClick="AssignAsync" Disabled="_assigning"
                                    StartIcon="@Icons.Material.Filled.PersonAdd">
                             Self Assign
@@ -155,7 +169,7 @@ else
             </MudStack>
         }
 
-        <MudDivider Class="mb-4" />
+        <MudDivider Class="mb-4"/>
 
         <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
             <MudText Typo="Typo.h6">Attachments (@_attachments.Count)</MudText>
@@ -168,13 +182,15 @@ else
                 {
                     <MudItem xs="6" sm="4" md="3">
                         <MudPaper Class="pa-1 relative" Style="cursor: pointer;"
-                                   @onclick="() => OpenPreview(attachment.AttachmentId)">
+                                  @onclick="() => OpenPreview(attachment.AttachmentId)">
                             <img src="@($"/api/attachments/{attachment.AttachmentId}")"
                                  alt="@attachment.OriginalFileName"
                                  style="width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; display: block;"
-                                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
-                            <div style="display: none; width: 100%; aspect-ratio: 1; align-items: center; justify-content: center; flex-direction: column; background: var(--mud-palette-surface); border-radius: 8px; padding: 8px;">
-                                <MudIcon Icon="@Icons.Material.Filled.InsertDriveFile" Size="Size.Large" Color="Color.Default" />
+                                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"/>
+                            <div
+                                style="display: none; width: 100%; aspect-ratio: 1; align-items: center; justify-content: center; flex-direction: column; background: var(--mud-palette-surface); border-radius: 8px; padding: 8px;">
+                                <MudIcon Icon="@Icons.Material.Filled.InsertDriveFile"
+                                         Size="Size.Large" Color="Color.Default"/>
                                 <MudText Typo="Typo.caption" Align="Align.Center" Class="mt-1"
                                          Style="word-break: break-all; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
                                     @attachment.OriginalFileName
@@ -186,7 +202,7 @@ else
             </MudGrid>
         }
 
-        <MudDivider Class="mb-4" />
+        <MudDivider Class="mb-4"/>
 
         <MudText Typo="Typo.h6" Class="mb-2">Votes</MudText>
         <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
@@ -194,18 +210,18 @@ else
                 <MudIconButton Icon="@Icons.Material.Filled.ThumbUp"
                                Color="@(_currentVote == VoteValue.Upvote ? Color.Success : Color.Default)"
                                OnClick="() => VoteAsync(VoteValue.Upvote)"
-                               Disabled="!AuthState.IsAuthenticated" />
+                               Disabled="!AuthState.IsAuthenticated"/>
             </MudTooltip>
             <MudText Typo="Typo.h6" Class="mx-2">@_issue.VoteScore</MudText>
             <MudTooltip Text="Downvote">
                 <MudIconButton Icon="@Icons.Material.Filled.ThumbDown"
                                Color="@(_currentVote == VoteValue.Downvote ? Color.Error : Color.Default)"
                                OnClick="() => VoteAsync(VoteValue.Downvote)"
-                               Disabled="!AuthState.IsAuthenticated" />
+                               Disabled="!AuthState.IsAuthenticated"/>
             </MudTooltip>
         </MudStack>
 
-        <MudDivider Class="mb-4" />
+        <MudDivider Class="mb-4"/>
 
         <MudText Typo="Typo.h6" Class="mb-2">Activity</MudText>
 
@@ -224,7 +240,8 @@ else
                     var sc = item.StatusChange;
                     <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2 ml-4"
                               Style="opacity: 0.7;">
-                        <MudIcon Icon="@Icons.Material.Filled.SwapHoriz" Size="Size.Small" Color="Color.Default" />
+                        <MudIcon Icon="@Icons.Material.Filled.SwapHoriz" Size="Size.Small"
+                                 Color="Color.Default"/>
                         <MudText Typo="Typo.body2">
                             <strong>@sc.ChangedByUsername</strong> changed status from
                             <MudChip T="string" Size="Size.Small"
@@ -241,7 +258,7 @@ else
                                 @(sc.ToStatus == Status.Open ? "Open" : "Closed")
                             </MudChip>
                         </MudText>
-                        <MudSpacer />
+                        <MudSpacer/>
                         <MudText Typo="Typo.caption" Color="Color.Default">
                             @sc.ChangedAt.ToString("MMM dd, yyyy HH:mm")
                         </MudText>
@@ -256,21 +273,23 @@ else
                                 @comment.AuthorUsername[..1].ToUpper()
                             </MudAvatar>
                             <MudText Typo="Typo.subtitle2">@comment.AuthorUsername</MudText>
-                            <MudSpacer />
+                            <MudSpacer/>
                             <MudText Typo="Typo.caption" Color="Color.Default">
                                 @comment.CreatedAt.ToString("MMM dd, yyyy HH:mm")
                             </MudText>
                             @if (AuthState.Username == comment.AuthorUsername || AuthState.Role == "Technician")
                             {
                                 <MudTooltip Text="Edit">
-                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                                   Size="Size.Small"
                                                    Color="Color.Inherit"
-                                                   OnClick="() => OpenCommentEditDialog(comment)" />
+                                                   OnClick="() => OpenCommentEditDialog(comment)"/>
                                 </MudTooltip>
                                 <MudTooltip Text="Delete">
-                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                                   Size="Size.Small"
                                                    Color="Color.Error"
-                                                   OnClick="() => DeleteComment(comment.Id)" />
+                                                   OnClick="() => DeleteComment(comment.Id)"/>
                                 </MudTooltip>
                             }
                         </MudStack>
@@ -287,7 +306,8 @@ else
                                                  Style="height: 20px; font-size: 0.7rem; vertical-align: middle; pointer-events: none;">
                                             @(refIssue.Status == Status.Open ? "Open" : "Closed")
                                         </MudChip>
-                                        <span style="font-size: 0.875rem; text-decoration: underline;">
+                                        <span
+                                            style="font-size: 0.875rem; text-decoration: underline;">
                                             #@seg.IssueId
                                         </span>
                                         <span style="font-size: 0.875rem;">
@@ -297,7 +317,8 @@ else
                                 }
                                 else if (seg.IsReference)
                                 {
-                                    <span style="font-size: 0.875rem;"><strong>@seg.Text</strong></span>
+                                    <span
+                                        style="font-size: 0.875rem;"><strong>@seg.Text</strong></span>
                                 }
                                 else
                                 {
@@ -309,11 +330,12 @@ else
                         {
                             var attachment = comment.Attachments[0];
                             <MudStack Row="true" Class="mt-2 ml-8">
-                                <MudPaper Class="pa-1 relative" Style="cursor: pointer; width: 96px; height: 96px;"
+                                <MudPaper Class="pa-1 relative"
+                                          Style="cursor: pointer; width: 96px; height: 96px;"
                                           @onclick="() => OpenPreview(attachment.AttachmentId)">
                                     <img src="@($"/api/attachments/{attachment.AttachmentId}")"
                                          alt="@attachment.OriginalFileName"
-                                         style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px; display: block;" />
+                                         style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px; display: block;"/>
                                 </MudPaper>
                             </MudStack>
                         }
@@ -326,7 +348,7 @@ else
         {
             <MudPaper Class="pa-4 mt-4">
                 <MudTextField @bind-Value="_newComment" Label="Add a comment"
-                              Lines="3" MaxLength="2000" />
+                              Lines="3" MaxLength="2000"/>
 
                 <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2 gap-2">
                     <MudFileUpload T="IBrowserFile"
@@ -345,21 +367,23 @@ else
                         {
                             <img src="@_newCommentImagePreviewUrl"
                                  alt="@_newCommentImage.Name"
-                                 style="width: 48px; height: 48px; object-fit: cover; border-radius: 4px; display: block;" />
+                                 style="width: 48px; height: 48px; object-fit: cover; border-radius: 4px; display: block;"/>
                         }
+
                         <MudText Typo="Typo.caption">@_newCommentImage.Name</MudText>
                         <MudTooltip Text="Remove image">
                             <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
-                                           Color="Color.Error" OnClick="ClearNewCommentImage" />
+                                           Color="Color.Error" OnClick="ClearNewCommentImage"/>
                         </MudTooltip>
                     }
                 </MudStack>
 
                 <MudButton OnClick="AddCommentAsync" Color="Color.Primary" Variant="Variant.Filled"
-                           Class="mt-2" Disabled="string.IsNullOrWhiteSpace(_newComment) || _submittingComment">
+                           Class="mt-2"
+                           Disabled="string.IsNullOrWhiteSpace(_newComment) || _submittingComment">
                     @if (_submittingComment)
                     {
-                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2"/>
                     }
                     Post Comment
                 </MudButton>
@@ -374,9 +398,9 @@ else
     </TitleContent>
     <DialogContent>
         <MudTextField @bind-Value="_editTitle" Label="Title" Required="true" MaxLength="200"
-                      Class="mb-4" FullWidth="true" />
+                      Class="mb-4" FullWidth="true"/>
         <MudTextField @bind-Value="_editDescription" Label="Description" Lines="5" MaxLength="2000"
-                      Class="mb-4" FullWidth="true" />
+                      Class="mb-4" FullWidth="true"/>
         @if (AuthState.Role == "Technician")
         {
             <MudSelect T="string" Label="Tags" MultiSelection="true"
@@ -388,7 +412,7 @@ else
             </MudSelect>
         }
 
-        <MudDivider Class="my-4" />
+        <MudDivider Class="my-4"/>
 
         <MudText Typo="Typo.subtitle1" Class="mb-2">Attachments</MudText>
 
@@ -397,7 +421,9 @@ else
             var visibleAttachments = _attachments.Where(a => !_editDeletedAttachmentIds.Contains(a.AttachmentId)).ToList();
             @if (visibleAttachments.Count > 0)
             {
-                <MudText Typo="Typo.body2" Class="mb-1" Color="Color.Default">Current (@visibleAttachments.Count)</MudText>
+                <MudText Typo="Typo.body2" Class="mb-1" Color="Color.Default">Current
+                    (@visibleAttachments.Count)
+                </MudText>
                 <MudStack Row="true" Wrap="Wrap.Wrap" Class="mb-2 gap-2">
                     @foreach (var attachment in visibleAttachments)
                     {
@@ -405,14 +431,16 @@ else
                             <img src="@($"/api/attachments/{attachment.AttachmentId}")"
                                  alt="@attachment.OriginalFileName"
                                  style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px; display: block;"
-                                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
-                            <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background: var(--mud-palette-surface); border-radius: 4px;">
-                                <MudIcon Icon="@Icons.Material.Filled.InsertDriveFile" Size="Size.Small" />
+                                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"/>
+                            <div
+                                style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background: var(--mud-palette-surface); border-radius: 4px;">
+                                <MudIcon Icon="@Icons.Material.Filled.InsertDriveFile"
+                                         Size="Size.Small"/>
                             </div>
                             <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
                                            Color="Color.Error"
                                            Style="position: absolute; top: 2px; right: 2px;"
-                                           OnClick="() => _editDeletedAttachmentIds.Add(attachment.AttachmentId)" />
+                                           OnClick="() => _editDeletedAttachmentIds.Add(attachment.AttachmentId)"/>
                         </MudPaper>
                     }
                 </MudStack>
@@ -431,7 +459,9 @@ else
 
         @if (_editFiles is { Count: > 0 })
         {
-            <MudText Typo="Typo.body2" Class="mt-2 mb-1" Color="Color.Default">New (@_editFiles.Count)</MudText>
+            <MudText Typo="Typo.body2" Class="mt-2 mb-1" Color="Color.Default">New
+                (@_editFiles.Count)
+            </MudText>
             <MudGrid Class="mb-2">
                 @foreach (var file in _editFiles)
                 {
@@ -441,12 +471,14 @@ else
                             {
                                 <img src="@dataUrl"
                                      alt="@file.Name"
-                                     style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px; display: block;" />
+                                     style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px; display: block;"/>
                             }
                             else
                             {
-                                <div style="width: 100%; height: 100%; align-items: center; justify-content: center; flex-direction: column; background: var(--mud-palette-surface); border-radius: 4px; display: flex;">
-                                    <MudIcon Icon="@Icons.Material.Filled.InsertDriveFile" Size="Size.Small" />
+                                <div
+                                    style="width: 100%; height: 100%; align-items: center; justify-content: center; flex-direction: column; background: var(--mud-palette-surface); border-radius: 4px; display: flex;">
+                                    <MudIcon Icon="@Icons.Material.Filled.InsertDriveFile"
+                                             Size="Size.Small"/>
                                 </div>
                             }
                         </MudPaper>
@@ -460,7 +492,7 @@ else
         <MudButton OnClick="SaveEditAsync" Color="Color.Primary" Disabled="_savingEdit">
             @if (_savingEdit)
             {
-                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2"/>
             }
             Save
         </MudButton>
@@ -472,14 +504,16 @@ else
         <MudText Typo="Typo.h6">Delete Issue</MudText>
     </TitleContent>
     <DialogContent>
-        <MudText>Are you sure you want to delete <strong>@_issue?.Title</strong>? This action cannot be undone.</MudText>
+        <MudText>Are you sure you want to delete <strong>@_issue?.Title</strong>? This action cannot
+            be undone.
+        </MudText>
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="() => _deleteDialogVisible = false">Cancel</MudButton>
         <MudButton OnClick="DeleteIssueAsync" Color="Color.Error" Disabled="_deleting">
             @if (_deleting)
             {
-                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2"/>
             }
             Delete
         </MudButton>
@@ -512,15 +546,15 @@ else
     private List<TagDto> _allTags = new();
     private HashSet<string> _editSelectedTags = new();
     private IReadOnlyList<IBrowserFile>? _editFiles;
-    private Dictionary<IBrowserFile, string?> _editPreviewUrls = new();
-    private HashSet<Guid> _editDeletedAttachmentIds = new();
-    private DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Medium, FullWidth = true };
+    private readonly Dictionary<IBrowserFile, string?> _editPreviewUrls = new();
+    private readonly HashSet<Guid> _editDeletedAttachmentIds = new();
+    private readonly DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Medium, FullWidth = true };
 
     private bool _deleteDialogVisible;
     private bool _deleting;
 
-    private Dictionary<int, IssueDto> _referencedIssues = new();
-    private static readonly System.Text.RegularExpressions.Regex _issueRefRegex = new(@"#(\d+)", System.Text.RegularExpressions.RegexOptions.Compiled);
+    private readonly Dictionary<int, IssueDto> _referencedIssues = new();
+    private static readonly Regex _issueRefRegex = new(@"#(\d+)", RegexOptions.Compiled);
 
     protected override async Task OnInitializedAsync()
     {
@@ -534,11 +568,11 @@ else
             {
                 _statusChanges = await IssueStatusService.GetStatusHistory(Id);
             }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Failed to load issue {IssueId}", Id);
-            Snackbar.Add($"Failed to load issue: {ex.Message}", Severity.Error);
-        }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Failed to load issue {IssueId}", Id);
+                Snackbar.Add($"Failed to load issue: {ex.Message}", Severity.Error);
+            }
 
             try
             {
@@ -551,11 +585,11 @@ else
             }
 
             _canUpdateStatus = AuthState.IsAuthenticated
-                && (AuthState.Role == "Technician" || AuthState.Username == _issue?.AuthorUsername);
+                               && (AuthState.Role == "Technician" || AuthState.Username == _issue?.AuthorUsername);
             _canEdit = AuthState.IsAuthenticated
-                && (AuthState.Role == "Technician" || AuthState.Username == _issue?.AuthorUsername);
+                       && (AuthState.Role == "Technician" || AuthState.Username == _issue?.AuthorUsername);
             _isAssignedToCurrentUser = AuthState.IsAuthenticated
-                && _issue?.AssignedToUsername == AuthState.Username;
+                                       && _issue?.AssignedToUsername == AuthState.Username;
 
             if (_canEdit && AuthState.Role == "Technician")
             {
@@ -616,7 +650,7 @@ else
             {
                 try
                 {
-                    using var stream = file.OpenReadStream(maxAllowedSize: IssueAttachmentOptions.Value.MaxSizeBytes);
+                    using var stream = file.OpenReadStream(IssueAttachmentOptions.Value.MaxSizeBytes);
                     using var ms = new MemoryStream();
                     await stream.CopyToAsync(ms);
                     _editPreviewUrls[file] = $"data:{file.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}";
@@ -664,8 +698,11 @@ else
             {
                 try
                 {
-                    await AttachmentsClient.Delete(Id, attachmentId);                }
-                catch { }
+                    await AttachmentsClient.Delete(Id, attachmentId);
+                }
+                catch
+                {
+                }
             }
 
             if (_editFiles is { Count: > 0 })
@@ -676,7 +713,9 @@ else
                     {
                         await AttachmentsClient.Add(Id, file);
                     }
-                    catch { }
+                    catch
+                    {
+                    }
                 }
             }
 
@@ -933,7 +972,7 @@ else
         var ids = new HashSet<int>();
         foreach (var comment in _comments)
         {
-            foreach (System.Text.RegularExpressions.Match m in _issueRefRegex.Matches(comment.Content))
+            foreach (Match m in _issueRefRegex.Matches(comment.Content))
             {
                 if (int.TryParse(m.Groups[1].Value, out var tid) && tid != Id)
                     ids.Add(tid);
@@ -949,7 +988,9 @@ else
                     var t = await IssuesService.GetById(tid);
                     _referencedIssues[tid] = t;
                 }
-                catch { }
+                catch
+                {
+                }
             }
         }
     }
@@ -958,7 +999,7 @@ else
     {
         var segments = new List<CommentSegment>();
         var lastEnd = 0;
-        foreach (System.Text.RegularExpressions.Match m in _issueRefRegex.Matches(content))
+        foreach (Match m in _issueRefRegex.Matches(content))
         {
             if (m.Index > lastEnd)
                 segments.Add(new CommentSegment(false, content[lastEnd..m.Index], 0));
@@ -981,14 +1022,19 @@ else
     {
         _timeline = new List<TimelineItem>();
         foreach (var c in _comments)
-            _timeline.Add(new TimelineItem(c.CreatedAt, TimelineItemType.Comment, Comment: c));
+            _timeline.Add(new TimelineItem(c.CreatedAt, TimelineItemType.Comment, c));
         foreach (var s in _statusChanges)
             _timeline.Add(new TimelineItem(s.ChangedAt, TimelineItemType.StatusChange, StatusChange: s));
         _timeline.Sort((a, b) => a.Timestamp.CompareTo(b.Timestamp));
     }
 
     private record TimelineItem(DateTime Timestamp, TimelineItemType Type, CommentDto? Comment = null, StatusChangeDto? StatusChange = null);
-    private enum TimelineItemType { Comment, StatusChange }
+
+    private enum TimelineItemType
+    {
+        Comment,
+        StatusChange
+    }
 
     private async Task DeleteIssueAsync()
     {
@@ -1008,4 +1054,5 @@ else
             _deleting = false;
         }
     }
+
 }

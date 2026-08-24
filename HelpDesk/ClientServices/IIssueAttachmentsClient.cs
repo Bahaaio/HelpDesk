@@ -1,4 +1,6 @@
-using HelpDesk.Dtos.Responses;
+using HelpDesk.Modules.Attachments.Dtos;
+using HelpDesk.Modules.Attachments.Models;
+using HelpDesk.Modules.Attachments.Services;
 using Microsoft.AspNetCore.Components.Forms;
 
 namespace HelpDesk.ClientServices;

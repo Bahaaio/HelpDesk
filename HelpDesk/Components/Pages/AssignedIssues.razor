@@ -1,4 +1,8 @@
 @page "/issues/assigned"
+@using HelpDesk.Modules.Issues.Dtos
+@using HelpDesk.Modules.Issues.Dtos.Requests
+@using HelpDesk.Modules.Issues.Enums
+@using HelpDesk.Modules.Issues.Services
 @rendermode InteractiveServer
 @inject IIssueAssignmentsService IssueAssignmentsService
 @inject NavigationManager Navigation
@@ -14,7 +18,7 @@
         <MudTextField @bind-Value="_searchText" Placeholder="Search issues..."
                       Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
                       Style="max-width: 300px;" Immediate="true"
-                      DebounceInterval="300" OnDebounceIntervalClicked="LoadIssues" />
+                      DebounceInterval="300" OnDebounceIntervalClicked="LoadIssues"/>
 
         <MudSelect T="string" @bind-Value="_selectedStatus" Label="Status" Style="width: 150px;"
                    SelectedValuesChanged="_ => LoadIssues()">
@@ -34,12 +38,12 @@
 
     @if (_loading)
     {
-        <MudProgressCircular Indeterminate="true" Class="d-flex justify-center ma-8" />
+        <MudProgressCircular Indeterminate="true" Class="d-flex justify-center ma-8"/>
     }
     else if (_issues.Count == 0)
     {
         <MudPaper Class="pa-8 text-center">
-            <MudIcon Icon="@Icons.Material.Filled.Inbox" Size="Size.Large" Color="Color.Default" />
+            <MudIcon Icon="@Icons.Material.Filled.Inbox" Size="Size.Large" Color="Color.Default"/>
             <MudText Typo="Typo.h6" Class="mt-2">No assigned issues</MudText>
         </MudPaper>
     }
@@ -72,11 +76,12 @@
                 <MudTd DataLabel="Tags">
                     @foreach (var tag in context.Tags)
                     {
-                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Class="mr-1">@tag</MudChip>
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined"
+                                 Class="mr-1">@tag</MudChip>
                     }
                 </MudTd>
                 <MudTd DataLabel="Score">
-                    <MudIcon Icon="@Icons.Material.Filled.ThumbUp" Size="Size.Small" Class="mr-1" />
+                    <MudIcon Icon="@Icons.Material.Filled.ThumbUp" Size="Size.Small" Class="mr-1"/>
                     @context.VoteScore
                 </MudTd>
                 <MudTd DataLabel="Created">@context.CreatedAt.ToString("MMM dd, yyyy")</MudTd>
@@ -105,17 +110,20 @@
         try
         {
             var query = new IssueQuery(
-                Status: _selectedStatus != "all" ? Enum.Parse<Status>(_selectedStatus) : null,
-                Tag: null,
-                Author: null,
-                Q: string.IsNullOrWhiteSpace(_searchText) ? null : _searchText,
-                Sort: Enum.Parse<IssueSort>(_sortBy)
+                _selectedStatus != "all" ? Enum.Parse<Status>(_selectedStatus) : null,
+                null,
+                null,
+                string.IsNullOrWhiteSpace(_searchText) ? null : _searchText,
+                Enum.Parse<IssueSort>(_sortBy)
             );
 
             _issues = await IssueAssignmentsService.GetCurrentUserAssignedIssues(query);
         }
-        catch { }
+        catch
+        {
+        }
 
         _loading = false;
     }
+
 }

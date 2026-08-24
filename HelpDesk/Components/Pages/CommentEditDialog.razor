@@ -1,3 +1,6 @@
+@using HelpDesk.Modules.Comments.Dtos
+@using HelpDesk.Modules.Comments.Dtos.Requests
+@using HelpDesk.Modules.Comments.Services
 @inject ICommentsService CommentsService
 @inject ICommentAttachmentsClient AttachmentsClient
 @inject IOptions<CommentAttachmentOptions> CommentAttachmentOptions
@@ -8,7 +11,8 @@
         <MudText Typo="Typo.h6">Edit Comment</MudText>
     </TitleContent>
     <DialogContent>
-        <MudTextField @bind-Value="_content" Label="Comment" Lines="3" MaxLength="2000" Class="mb-2" />
+        <MudTextField @bind-Value="_content" Label="Comment" Lines="3" MaxLength="2000"
+                      Class="mb-2"/>
 
         @if (_selectedFile is null)
         {
@@ -17,18 +21,19 @@
                 <img src="@($"/api/attachments/{Comment.Attachments[0].AttachmentId}")"
                      alt="Current image"
                      style="max-width: 100%; max-height: 40vh; border-radius: 8px; display: block; margin: 0 auto;"
-                     onerror="this.style.display='none'" />
+                     onerror="this.style.display='none'"/>
             }
         }
         else if (_previewUrl is not null)
         {
             <img src="@_previewUrl"
                  alt="@_selectedFile.Name"
-                 style="max-width: 100%; max-height: 40vh; border-radius: 8px; display: block; margin: 0 auto;" />
+                 style="max-width: 100%; max-height: 40vh; border-radius: 8px; display: block; margin: 0 auto;"/>
         }
 
         <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-3">
-            <MudFileUpload T="IBrowserFile" Accept="@string.Join(',', CommentAttachmentOptions.Value.AllowedExtensions)"
+            <MudFileUpload T="IBrowserFile"
+                           Accept="@string.Join(',', CommentAttachmentOptions.Value.AllowedExtensions)"
                            FilesChanged="OnFileSelected">
                 <ActivatorContent>
                     <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Image"
@@ -55,7 +60,8 @@
         </MudStack>
 
         <MudText Typo="Typo.caption" Color="Color.Default" Class="mt-2 text-center">
-            Optional image (@string.Join(", ", CommentAttachmentOptions.Value.AllowedExtensions)), max @(CommentAttachmentOptions.Value.MaxSizeBytes / 1024 / 1024) MB.
+            Optional image (@string.Join(", ", CommentAttachmentOptions.Value.AllowedExtensions)),
+            max @(CommentAttachmentOptions.Value.MaxSizeBytes / 1024 / 1024) MB.
         </MudText>
     </DialogContent>
     <DialogActions>
@@ -65,12 +71,12 @@
                 Current image will be removed
             </MudChip>
         }
-        <MudSpacer />
+        <MudSpacer/>
         <MudButton OnClick="Cancel">Cancel</MudButton>
         <MudButton OnClick="SaveAsync" Color="Color.Primary" Disabled="_saving || !_canSave">
             @if (_saving)
             {
-                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2"/>
             }
             Save
         </MudButton>
@@ -81,7 +87,8 @@
     [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
 
     /// <summary>The comment being edited.</summary>
-    [Parameter] public CommentDto Comment { get; set; } = null!;
+    [Parameter]
+    public CommentDto Comment { get; set; } = null!;
 
     private string _content = "";
     private bool _saving;
@@ -192,4 +199,5 @@
             _saving = false;
         }
     }
+
 }

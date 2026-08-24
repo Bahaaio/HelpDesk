@@ -1,4 +1,12 @@
-using HelpDesk.Models;
+using HelpDesk.Modules.Attachments.Dtos;
+using HelpDesk.Modules.Attachments.Models;
+using HelpDesk.Modules.Attachments.Services;
+using HelpDesk.Modules.Comments.Models;
+using HelpDesk.Modules.Invites;
+using HelpDesk.Modules.Issues.Models;
+using HelpDesk.Modules.Tags;
+using HelpDesk.Modules.Users;
+using HelpDesk.Modules.Issues.Votes;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;

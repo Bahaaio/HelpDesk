@@ -1,0 +1,15 @@
+using System.Collections.Generic;
+using HelpDesk.Common.Entities;
+using HelpDesk.Modules.Issues.Models;
+
+namespace HelpDesk.Modules.Tags;
+
+public class Tag : IEntity<int>
+
+{
+    public int Id { get; set; }
+    public required string Name { get; set; }
+    public string? Description { get; set; }
+
+    public ICollection<Issue> Issues { get; set; } = [];
+}

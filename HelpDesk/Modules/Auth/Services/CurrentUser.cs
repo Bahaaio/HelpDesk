@@ -1,0 +1,16 @@
+using System.Security.Claims;
+
+namespace HelpDesk.Modules.Auth.Services;
+
+public class CurrentUser : ICurrentUser
+{
+    public CurrentUser(IHttpContextAccessor contextAccessor)
+    {
+        Principal = contextAccessor.HttpContext?.User ?? new ClaimsPrincipal();
+    }
+
+    public int Id => int.Parse(Principal.FindFirstValue(ClaimTypes.NameIdentifier)!);
+    public string UserName => Principal.FindFirstValue(ClaimTypes.Name)!;
+    public string Role => Principal.FindFirstValue(ClaimTypes.Role)!;
+    public ClaimsPrincipal Principal { get; }
+}

@@ -1,4 +1,6 @@
 @page "/issues/new"
+@using HelpDesk.Modules.Issues.Dtos.Requests
+@using HelpDesk.Modules.Issues.Services
 @rendermode InteractiveServer
 @inject IIssuesService IssuesService
 @inject IIssueAttachmentsClient AttachmentsClient
@@ -10,19 +12,20 @@
 
 <MudContainer MaxWidth="MaxWidth.Medium">
     <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
-        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Href="/issues" />
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Href="/issues"/>
         <MudText Typo="Typo.h4">Create Issue</MudText>
     </MudStack>
 
     <MudPaper Class="pa-6">
         <MudTextField @bind-Value="_title" Label="Title" Required="true" MaxLength="200"
-                      Class="mb-4" FullWidth="true" />
+                      Class="mb-4" FullWidth="true"/>
 
         <MudTextField @bind-Value="_description" Label="Description" Lines="5" MaxLength="2000"
-                      Class="mb-4" FullWidth="true" />
+                      Class="mb-4" FullWidth="true"/>
 
         <MudFileUpload @bind-Files="Files" Multiple="true"
-                       Accept="@string.Join(',', IssueAttachmentOptions.Value.AllowedExtensions)" Class="mb-4">
+                       Accept="@string.Join(',', IssueAttachmentOptions.Value.AllowedExtensions)"
+                       Class="mb-4">
             <ActivatorContent>
                 <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.AttachFile">
                     Attach Files
@@ -43,12 +46,14 @@
                             {
                                 <img src="@dataUrl"
                                      alt="@file.Name"
-                                     style="width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; display: block;" />
+                                     style="width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; display: block;"/>
                             }
                             else
                             {
-                                <div style="width: 100%; aspect-ratio: 1; align-items: center; justify-content: center; flex-direction: column; background: var(--mud-palette-surface); border-radius: 8px; padding: 8px; display: flex;">
-                                    <MudIcon Icon="@Icons.Material.Filled.InsertDriveFile" Size="Size.Large" Color="Color.Default" />
+                                <div
+                                    style="width: 100%; aspect-ratio: 1; align-items: center; justify-content: center; flex-direction: column; background: var(--mud-palette-surface); border-radius: 8px; padding: 8px; display: flex;">
+                                    <MudIcon Icon="@Icons.Material.Filled.InsertDriveFile"
+                                             Size="Size.Large" Color="Color.Default"/>
                                     <MudText Typo="Typo.caption" Align="Align.Center" Class="mt-1"
                                              Style="word-break: break-all; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
                                         @file.Name
@@ -58,7 +63,7 @@
                             <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
                                            Color="Color.Error"
                                            Style="position: absolute; top: 4px; right: 4px;"
-                                           OnClick="() => RemoveFile(file)" />
+                                           OnClick="() => RemoveFile(file)"/>
                         </MudPaper>
                     </MudItem>
                 }
@@ -71,7 +76,7 @@
                        Disabled="_loading || string.IsNullOrWhiteSpace(_title)">
                 @if (_loading)
                 {
-                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2"/>
                 }
                 Create
             </MudButton>
@@ -84,7 +89,7 @@
     private string? _description;
     private bool _loading;
     private IReadOnlyList<IBrowserFile>? _files;
-    private Dictionary<IBrowserFile, string?> _previewUrls = new();
+    private readonly Dictionary<IBrowserFile, string?> _previewUrls = new();
 
     private static readonly string[] ImageTypes = { "image/jpeg", "image/png", "image/gif", "image/webp" };
 
@@ -112,7 +117,7 @@
             {
                 try
                 {
-                    using var stream = file.OpenReadStream(maxAllowedSize: IssueAttachmentOptions.Value.MaxSizeBytes);
+                    using var stream = file.OpenReadStream(IssueAttachmentOptions.Value.MaxSizeBytes);
                     using var ms = new MemoryStream();
                     await stream.CopyToAsync(ms);
                     _previewUrls[file] = $"data:{file.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}";
@@ -161,7 +166,9 @@
                     {
                         await AttachmentsClient.Add(issue.Id, file);
                     }
-                    catch { }
+                    catch
+                    {
+                    }
                 }
             }
 
@@ -176,4 +183,5 @@
             _loading = false;
         }
     }
+
 }

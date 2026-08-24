@@ -1,5 +1,6 @@
+using HelpDesk.Common.Exceptions;
+using HelpDesk.Common.Extensions;
 using HelpDesk.Components;
-using HelpDesk.Exceptions;
 using HelpDesk.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,14 +8,11 @@ var builder = WebApplication.CreateBuilder(args);
 // API services
 builder.Services.AddControllers();
 builder.Services.AddDatabaseServices(builder.Configuration);
-builder.Services.AddApplicationServices();
-builder.Services.AddOptionsServices();
+builder.Services.AddModules();
 builder.Services.AddOpenApiServices();
 builder.Services.AddIdentityServices();
 builder.Services.AddAuthorizationServices();
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
-builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandling();
 
 // UI services
 builder.Services.AddUiServices();

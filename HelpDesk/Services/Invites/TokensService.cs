@@ -1,6 +1,6 @@
 using System.Security.Cryptography;
 
-namespace HelpDesk.Services.Auth;
+namespace HelpDesk.Services.Invites;
 
 public class TokensService : ITokensService
 {

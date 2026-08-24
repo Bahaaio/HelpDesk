@@ -1,4 +1,4 @@
-namespace HelpDesk.Services.Auth;
+namespace HelpDesk.Services.Invites;
 
 /// <summary>
 ///     Generates cryptographically secure random tokens.

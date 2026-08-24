@@ -16,10 +16,6 @@ public class IssueAttachmentsController : ControllerBase
         _attachmentsService = attachmentsService;
     }
 
-    [HttpGet]
-    public async Task<ActionResult<List<AttachmentDto>>> GetAll(int issueId) =>
-        Ok(await _attachmentsService.GetAll(issueId));
-
     [HttpPost]
     public async Task<ActionResult<AttachmentDto>> Attach(int issueId, IFormFile file) =>
         Ok(await _attachmentsService.Add(issueId, file));

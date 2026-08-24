@@ -527,7 +527,7 @@ else
         try
         {
             _issue = await IssuesService.GetById(Id);
-            _attachments = await AttachmentsClient.GetAll(Id);
+            _attachments = _issue.Attachments;
             _comments = await CommentsService.GetAll(Id);
 
             try
@@ -682,7 +682,7 @@ else
 
             var refreshed = await IssuesService.GetById(Id);
             _issue = refreshed;
-            _attachments = await AttachmentsClient.GetAll(Id);
+            _attachments = _issue.Attachments;
 
             _editDialogOpen = false;
             Snackbar.Add("Issue updated", Severity.Success);
@@ -704,7 +704,7 @@ else
             await AttachmentsClient.Delete(Id, attachmentId);
             var refreshed = await IssuesService.GetById(Id);
             _issue = refreshed;
-            _attachments = await AttachmentsClient.GetAll(Id);
+            _attachments = _issue.Attachments;
             Snackbar.Add("Attachment deleted", Severity.Success);
         }
         catch (Exception ex)
@@ -744,7 +744,7 @@ else
             await IssueAssignmentsService.AssignCurrentUser(Id);
             var refreshed = await IssuesService.GetById(Id);
             _issue = refreshed;
-            _attachments = await AttachmentsClient.GetAll(Id);
+            _attachments = _issue.Attachments;
             _isAssignedToCurrentUser = _issue?.AssignedToUsername == AuthState.Username;
             Snackbar.Add("Issue assigned to you", Severity.Success);
         }
@@ -766,7 +766,7 @@ else
             await IssueAssignmentsService.UnassignCurrentUser(Id);
             var refreshed = await IssuesService.GetById(Id);
             _issue = refreshed;
-            _attachments = await AttachmentsClient.GetAll(Id);
+            _attachments = _issue.Attachments;
             _isAssignedToCurrentUser = false;
             Snackbar.Add("Issue unassigned", Severity.Success);
         }

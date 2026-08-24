@@ -16,10 +16,6 @@ public class CommentAttachmentsController : ControllerBase
         _attachmentsService = attachmentsService;
     }
 
-    [HttpGet]
-    public async Task<ActionResult<List<AttachmentDto>>> GetAll(int commentId) =>
-        Ok(await _attachmentsService.GetAll(commentId));
-
     [HttpPost]
     public async Task<ActionResult<AttachmentDto>> Attach(int commentId, IFormFile file) =>
         Ok(await _attachmentsService.Add(commentId, file));

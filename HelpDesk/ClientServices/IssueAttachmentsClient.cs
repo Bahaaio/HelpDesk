@@ -2,7 +2,6 @@ using HelpDesk.Dtos.Responses;
 using HelpDesk.Models;
 using HelpDesk.Options;
 using HelpDesk.Services.Attachments;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.Extensions.Options;
 
@@ -19,9 +18,6 @@ public class IssueAttachmentsClient : IIssueAttachmentsClient
         _attachmentsService = attachmentsService;
         _options = options.Value;
     }
-
-    public async Task<List<AttachmentDto>> GetAll(int issueId) =>
-        await _attachmentsService.GetAll(issueId);
 
     public async Task<AttachmentDto> Add(int issueId, IBrowserFile file)
     {

@@ -14,12 +14,8 @@ public static class CommentMapper
             c.Content,
             c.CreatedAt,
             c.Author.UserName!,
-            c.Attachments
-                .Select(a => new AttachmentDto(
-                    a.AttachmentId,
-                    a.Attachment.ContentType,
-                    a.Attachment.OriginalFileName))
-                .ToList());
+            c.Attachments.Select(ca => ca.ToDto()).ToList()
+        );
 
     public static CommentDto ToDto(this Comment c) => Compiled(c);
 }

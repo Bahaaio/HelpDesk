@@ -19,9 +19,6 @@ public class CommentAttachmentsClient : ICommentAttachmentsClient
         _options = options.Value;
     }
 
-    public async Task<List<AttachmentDto>> GetAll(int commentId) =>
-        await _attachmentsService.GetAll(commentId);
-
     public async Task<AttachmentDto> Add(int commentId, IBrowserFile file)
     {
         await using var source = file.OpenReadStream(_options.MaxSizeBytes);

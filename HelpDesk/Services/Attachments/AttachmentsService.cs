@@ -20,21 +20,21 @@ namespace HelpDesk.Services.Attachments;
 ///     You must implement authorization logic in the derived classes.
 /// </remarks>
 /// <typeparam name="TOwner">The owner of the attachment.</typeparam>
-/// <typeparam name="TJoin">The join table between attachments and owner.</typeparam>
-public abstract class AttachmentsService<TOwner, TJoin> : IAttachmentsService<TOwner>
+/// <typeparam name="TAttachment">The attachment type.</typeparam>
+public abstract class AttachmentsService<TOwner, TAttachment> : IAttachmentsService<TOwner>
     where TOwner : class, IOwnedByUser, IEntity<int>
-    where TJoin : class, IAttachmentJoin<TOwner>, new()
+    where TAttachment : Attachment, new()
 {
-    private readonly DbSet<TJoin> _attachmentJoinSet;
     private readonly IAttachmentValidationService _attachmentValidationService;
+    private readonly DbSet<TAttachment> _attachmentsSet;
     private readonly AppDbContext _db;
-    private readonly ILogger<AttachmentsService<TOwner, TJoin>> _logger;
+    private readonly ILogger<AttachmentsService<TOwner, TAttachment>> _logger;
     private readonly DbSet<TOwner> _ownerSet;
     private readonly IStorageService _storageService;
     private readonly ICurrentUser _user;
 
     protected AttachmentsService(IStorageService storageService, AppDbContext db, ICurrentUser user,
-        ILogger<AttachmentsService<TOwner, TJoin>> logger,
+        ILogger<AttachmentsService<TOwner, TAttachment>> logger,
         IAttachmentValidationService attachmentValidationService)
     {
         _storageService = storageService;
@@ -43,44 +43,40 @@ public abstract class AttachmentsService<TOwner, TJoin> : IAttachmentsService<TO
         _attachmentValidationService = attachmentValidationService;
         _ownerSet = db.Set<TOwner>();
         _user = user;
-        _attachmentJoinSet = db.Set<TJoin>();
+        _attachmentsSet = db.Set<TAttachment>();
     }
 
     protected abstract AttachmentOptions AttachmentOptions { get; }
 
     public async Task<List<AttachmentDto>> GetAll(int ownerId)
     {
-        return await _attachmentJoinSet
-            .Where(aj => aj.OwnerId == ownerId)
-            .Select(aj => aj.Attachment.ToDto())
+        return await _attachmentsSet
+            .Where(a => a.OwnerId == ownerId)
+            .Select(a => a.ToDto())
             .ToListAsync();
     }
 
     public virtual async Task<AttachmentDto> Add(int ownerId, IFormFile file)
     {
         _attachmentValidationService.Validate(file, AttachmentOptions);
+        await _ownerSet.ExistsOrThrowAsync(ownerId);
 
-        var count = await _attachmentJoinSet.CountAsync(aj => aj.OwnerId == ownerId);
+        var count = await _attachmentsSet.CountAsync(a => a.OwnerId == ownerId);
         _attachmentValidationService.ValidateCount(count + 1, AttachmentOptions.MaxCount);
 
         var guid = Guid.NewGuid();
         await _storageService.Store(file, guid.ToString());
 
-        var attachment = new Attachment
+        var attachment = new TAttachment
         {
             Id = guid,
+            OwnerId = ownerId,
             ContentType = file.ContentType,
             OriginalFileName = file.FileName,
             UploaderId = _user.Id
         };
+
         _db.Attachments.Add(attachment);
-
-        _attachmentJoinSet.Add(new TJoin
-        {
-            AttachmentId = attachment.Id,
-            OwnerId = ownerId
-        });
-
         await _db.SaveChangesAsync();
 
         _logger.LogInformation(
@@ -96,6 +92,7 @@ public abstract class AttachmentsService<TOwner, TJoin> : IAttachmentsService<TO
 
         _db.Remove(attachment);
         await _storageService.DeleteFile(attachmentId.ToString());
+
         await _db.SaveChangesAsync();
 
         _logger.LogInformation("User {userId} deleted attachment {attachmentId}",
@@ -104,16 +101,16 @@ public abstract class AttachmentsService<TOwner, TJoin> : IAttachmentsService<TO
 
     public virtual async Task DeleteAll(int ownerId)
     {
-        var attachmentIds = await _attachmentJoinSet
-            .Where(aj => aj.OwnerId == ownerId)
-            .Select(aj => aj.AttachmentId.ToString())
+        var attachmentIds = await _attachmentsSet
+            .Where(a => a.OwnerId == ownerId)
+            .Select(a => a.Id.ToString())
             .ToListAsync();
 
         foreach (var id in attachmentIds)
             await _storageService.DeleteFile(id);
 
-        await _attachmentJoinSet
-            .Where(aj => aj.OwnerId == ownerId)
+        await _attachmentsSet
+            .Where(a => a.OwnerId == ownerId)
             .ExecuteDeleteAsync();
     }
 
@@ -126,14 +123,13 @@ public abstract class AttachmentsService<TOwner, TJoin> : IAttachmentsService<TO
     /// <exception cref="NotFoundException">Thrown if the attachment is not found.</exception>
     protected async Task<TOwner> GetOwnerEntity(Guid attachmentId)
     {
-        var attachmentJoin = await _attachmentJoinSet
-            .Where(aj => aj.AttachmentId == attachmentId)
-            .SingleOrDefaultAsync();
-
-        if (attachmentJoin is null)
-            throw new NotFoundException($"Attachment with id {attachmentId} not found");
-
-        return await _ownerSet.FindOrThrowAsync(attachmentJoin.OwnerId);
+        return await _ownerSet.Where(o =>
+                   o.Id == _attachmentsSet
+                       .Where(a => a.Id == attachmentId)
+                       .Select(a => a.OwnerId)
+                       .FirstOrDefault()
+               ).SingleOrDefaultAsync() ??
+               throw new NotFoundException($"Attachment with id: {attachmentId} not found");
     }
 
     /// <summary>

@@ -1,3 +1,4 @@
+using HelpDesk.Authorization;
 using HelpDesk.Authorization.Requirements;
 using HelpDesk.Data;
 using HelpDesk.Dtos.Requests;
@@ -174,8 +175,8 @@ public class CommentsServiceTests : IDisposable
             .ThrowsAsync(new UnauthorizedAccessException("User is not authorized."));
 
         // Act & Assert
-        await Assert.ThrowsAsync<UnauthorizedAccessException>(
-            () => _service.Update(commentId, new UpdateCommentRequest("hijacked")));
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            _service.Update(commentId, new UpdateCommentRequest("hijacked")));
 
         var unchangedComment = await _db.Comments.FindAsync(commentId);
         Assert.NotNull(unchangedComment);

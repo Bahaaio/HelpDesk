@@ -1,7 +1,7 @@
 using HelpDesk.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 
-namespace HelpDesk.Services.Auth;
+namespace HelpDesk.Authorization;
 
 public interface IAuthorizationGuard
 {

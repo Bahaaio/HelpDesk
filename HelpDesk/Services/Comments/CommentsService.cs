@@ -1,3 +1,4 @@
+using HelpDesk.Authorization;
 using HelpDesk.Data;
 using HelpDesk.Dtos.Requests;
 using HelpDesk.Dtos.Responses;

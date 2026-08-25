@@ -1,57 +1,55 @@
-using HelpDesk.Common.Extensions;
-using HelpDesk.Data;
+using HelpDesk.Data.Persistence;
 using HelpDesk.Modules.Auth.Services;
+using HelpDesk.Modules.Issues.Repositories;
 using HelpDesk.Modules.Issues.Votes.Dtos;
 using HelpDesk.Modules.Issues.Votes.Dtos.Requests;
 using HelpDesk.Modules.Issues.Votes.Models;
-using Microsoft.EntityFrameworkCore;
+using HelpDesk.Modules.Issues.Votes.Repositories;
 
 namespace HelpDesk.Modules.Issues.Votes.Services.Implementations;
 
 public class VotesService : IVotesService
 {
-    private readonly AppDbContext _db;
+    private readonly IIssuesRepository _issuesRepository;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUser _user;
+    private readonly IVotesRepository _votesRepository;
 
-    public VotesService(AppDbContext db, ICurrentUser user)
+    public VotesService(IVotesRepository votesRepository, IIssuesRepository issuesRepository,
+        IUnitOfWork unitOfWork, ICurrentUser user)
     {
-        _db = db;
+        _votesRepository = votesRepository;
+        _issuesRepository = issuesRepository;
+        _unitOfWork = unitOfWork;
         _user = user;
     }
 
     public async Task Vote(int issueId, VoteRequest request)
     {
-        var issue = await _db.Issues.FindOrThrowAsync(issueId);
-
-        var existingVote = await _db.Votes.FindAsync(issueId, _user.Id);
+        await _issuesRepository.ExistsOrThrowAsync(issueId);
+        var existingVote = await _votesRepository.FindAsync(issueId, _user.Id);
 
         if (existingVote is null)
-            issue.Votes.Add(new Vote
+            _votesRepository.Add(new Vote
             {
                 Value = request.Vote,
                 VoterId = _user.Id,
                 IssueId = issueId
             });
-
         else
             existingVote.Value = request.Vote;
 
-        await _db.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
     }
 
-    public async Task DeleteUserVote(int issueId)
-    {
-        await _db.Votes
-            .Where(v => v.IssueId == issueId && v.VoterId == _user.Id)
-            .ExecuteDeleteAsync();
-    }
+    public Task DeleteUserVote(int issueId) =>
+        _votesRepository.DeleteAsync(issueId, _user.Id);
 
     public async Task<VoteDto> GetUserVote(int issueId)
     {
-        await _db.Issues.ExistsOrThrowAsync(issueId);
+        await _issuesRepository.ExistsOrThrowAsync(issueId);
 
-        var vote = await _db.Votes.FindAsync(issueId, _user.Id);
-
+        var vote = await _votesRepository.FindAsync(issueId, _user.Id);
         return new VoteDto(vote?.Value);
     }
 }

@@ -1,15 +1,13 @@
-using HelpDesk.Common.Exceptions;
-using HelpDesk.Common.Extensions;
 using HelpDesk.Common.Models;
-using HelpDesk.Data;
+using HelpDesk.Data.Persistence;
 using HelpDesk.Modules.Attachments.Dtos;
 using HelpDesk.Modules.Attachments.Mappers;
 using HelpDesk.Modules.Attachments.Models;
 using HelpDesk.Modules.Attachments.Options;
+using HelpDesk.Modules.Attachments.Repositories;
 using HelpDesk.Modules.Auth.Services;
 using HelpDesk.Modules.Authorization.Models;
 using HelpDesk.Modules.Storage.Services;
-using Microsoft.EntityFrameworkCore;
 
 namespace HelpDesk.Modules.Attachments.Services.Implementations;
 
@@ -27,24 +25,29 @@ public abstract class AttachmentsService<TParent, TAttachment> : IAttachmentsSer
     where TAttachment : Attachment, IHasParent<TParent>, new()
 {
     private readonly IAttachmentValidationService _attachmentValidationService;
-    private readonly DbSet<TAttachment> _attachmentsSet;
-    private readonly AppDbContext _db;
+    private readonly IAttachmentsRepository<TAttachment> _attachmentsRepository;
     private readonly ILogger<AttachmentsService<TParent, TAttachment>> _logger;
-    private readonly DbSet<TParent> _parentSet;
+    private readonly IRepository<TParent, int> _parentRepository;
     private readonly IStorageService _storageService;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUser _user;
 
-    protected AttachmentsService(IStorageService storageService, AppDbContext db, ICurrentUser user,
+    protected AttachmentsService(
+        IStorageService storageService,
+        IRepository<TParent, int> parentRepository,
+        IAttachmentsRepository<TAttachment> attachmentsRepository,
+        IUnitOfWork unitOfWork,
+        ICurrentUser user,
         ILogger<AttachmentsService<TParent, TAttachment>> logger,
         IAttachmentValidationService attachmentValidationService)
     {
         _storageService = storageService;
-        _db = db;
+        _parentRepository = parentRepository;
+        _attachmentsRepository = attachmentsRepository;
+        _unitOfWork = unitOfWork;
+        _user = user;
         _logger = logger;
         _attachmentValidationService = attachmentValidationService;
-        _parentSet = db.Set<TParent>();
-        _user = user;
-        _attachmentsSet = db.Set<TAttachment>();
     }
 
     protected abstract AttachmentOptions AttachmentOptions { get; }
@@ -52,9 +55,9 @@ public abstract class AttachmentsService<TParent, TAttachment> : IAttachmentsSer
     public virtual async Task<AttachmentDto> Add(int parentId, IFormFile file)
     {
         _attachmentValidationService.Validate(file, AttachmentOptions);
-        await _parentSet.ExistsOrThrowAsync(parentId);
+        await _parentRepository.ExistsOrThrowAsync(parentId);
 
-        var count = await _attachmentsSet.CountAsync(a => a.ParentId == parentId);
+        var count = await _attachmentsRepository.CountByParentIdAsync(parentId);
         _attachmentValidationService.ValidateCount(count + 1, AttachmentOptions.MaxCount);
 
         var guid = Guid.NewGuid();
@@ -69,8 +72,8 @@ public abstract class AttachmentsService<TParent, TAttachment> : IAttachmentsSer
             UploaderId = _user.Id
         };
 
-        _db.Attachments.Add(attachment);
-        await _db.SaveChangesAsync();
+        _attachmentsRepository.Add(attachment);
+        await _unitOfWork.SaveChangesAsync();
 
         _logger.LogInformation(
             "User {userId} added attachment {attachmentId} to parent {ParentId}",
@@ -81,12 +84,11 @@ public abstract class AttachmentsService<TParent, TAttachment> : IAttachmentsSer
 
     public virtual async Task Delete(Guid attachmentId)
     {
-        var attachment = await _db.Attachments.FindOrThrowAsync(attachmentId);
+        var attachment = await _attachmentsRepository.GetByIdAsync(attachmentId);
 
-        _db.Remove(attachment);
+        _attachmentsRepository.Remove(attachment);
         await _storageService.DeleteFile(attachmentId.ToString());
-
-        await _db.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
 
         _logger.LogInformation("User {userId} deleted attachment {attachmentId}",
             _user.Id, attachmentId);
@@ -94,42 +96,26 @@ public abstract class AttachmentsService<TParent, TAttachment> : IAttachmentsSer
 
     public virtual async Task DeleteAll(int parentId)
     {
-        var attachmentIds = await _attachmentsSet
-            .Where(a => a.ParentId == parentId)
-            .Select(a => a.Id.ToString())
-            .ToListAsync();
+        var keys = await _attachmentsRepository.GetIdsByParentIdAsync(parentId);
 
-        foreach (var id in attachmentIds)
-            await _storageService.DeleteFile(id);
-
-        await _attachmentsSet
-            .Where(a => a.ParentId == parentId)
-            .ExecuteDeleteAsync();
+        foreach (var key in keys)
+            await _storageService.DeleteFile(key);
     }
 
     /// <summary>
-    ///     Gets the owner entity of the attachment.
-    ///     Used to implement authorization logic.
+    ///     Gets the owner entity of an attachment by parent ID.
+    ///     Used to implement authorization logic in derived classes.
     /// </summary>
-    /// <param name="attachmentId">The ID of the attachment.</param>
-    /// <returns>The owner entity.</returns>
-    /// <exception cref="NotFoundException">Thrown if the attachment is not found.</exception>
+    protected Task<TParent> GetOwnerEntity(int parentId) =>
+        _parentRepository.GetByIdAsync(parentId);
+
+    /// <summary>
+    ///     Gets the owner entity of an attachment by attachment ID.
+    ///     Used to implement authorization logic in derived classes.
+    /// </summary>
     protected async Task<TParent> GetOwnerEntity(Guid attachmentId)
     {
-        return await _parentSet.Where(o =>
-                   o.Id == _attachmentsSet
-                       .Where(a => a.Id == attachmentId)
-                       .Select(a => a.ParentId)
-                       .FirstOrDefault()
-               ).SingleOrDefaultAsync() ??
-               throw new NotFoundException($"Attachment with id: {attachmentId} not found");
+        var parentId = await _attachmentsRepository.GetParentIdByAttachmentAsync(attachmentId);
+        return await _parentRepository.GetByIdAsync(parentId);
     }
-
-    /// <summary>
-    ///     Gets the owner entity of the attachment.
-    /// </summary>
-    /// <param name="parentId">The ID of the parent resource.</param>
-    /// <returns>The owner entity.</returns>
-    protected async Task<TParent> GetOwnerEntity(int parentId) =>
-        await _parentSet.FindOrThrowAsync(parentId);
 }

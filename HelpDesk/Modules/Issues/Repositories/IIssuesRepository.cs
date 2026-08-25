@@ -1,0 +1,39 @@
+using HelpDesk.Data.Persistence;
+using HelpDesk.Modules.Issues.Dtos;
+using HelpDesk.Modules.Issues.Dtos.Requests;
+using HelpDesk.Modules.Issues.Models;
+
+namespace HelpDesk.Modules.Issues.Repositories;
+
+public interface IIssuesRepository : IRepository<Issue, int>
+{
+    /// <summary>Returns all issues matching <paramref name="query" />, projected to DTOs.</summary>
+    Task<List<IssueDto>> GetAllAsync(IssueQuery query);
+
+    /// <summary>
+    ///     Returns an issue with all nav-props loaded for mutation (auth + update), or
+    ///     <c>null</c>.
+    /// </summary>
+    Task<Issue?> FindForUpdateAsync(int id);
+
+    /// <summary>Returns an issue with its <c>Tags</c> collection loaded, or <c>null</c>.</summary>
+    Task<Issue?> FindWithTagsAsync(int id);
+
+    /// <summary>
+    ///     Returns all issues by <paramref name="authorId" /> matching <paramref name="query" />,
+    ///     projected to DTOs.
+    /// </summary>
+    Task<List<IssueDto>> GetAllByAuthorAsync(int authorId, IssueQuery query);
+
+    /// <summary>
+    ///     Returns all issues assigned to <paramref name="userId" /> matching
+    ///     <paramref name="query" />, projected to DTOs.
+    /// </summary>
+    Task<List<IssueDto>> GetAllAssignedToUserAsync(int userId, IssueQuery query);
+
+    /// <summary>
+    ///     Loads the <see cref="Issue.Author" /> navigation property for <paramref name="issue" />.
+    ///     Used after insert to satisfy DTO mapping without a full re-fetch.
+    /// </summary>
+    Task LoadAuthorAsync(Issue issue);
+}

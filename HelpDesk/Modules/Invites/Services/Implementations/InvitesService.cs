@@ -1,20 +1,24 @@
 using HelpDesk.Common.Exceptions;
-using HelpDesk.Data;
+using HelpDesk.Data.Persistence;
 using HelpDesk.Modules.Invites.Dtos;
 using HelpDesk.Modules.Invites.Dtos.Requests;
 using HelpDesk.Modules.Invites.Models;
+using HelpDesk.Modules.Invites.Repositories;
 
 namespace HelpDesk.Modules.Invites.Services.Implementations;
 
 public class InvitesService : IInvitesService
 {
-    private readonly AppDbContext _db;
+    private readonly IInvitesRepository _invitesRepository;
     private readonly ITokensService _tokensService;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public InvitesService(AppDbContext db, ITokensService tokensService)
+    public InvitesService(IInvitesRepository invitesRepository, ITokensService tokensService,
+        IUnitOfWork unitOfWork)
     {
-        _db = db;
+        _invitesRepository = invitesRepository;
         _tokensService = tokensService;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<InviteDto> CreateInvite(CreateInviteRequest request)
@@ -25,20 +29,20 @@ public class InvitesService : IInvitesService
             ExpiresAt = DateTime.UtcNow.AddDays(request.ValidDays)
         };
 
-        _db.InviteCodes.Add(invite);
-        await _db.SaveChangesAsync();
+        _invitesRepository.Add(invite);
+        await _unitOfWork.SaveChangesAsync();
 
         return new InviteDto(invite.Code, invite.ExpiresAt);
     }
 
     public async Task ValidateAndConsume(string code)
     {
-        var invite = await _db.InviteCodes.FindAsync(code);
+        var invite = await _invitesRepository.FindAsync(code);
 
         if (invite is null || invite.ExpiresAt < DateTime.UtcNow)
             throw new BadRequestException("Invalid or expired invite code");
 
-        _db.Remove(invite);
-        await _db.SaveChangesAsync();
+        _invitesRepository.Remove(invite);
+        await _unitOfWork.SaveChangesAsync();
     }
 }

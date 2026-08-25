@@ -1,33 +1,32 @@
 using HelpDesk.Common.Exceptions;
-using HelpDesk.Data;
+using HelpDesk.Data.Persistence;
 using HelpDesk.Modules.Tags.Dtos;
 using HelpDesk.Modules.Tags.Dtos.Requests;
 using HelpDesk.Modules.Tags.Mappers;
 using HelpDesk.Modules.Tags.Models;
-using Microsoft.EntityFrameworkCore;
+using HelpDesk.Modules.Tags.Repositories;
 
 namespace HelpDesk.Modules.Tags.Services.Implementations;
 
 public class TagsService : ITagsService
 {
-    private readonly AppDbContext _db;
     private readonly ILogger<TagsService> _logger;
+    private readonly ITagsRepository _tagsRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public TagsService(AppDbContext db, ILogger<TagsService> logger)
+    public TagsService(ITagsRepository tagsRepository, IUnitOfWork unitOfWork,
+        ILogger<TagsService> logger)
     {
-        _db = db;
+        _tagsRepository = tagsRepository;
+        _unitOfWork = unitOfWork;
         _logger = logger;
     }
 
-    public async Task<List<TagDto>> GetAll() =>
-        await _db.Tags
-            .AsNoTracking()
-            .Select(TagMapper.ToDtoExpression)
-            .ToListAsync();
+    public Task<List<TagDto>> GetAll() => _tagsRepository.GetAllAsync();
 
     public async Task<TagDto> Create(CreateTagRequest request)
     {
-        var existingTag = await _db.Tags.SingleOrDefaultAsync(t => t.Name == request.Name);
+        var existingTag = await _tagsRepository.FindByNameAsync(request.Name);
         if (existingTag is not null)
             throw new ConflictException($"Tag with name {request.Name} already exists");
 
@@ -37,8 +36,8 @@ public class TagsService : ITagsService
             Description = request.Description
         };
 
-        _db.Tags.Add(tag);
-        await _db.SaveChangesAsync();
+        _tagsRepository.Add(tag);
+        await _unitOfWork.SaveChangesAsync();
 
         _logger.LogInformation("Created tag {tagName}", tag.Name);
 
@@ -47,23 +46,18 @@ public class TagsService : ITagsService
 
     public async Task<TagDto> Update(string name, UpdateTagRequest request)
     {
-        var tag = await _db.Tags.SingleOrDefaultAsync(t =>
-            EF.Functions.ILike(t.Name, name));
-
-        if (tag is null)
-            throw new NotFoundException($"Tag with name {name} doesn't exist");
+        var tag = await _tagsRepository.FindByNameAsync(name)
+                  ?? throw new NotFoundException($"Tag with name {name} doesn't exist");
 
         tag.Description = request.Description;
 
-        await _db.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
         return tag.ToDto();
     }
 
     public async Task Delete(string name)
     {
-        var deleted = await _db.Tags
-            .Where(t => EF.Functions.ILike(t.Name, name))
-            .ExecuteDeleteAsync();
+        var deleted = await _tagsRepository.DeleteByNameAsync(name);
 
         if (deleted > 0)
             _logger.LogInformation("Deleted tag {tagName}", name);

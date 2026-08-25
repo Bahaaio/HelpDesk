@@ -1,3 +1,5 @@
+using HelpDesk.Modules.Invites.Repositories;
+using HelpDesk.Modules.Invites.Repositories.Implementations;
 using HelpDesk.Modules.Invites.Services;
 using HelpDesk.Modules.Invites.Services.Implementations;
 
@@ -11,6 +13,7 @@ public static class DependencyInjection
         {
             services.AddScoped<IInvitesService, InvitesService>();
             services.AddSingleton<ITokensService, TokensService>();
+            services.AddScoped<IInvitesRepository, InvitesRepository>();
         }
     }
 }

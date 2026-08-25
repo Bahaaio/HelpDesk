@@ -1,3 +1,5 @@
+using HelpDesk.Modules.Tags.Repositories;
+using HelpDesk.Modules.Tags.Repositories.Implementations;
 using HelpDesk.Modules.Tags.Services;
 using HelpDesk.Modules.Tags.Services.Implementations;
 
@@ -10,6 +12,7 @@ public static class DependencyInjection
         public void AddTagsModule()
         {
             services.AddScoped<ITagsService, TagsService>();
+            services.AddScoped<ITagsRepository, TagsRepository>();
         }
     }
 }

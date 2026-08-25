@@ -1,6 +1,7 @@
-using HelpDesk.Data;
+using HelpDesk.Data.Persistence;
 using HelpDesk.Modules.Attachments.Dtos;
 using HelpDesk.Modules.Attachments.Options;
+using HelpDesk.Modules.Attachments.Repositories;
 using HelpDesk.Modules.Attachments.Services;
 using HelpDesk.Modules.Attachments.Services.Implementations;
 using HelpDesk.Modules.Auth.Services;
@@ -8,6 +9,7 @@ using HelpDesk.Modules.Authorization.Extensions;
 using HelpDesk.Modules.Authorization.Services;
 using HelpDesk.Modules.Issues.Models;
 using HelpDesk.Modules.Issues.Options;
+using HelpDesk.Modules.Issues.Repositories;
 using HelpDesk.Modules.Storage.Services;
 using Microsoft.Extensions.Options;
 
@@ -17,11 +19,18 @@ public class IssueAttachmentsService : AttachmentsService<Issue, IssueAttachment
 {
     private readonly IAuthorizationGuard _authGuard;
 
-    public IssueAttachmentsService(IStorageService storageService, AppDbContext db,
-        ICurrentUser user, ILogger<IssueAttachmentsService> logger,
+    public IssueAttachmentsService(
+        IStorageService storageService,
+        IIssuesRepository issuesRepository,
+        IAttachmentsRepository<IssueAttachment> attachmentsRepository,
+        IUnitOfWork unitOfWork,
+        ICurrentUser user,
+        ILogger<IssueAttachmentsService> logger,
         IAttachmentValidationService attachmentValidationService,
-        IAuthorizationGuard authGuard, IOptions<IssueAttachmentOptions> attachmentOptions)
-        : base(storageService, db, user, logger, attachmentValidationService)
+        IAuthorizationGuard authGuard,
+        IOptions<IssueAttachmentOptions> attachmentOptions)
+        : base(storageService, issuesRepository, attachmentsRepository, unitOfWork, user, logger,
+            attachmentValidationService)
     {
         _authGuard = authGuard;
         AttachmentOptions = attachmentOptions.Value;

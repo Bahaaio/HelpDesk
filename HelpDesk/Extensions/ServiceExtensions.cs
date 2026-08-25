@@ -1,4 +1,6 @@
 using HelpDesk.Data;
+using HelpDesk.Data.Persistence;
+using HelpDesk.Data.Persistence.Implementations;
 using HelpDesk.Modules.Attachments;
 using HelpDesk.Modules.Auth;
 using HelpDesk.Modules.Authorization;
@@ -20,6 +22,7 @@ public static class ServiceExtensions
         {
             services.AddDbContext<AppDbContext>(options =>
                 options.UseNpgsql(configuration.GetConnectionString("Default")));
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
         }
 
         /// <summary>

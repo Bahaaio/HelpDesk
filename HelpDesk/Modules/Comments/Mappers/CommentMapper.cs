@@ -1,11 +1,7 @@
 using System.Linq.Expressions;
-using HelpDesk.Modules.Attachments.Dtos;
-using HelpDesk.Modules.Attachments.Models;
-using HelpDesk.Modules.Attachments.Services;
+using HelpDesk.Modules.Attachments.Mappers;
 using HelpDesk.Modules.Comments.Dtos;
 using HelpDesk.Modules.Comments.Models;
-
-using HelpDesk.Modules.Attachments.Mappers;
 
 namespace HelpDesk.Modules.Comments.Mappers;
 

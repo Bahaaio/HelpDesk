@@ -4,7 +4,7 @@ using HelpDesk.Modules.Users.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 
-namespace HelpDesk.Modules.Auth.Services;
+namespace HelpDesk.Modules.Auth.Services.Implementations;
 
 /// <summary>
 ///     Seeds identity-related data: roles and the default technician account.

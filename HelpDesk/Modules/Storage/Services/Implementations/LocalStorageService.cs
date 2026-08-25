@@ -1,4 +1,4 @@
-namespace HelpDesk.Modules.Storage.Services;
+namespace HelpDesk.Modules.Storage.Services.Implementations;
 
 public class LocalStorageService : IStorageService
 {

@@ -1,26 +1,26 @@
 using HelpDesk.Common.Authorization;
 using HelpDesk.Common.Extensions;
 using HelpDesk.Data;
-using HelpDesk.Modules.Attachments;
 using HelpDesk.Modules.Attachments.Dtos;
 using HelpDesk.Modules.Attachments.Options;
 using HelpDesk.Modules.Attachments.Services;
+using HelpDesk.Modules.Attachments.Services.Implementations;
 using HelpDesk.Modules.Auth.Services;
-using HelpDesk.Modules.Issues.Models;
-using HelpDesk.Modules.Issues.Options;
+using HelpDesk.Modules.Comments.Models;
+using HelpDesk.Modules.Comments.Options;
 using HelpDesk.Modules.Storage.Services;
 using Microsoft.Extensions.Options;
 
-namespace HelpDesk.Modules.Issues.Services;
+namespace HelpDesk.Modules.Comments.Services.Implementations;
 
-public class IssueAttachmentsService : AttachmentsService<Issue, IssueAttachment>
+public class CommentAttachmentsService : AttachmentsService<Comment, CommentAttachment>
 {
     private readonly IAuthorizationGuard _authGuard;
 
-    public IssueAttachmentsService(IStorageService storageService, AppDbContext db,
-        ICurrentUser user, ILogger<IssueAttachmentsService> logger,
+    public CommentAttachmentsService(IStorageService storageService, AppDbContext db,
+        ICurrentUser user, ILogger<AttachmentsService<Comment, CommentAttachment>> logger,
         IAttachmentValidationService attachmentValidationService,
-        IAuthorizationGuard authGuard, IOptions<IssueAttachmentOptions> attachmentOptions)
+        IOptions<CommentAttachmentOptions> attachmentOptions, IAuthorizationGuard authGuard)
         : base(storageService, db, user, logger, attachmentValidationService)
     {
         _authGuard = authGuard;
@@ -31,16 +31,16 @@ public class IssueAttachmentsService : AttachmentsService<Issue, IssueAttachment
 
     public override async Task<AttachmentDto> Add(int parentId, IFormFile file)
     {
-        var issue = await GetOwnerEntity(parentId);
-        await _authGuard.AuthorizeOwnerOrTechnician(issue);
+        var comment = await GetOwnerEntity(parentId);
+        await _authGuard.AuthorizeOwnerOrTechnician(comment);
 
         return await base.Add(parentId, file);
     }
 
     public override async Task Delete(Guid attachmentId)
     {
-        var issue = await GetOwnerEntity(attachmentId);
-        await _authGuard.AuthorizeOwnerOrTechnician(issue);
+        var comment = await GetOwnerEntity(attachmentId);
+        await _authGuard.AuthorizeOwnerOrTechnician(comment);
 
         await base.Delete(attachmentId);
     }

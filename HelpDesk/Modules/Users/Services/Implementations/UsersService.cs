@@ -1,7 +1,7 @@
 using HelpDesk.Modules.Auth.Services;
 using HelpDesk.Modules.Users.Dtos;
 
-namespace HelpDesk.Modules.Users.Services;
+namespace HelpDesk.Modules.Users.Services.Implementations;
 
 public class UsersService : IUsersService
 {

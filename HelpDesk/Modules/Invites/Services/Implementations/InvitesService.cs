@@ -5,7 +5,7 @@ using HelpDesk.Modules.Invites.Dtos;
 using HelpDesk.Modules.Invites.Dtos.Requests;
 using HelpDesk.Modules.Invites.Models;
 
-namespace HelpDesk.Modules.Invites.Services;
+namespace HelpDesk.Modules.Invites.Services.Implementations;
 
 public class InvitesService : IInvitesService
 {

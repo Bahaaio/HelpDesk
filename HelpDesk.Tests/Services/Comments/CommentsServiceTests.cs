@@ -5,7 +5,7 @@ using HelpDesk.Data;
 using HelpDesk.Modules.Auth.Services;
 using HelpDesk.Modules.Comments.Dtos.Requests;
 using HelpDesk.Modules.Comments.Models;
-using HelpDesk.Modules.Comments.Services;
+using HelpDesk.Modules.Comments.Services.Implementations;
 using HelpDesk.Modules.Issues.Models;
 using HelpDesk.Modules.Users.Models;
 using Microsoft.AspNetCore.Authorization;

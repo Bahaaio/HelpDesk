@@ -6,7 +6,7 @@ using HelpDesk.Modules.Tags.Mappers;
 using HelpDesk.Modules.Tags.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace HelpDesk.Modules.Tags.Services;
+namespace HelpDesk.Modules.Tags.Services.Implementations;
 
 public class TagsService : ITagsService
 {

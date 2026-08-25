@@ -3,6 +3,7 @@ using HelpDesk.Modules.Attachments.Services;
 using HelpDesk.Modules.Issues.Models;
 using HelpDesk.Modules.Issues.Options;
 using HelpDesk.Modules.Issues.Services;
+using HelpDesk.Modules.Issues.Services.Implementations;
 using HelpDesk.Modules.Issues.Votes;
 
 namespace HelpDesk.Modules.Issues;

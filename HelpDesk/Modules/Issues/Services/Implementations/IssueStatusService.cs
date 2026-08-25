@@ -7,7 +7,7 @@ using HelpDesk.Modules.Issues.Dtos.Requests;
 using HelpDesk.Modules.Issues.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace HelpDesk.Modules.Issues.Services;
+namespace HelpDesk.Modules.Issues.Services.Implementations;
 
 public class IssueStatusService : IIssueStatusService
 {

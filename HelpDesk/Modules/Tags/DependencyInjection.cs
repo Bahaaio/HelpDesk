@@ -1,4 +1,5 @@
 using HelpDesk.Modules.Tags.Services;
+using HelpDesk.Modules.Tags.Services.Implementations;
 
 namespace HelpDesk.Modules.Tags;
 

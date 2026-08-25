@@ -5,7 +5,7 @@ using HelpDesk.Modules.Invites.Services;
 using HelpDesk.Modules.Users.Models;
 using Microsoft.AspNetCore.Identity;
 
-namespace HelpDesk.Modules.Auth.Services;
+namespace HelpDesk.Modules.Auth.Services.Implementations;
 
 public class AuthService : IAuthService
 {

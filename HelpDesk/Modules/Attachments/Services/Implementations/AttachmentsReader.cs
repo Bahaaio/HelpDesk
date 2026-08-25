@@ -4,7 +4,7 @@ using HelpDesk.Modules.Attachments.Dtos;
 using HelpDesk.Modules.Storage.Services;
 using Microsoft.EntityFrameworkCore;
 
-namespace HelpDesk.Modules.Attachments.Services;
+namespace HelpDesk.Modules.Attachments.Services.Implementations;
 
 public class AttachmentsReader : IAttachmentsReader
 {

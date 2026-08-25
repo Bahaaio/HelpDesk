@@ -12,7 +12,7 @@ using HelpDesk.Modules.Issues.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace HelpDesk.Modules.Issues.Services;
+namespace HelpDesk.Modules.Issues.Services.Implementations;
 
 public class IssuesService : IIssuesService
 {

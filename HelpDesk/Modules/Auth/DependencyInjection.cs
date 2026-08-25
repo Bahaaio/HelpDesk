@@ -2,6 +2,7 @@ using HelpDesk.Common.Authorization;
 using HelpDesk.Extensions;
 using HelpDesk.Modules.Auth.Options;
 using HelpDesk.Modules.Auth.Services;
+using HelpDesk.Modules.Auth.Services.Implementations;
 
 namespace HelpDesk.Modules.Auth;
 

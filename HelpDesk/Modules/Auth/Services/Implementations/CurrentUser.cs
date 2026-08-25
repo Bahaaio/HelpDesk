@@ -1,6 +1,6 @@
 using System.Security.Claims;
 
-namespace HelpDesk.Modules.Auth.Services;
+namespace HelpDesk.Modules.Auth.Services.Implementations;
 
 public class CurrentUser : ICurrentUser
 {

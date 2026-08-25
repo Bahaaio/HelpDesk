@@ -11,7 +11,7 @@ using HelpDesk.Modules.Auth.Services;
 using HelpDesk.Modules.Storage.Services;
 using Microsoft.EntityFrameworkCore;
 
-namespace HelpDesk.Modules.Attachments.Services;
+namespace HelpDesk.Modules.Attachments.Services.Implementations;
 
 /// <summary>
 ///     Generic attachment service.

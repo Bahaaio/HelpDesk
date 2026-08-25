@@ -1,4 +1,5 @@
 using HelpDesk.Modules.Attachments.Services;
+using HelpDesk.Modules.Attachments.Services.Implementations;
 
 namespace HelpDesk.Modules.Attachments;
 

@@ -8,7 +8,7 @@ using HelpDesk.Modules.Comments.Mappers;
 using HelpDesk.Modules.Comments.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace HelpDesk.Modules.Comments.Services;
+namespace HelpDesk.Modules.Comments.Services.Implementations;
 
 public class CommentsService : ICommentsService
 {

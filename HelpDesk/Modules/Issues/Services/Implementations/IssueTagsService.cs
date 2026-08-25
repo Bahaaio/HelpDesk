@@ -2,7 +2,7 @@ using HelpDesk.Common.Exceptions;
 using HelpDesk.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace HelpDesk.Modules.Issues.Services;
+namespace HelpDesk.Modules.Issues.Services.Implementations;
 
 public class IssueTagsService : IIssueTagsService
 {

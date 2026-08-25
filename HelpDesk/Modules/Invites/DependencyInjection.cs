@@ -1,5 +1,6 @@
 using HelpDesk.Common.Security;
 using HelpDesk.Modules.Invites.Services;
+using HelpDesk.Modules.Invites.Services.Implementations;
 
 namespace HelpDesk.Modules.Invites;
 

@@ -1,4 +1,5 @@
-using HelpDesk.Modules.Users;
+using HelpDesk.Modules.Users.Dtos;
+using HelpDesk.Modules.Users.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HelpDesk.Modules.Users.Controllers;

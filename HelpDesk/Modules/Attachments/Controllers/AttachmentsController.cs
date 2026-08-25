@@ -1,5 +1,3 @@
-using HelpDesk.Modules.Attachments.Dtos;
-using HelpDesk.Modules.Attachments.Models;
 using HelpDesk.Modules.Attachments.Services;
 using Microsoft.AspNetCore.Mvc;
 

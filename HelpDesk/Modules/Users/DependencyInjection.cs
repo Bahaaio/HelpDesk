@@ -1,3 +1,5 @@
+using HelpDesk.Modules.Users.Services;
+
 namespace HelpDesk.Modules.Users;
 
 public static class DependencyInjection

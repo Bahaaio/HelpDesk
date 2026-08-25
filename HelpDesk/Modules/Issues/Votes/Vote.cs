@@ -1,6 +1,6 @@
 using HelpDesk.Common.Authorization;
 using HelpDesk.Modules.Issues.Models;
-using HelpDesk.Modules.Users;
+using HelpDesk.Modules.Users.Models;
 
 namespace HelpDesk.Modules.Issues.Votes;
 

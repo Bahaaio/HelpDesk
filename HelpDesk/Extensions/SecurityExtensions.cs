@@ -1,6 +1,6 @@
 using HelpDesk.Common.Authorization.Handlers;
 using HelpDesk.Data;
-using HelpDesk.Modules.Users;
+using HelpDesk.Modules.Users.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 

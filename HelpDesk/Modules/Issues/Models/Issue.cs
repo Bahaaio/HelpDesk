@@ -2,9 +2,9 @@ using HelpDesk.Common.Authorization;
 using HelpDesk.Common.Entities;
 using HelpDesk.Modules.Comments.Models;
 using HelpDesk.Modules.Issues.Enums;
-using HelpDesk.Modules.Tags;
-using HelpDesk.Modules.Users;
 using HelpDesk.Modules.Issues.Votes;
+using HelpDesk.Modules.Tags.Models;
+using HelpDesk.Modules.Users.Models;
 
 namespace HelpDesk.Modules.Issues.Models;
 

@@ -3,10 +3,12 @@ using HelpDesk.Common.Extensions;
 using HelpDesk.Data;
 using HelpDesk.Modules.Attachments;
 using HelpDesk.Modules.Attachments.Dtos;
+using HelpDesk.Modules.Attachments.Options;
 using HelpDesk.Modules.Attachments.Services;
 using HelpDesk.Modules.Auth.Services;
 using HelpDesk.Modules.Issues.Models;
-using HelpDesk.Modules.Storage;
+using HelpDesk.Modules.Issues.Options;
+using HelpDesk.Modules.Storage.Services;
 using Microsoft.Extensions.Options;
 
 namespace HelpDesk.Modules.Issues.Services;

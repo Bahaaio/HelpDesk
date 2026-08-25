@@ -3,6 +3,7 @@ using HelpDesk.Modules.Attachments.Models;
 using HelpDesk.Modules.Attachments.Services;
 using HelpDesk.Modules.Comments.Models;
 using HelpDesk.Modules.Comments;
+using HelpDesk.Modules.Comments.Options;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.Extensions.Options;
 

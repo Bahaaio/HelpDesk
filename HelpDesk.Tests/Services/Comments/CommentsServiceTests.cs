@@ -7,7 +7,7 @@ using HelpDesk.Modules.Comments.Dtos.Requests;
 using HelpDesk.Modules.Comments.Models;
 using HelpDesk.Modules.Comments.Services;
 using HelpDesk.Modules.Issues.Models;
-using HelpDesk.Modules.Users;
+using HelpDesk.Modules.Users.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;

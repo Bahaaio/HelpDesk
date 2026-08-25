@@ -6,8 +6,9 @@ using HelpDesk.Data;
 using HelpDesk.Modules.Attachments.Dtos;
 using HelpDesk.Modules.Attachments.Mappers;
 using HelpDesk.Modules.Attachments.Models;
+using HelpDesk.Modules.Attachments.Options;
 using HelpDesk.Modules.Auth.Services;
-using HelpDesk.Modules.Storage;
+using HelpDesk.Modules.Storage.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace HelpDesk.Modules.Attachments.Services;

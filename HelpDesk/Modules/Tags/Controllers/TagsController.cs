@@ -1,5 +1,7 @@
 using HelpDesk.Modules.Auth.Enums;
-using HelpDesk.Modules.Tags;
+using HelpDesk.Modules.Tags.Dtos;
+using HelpDesk.Modules.Tags.Dtos.Requests;
+using HelpDesk.Modules.Tags.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

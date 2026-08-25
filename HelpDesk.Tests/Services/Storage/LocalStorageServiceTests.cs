@@ -1,5 +1,5 @@
 using System.Text;
-using HelpDesk.Modules.Storage;
+using HelpDesk.Modules.Storage.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Moq;

@@ -1,5 +1,6 @@
 using HelpDesk.Common.Exceptions;
 using HelpDesk.Modules.Attachments;
+using HelpDesk.Modules.Attachments.Options;
 
 namespace HelpDesk.Modules.Attachments.Services;
 

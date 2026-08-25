@@ -1,6 +1,6 @@
 using HelpDesk.Common.Entities;
 using HelpDesk.Modules.Issues.Enums;
-using HelpDesk.Modules.Users;
+using HelpDesk.Modules.Users.Models;
 
 namespace HelpDesk.Modules.Issues.Models;
 

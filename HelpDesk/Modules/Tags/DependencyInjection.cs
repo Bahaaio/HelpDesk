@@ -1,3 +1,5 @@
+using HelpDesk.Modules.Tags.Services;
+
 namespace HelpDesk.Modules.Tags;
 
 public static class DependencyInjection

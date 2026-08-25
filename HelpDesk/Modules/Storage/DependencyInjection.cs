@@ -1,3 +1,5 @@
+using HelpDesk.Modules.Storage.Services;
+
 namespace HelpDesk.Modules.Storage;
 
 public static class DependencyInjection

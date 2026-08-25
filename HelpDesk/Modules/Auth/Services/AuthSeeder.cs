@@ -1,5 +1,6 @@
 using HelpDesk.Modules.Auth.Enums;
-using HelpDesk.Modules.Users;
+using HelpDesk.Modules.Auth.Options;
+using HelpDesk.Modules.Users.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 

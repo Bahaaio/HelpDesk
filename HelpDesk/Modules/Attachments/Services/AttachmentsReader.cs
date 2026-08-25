@@ -1,11 +1,8 @@
 using HelpDesk.Common.Exceptions;
 using HelpDesk.Data;
-using HelpDesk.Modules.Storage;
-using Microsoft.EntityFrameworkCore;
-
-using HelpDesk.Modules.Attachments.Models;
-
 using HelpDesk.Modules.Attachments.Dtos;
+using HelpDesk.Modules.Storage.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace HelpDesk.Modules.Attachments.Services;
 

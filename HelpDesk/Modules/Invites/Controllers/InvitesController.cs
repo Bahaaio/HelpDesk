@@ -1,5 +1,7 @@
 using HelpDesk.Modules.Auth.Enums;
-using HelpDesk.Modules.Invites;
+using HelpDesk.Modules.Invites.Dtos;
+using HelpDesk.Modules.Invites.Dtos.Requests;
+using HelpDesk.Modules.Invites.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

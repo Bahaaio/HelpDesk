@@ -1,27 +1,25 @@
 using HelpDesk.Modules.Attachments.Dtos;
-using HelpDesk.Modules.Attachments.Models;
 using HelpDesk.Modules.Attachments.Services;
-using HelpDesk.Modules.Comments.Models;
-using HelpDesk.Modules.Comments;
-using HelpDesk.Modules.Comments.Options;
+using HelpDesk.Modules.Issues.Models;
+using HelpDesk.Modules.Issues.Options;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.Extensions.Options;
 
-namespace HelpDesk.ClientServices;
+namespace HelpDesk.ClientServices.Implementations;
 
-public class CommentAttachmentsClient : ICommentAttachmentsClient
+public class IssueAttachmentsClient : IIssueAttachmentsClient
 {
-    private readonly IAttachmentsService<Comment> _attachmentsService;
-    private readonly CommentAttachmentOptions _options;
+    private readonly IAttachmentsService<Issue> _attachmentsService;
+    private readonly IssueAttachmentOptions _options;
 
-    public CommentAttachmentsClient(IAttachmentsService<Comment> attachmentsService,
-        IOptions<CommentAttachmentOptions> options)
+    public IssueAttachmentsClient(IAttachmentsService<Issue> attachmentsService,
+        IOptions<IssueAttachmentOptions> options)
     {
         _attachmentsService = attachmentsService;
         _options = options.Value;
     }
 
-    public async Task<AttachmentDto> Add(int commentId, IBrowserFile file)
+    public async Task<AttachmentDto> Add(int issueId, IBrowserFile file)
     {
         await using var source = file.OpenReadStream(_options.MaxSizeBytes);
         await using var stream = new MemoryStream();
@@ -34,10 +32,10 @@ public class CommentAttachmentsClient : ICommentAttachmentsClient
             ContentType = file.ContentType ?? "application/octet-stream"
         };
 
-        return await _attachmentsService.Add(commentId, formFile);
+        return await _attachmentsService.Add(issueId, formFile);
     }
 
-    public async Task Delete(int commentId, Guid attachmentId)
+    public async Task Delete(int issueId, Guid attachmentId)
     {
         await _attachmentsService.Delete(attachmentId);
     }

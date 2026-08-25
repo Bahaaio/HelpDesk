@@ -1,4 +1,5 @@
 using HelpDesk.ClientServices;
+using HelpDesk.ClientServices.Implementations;
 using MudBlazor.Services;
 
 namespace HelpDesk.Extensions;
@@ -11,7 +12,7 @@ public static class UiExtensions
         {
             services.AddRazorComponents().AddInteractiveServerComponents();
             services.AddMudServices();
-            services.AddScoped<AuthState>();
+            services.AddScoped<IAuthState, AuthState>();
             services.AddScoped<IIssueAttachmentsClient, IssueAttachmentsClient>();
             services.AddScoped<ICommentAttachmentsClient, CommentAttachmentsClient>();
         }

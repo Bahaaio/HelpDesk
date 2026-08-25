@@ -1,8 +1,8 @@
 using HelpDesk.Modules.Auth.Services;
 
-namespace HelpDesk.ClientServices;
+namespace HelpDesk.ClientServices.Implementations;
 
-public class AuthState
+public class AuthState : IAuthState
 {
     private readonly ICurrentUser _currentUser;
 

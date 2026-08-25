@@ -1,5 +1,5 @@
-using HelpDesk.Common.Entities;
 using HelpDesk.Common.Exceptions;
+using HelpDesk.Common.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace HelpDesk.Common.Extensions;

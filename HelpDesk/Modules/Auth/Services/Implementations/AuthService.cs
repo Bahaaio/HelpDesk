@@ -1,8 +1,8 @@
 using HelpDesk.Common.Exceptions;
 using HelpDesk.Modules.Auth.Dtos;
 using HelpDesk.Modules.Auth.Enums;
+using HelpDesk.Modules.Auth.Models;
 using HelpDesk.Modules.Invites.Services;
-using HelpDesk.Modules.Users.Models;
 using Microsoft.AspNetCore.Identity;
 
 namespace HelpDesk.Modules.Auth.Services.Implementations;

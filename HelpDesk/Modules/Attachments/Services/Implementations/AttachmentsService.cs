@@ -1,13 +1,13 @@
-using HelpDesk.Common.Authorization;
-using HelpDesk.Common.Entities;
 using HelpDesk.Common.Exceptions;
 using HelpDesk.Common.Extensions;
+using HelpDesk.Common.Models;
 using HelpDesk.Data;
 using HelpDesk.Modules.Attachments.Dtos;
 using HelpDesk.Modules.Attachments.Mappers;
 using HelpDesk.Modules.Attachments.Models;
 using HelpDesk.Modules.Attachments.Options;
 using HelpDesk.Modules.Auth.Services;
+using HelpDesk.Modules.Authorization.Models;
 using HelpDesk.Modules.Storage.Services;
 using Microsoft.EntityFrameworkCore;
 

@@ -1,10 +1,10 @@
-using HelpDesk.Common.Authorization;
-using HelpDesk.Common.Entities;
+using HelpDesk.Common.Models;
+using HelpDesk.Modules.Auth.Models;
+using HelpDesk.Modules.Authorization.Models;
 using HelpDesk.Modules.Comments.Models;
 using HelpDesk.Modules.Issues.Enums;
-using HelpDesk.Modules.Issues.Votes;
+using HelpDesk.Modules.Issues.Votes.Models;
 using HelpDesk.Modules.Tags.Models;
-using HelpDesk.Modules.Users.Models;
 
 namespace HelpDesk.Modules.Issues.Models;
 

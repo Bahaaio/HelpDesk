@@ -1,9 +1,10 @@
-using HelpDesk.Common.Authorization;
 using HelpDesk.Common.Exceptions;
 using HelpDesk.Common.Extensions;
 using HelpDesk.Data;
 using HelpDesk.Modules.Attachments.Services;
 using HelpDesk.Modules.Auth.Services;
+using HelpDesk.Modules.Authorization.Extensions;
+using HelpDesk.Modules.Authorization.Services;
 using HelpDesk.Modules.Issues.Dtos;
 using HelpDesk.Modules.Issues.Dtos.Requests;
 using HelpDesk.Modules.Issues.Extensions;

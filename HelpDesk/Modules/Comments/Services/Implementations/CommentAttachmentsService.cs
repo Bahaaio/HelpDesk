@@ -1,11 +1,11 @@
-using HelpDesk.Common.Authorization;
-using HelpDesk.Common.Extensions;
 using HelpDesk.Data;
 using HelpDesk.Modules.Attachments.Dtos;
 using HelpDesk.Modules.Attachments.Options;
 using HelpDesk.Modules.Attachments.Services;
 using HelpDesk.Modules.Attachments.Services.Implementations;
 using HelpDesk.Modules.Auth.Services;
+using HelpDesk.Modules.Authorization.Extensions;
+using HelpDesk.Modules.Authorization.Services;
 using HelpDesk.Modules.Comments.Models;
 using HelpDesk.Modules.Comments.Options;
 using HelpDesk.Modules.Storage.Services;

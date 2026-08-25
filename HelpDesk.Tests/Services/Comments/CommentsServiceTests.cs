@@ -1,13 +1,13 @@
-using HelpDesk.Common.Authorization;
-using HelpDesk.Common.Authorization.Requirements;
 using HelpDesk.Common.Exceptions;
 using HelpDesk.Data;
+using HelpDesk.Modules.Auth.Models;
 using HelpDesk.Modules.Auth.Services;
+using HelpDesk.Modules.Authorization.Requirements;
+using HelpDesk.Modules.Authorization.Services;
 using HelpDesk.Modules.Comments.Dtos.Requests;
 using HelpDesk.Modules.Comments.Models;
 using HelpDesk.Modules.Comments.Services.Implementations;
 using HelpDesk.Modules.Issues.Models;
-using HelpDesk.Modules.Users.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;

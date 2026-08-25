@@ -10,8 +10,6 @@ builder.Services.AddControllers();
 builder.Services.AddDatabaseServices(builder.Configuration);
 builder.Services.AddModules();
 builder.Services.AddOpenApiServices();
-builder.Services.AddIdentityServices();
-builder.Services.AddAuthorizationServices();
 builder.Services.AddExceptionHandling();
 
 // UI services

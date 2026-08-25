@@ -1,7 +1,7 @@
-using HelpDesk.Common.Authorization;
-using HelpDesk.Common.Entities;
+using HelpDesk.Common.Models;
+using HelpDesk.Modules.Auth.Models;
+using HelpDesk.Modules.Authorization.Models;
 using HelpDesk.Modules.Issues.Models;
-using HelpDesk.Modules.Users.Models;
 
 namespace HelpDesk.Modules.Comments.Models;
 

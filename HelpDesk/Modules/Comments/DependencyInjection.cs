@@ -1,4 +1,4 @@
-using HelpDesk.Extensions;
+using HelpDesk.Common.Extensions;
 using HelpDesk.Modules.Attachments.Services;
 using HelpDesk.Modules.Comments.Models;
 using HelpDesk.Modules.Comments.Options;

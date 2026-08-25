@@ -1,7 +1,8 @@
-using HelpDesk.Common.Authorization;
 using HelpDesk.Common.Extensions;
 using HelpDesk.Data;
 using HelpDesk.Modules.Auth.Services;
+using HelpDesk.Modules.Authorization.Extensions;
+using HelpDesk.Modules.Authorization.Services;
 using HelpDesk.Modules.Comments.Dtos;
 using HelpDesk.Modules.Comments.Dtos.Requests;
 using HelpDesk.Modules.Comments.Mappers;

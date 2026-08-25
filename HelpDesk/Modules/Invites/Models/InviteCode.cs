@@ -1,4 +1,4 @@
-using HelpDesk.Common.Entities;
+using HelpDesk.Common.Models;
 
 namespace HelpDesk.Modules.Invites.Models;
 

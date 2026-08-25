@@ -1,4 +1,4 @@
-using HelpDesk.Common.Entities;
+using HelpDesk.Common.Models;
 using HelpDesk.Modules.Issues.Models;
 
 namespace HelpDesk.Modules.Tags.Models;

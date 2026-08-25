@@ -1,5 +1,4 @@
 using HelpDesk.Common.Exceptions;
-using HelpDesk.Common.Security;
 using HelpDesk.Data;
 using HelpDesk.Modules.Invites.Dtos;
 using HelpDesk.Modules.Invites.Dtos.Requests;

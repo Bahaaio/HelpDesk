@@ -1,9 +1,7 @@
 using HelpDesk.Data;
-using HelpDesk.Modules.Attachments.Dtos;
-using HelpDesk.Modules.Attachments.Models;
 using HelpDesk.Modules.Attachments;
-using HelpDesk.Modules.Attachments.Services;
 using HelpDesk.Modules.Auth;
+using HelpDesk.Modules.Authorization;
 using HelpDesk.Modules.Comments;
 using HelpDesk.Modules.Invites;
 using HelpDesk.Modules.Issues;
@@ -31,7 +29,8 @@ public static class ServiceExtensions
         {
             services.AddStorageModule();
             services.AddAttachmentsModule();
-            services.AddAuthModule();
+            services.AddAuthenticationModule();
+            services.AddAuthorizationModule();
             services.AddUsersModule();
             services.AddInvitesModule();
             services.AddTagsModule();

@@ -1,10 +1,11 @@
-using HelpDesk.Extensions;
+using HelpDesk.Common.Extensions;
 using HelpDesk.Modules.Attachments.Services;
 using HelpDesk.Modules.Issues.Models;
 using HelpDesk.Modules.Issues.Options;
 using HelpDesk.Modules.Issues.Services;
 using HelpDesk.Modules.Issues.Services.Implementations;
-using HelpDesk.Modules.Issues.Votes;
+using HelpDesk.Modules.Issues.Votes.Services;
+using HelpDesk.Modules.Issues.Votes.Services.Implementations;
 
 namespace HelpDesk.Modules.Issues;
 

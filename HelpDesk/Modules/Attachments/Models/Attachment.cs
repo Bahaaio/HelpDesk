@@ -1,6 +1,6 @@
-using HelpDesk.Common.Authorization;
-using HelpDesk.Common.Entities;
-using HelpDesk.Modules.Users.Models;
+using HelpDesk.Common.Models;
+using HelpDesk.Modules.Auth.Models;
+using HelpDesk.Modules.Authorization.Models;
 
 namespace HelpDesk.Modules.Attachments.Models;
 

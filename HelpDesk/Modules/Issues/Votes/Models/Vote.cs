@@ -1,3 +1,4 @@
+using HelpDesk.Modules.Issues.Votes.Enums;
 using HelpDesk.Modules.Auth.Models;
 using HelpDesk.Modules.Authorization.Models;
 using HelpDesk.Modules.Issues.Models;

@@ -1,6 +1,0 @@
-<Solution>
-  <Project Path="HelpDesk/HelpDesk.csproj" />
-  <Project Path="HelpDesk.Tests/HelpDesk.Tests.csproj">
-    <Build Solution="Debug|*" Project="false" />
-  </Project>
-</Solution>

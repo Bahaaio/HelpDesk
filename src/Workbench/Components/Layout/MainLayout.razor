@@ -1,0 +1,111 @@
+@inherits LayoutComponentBase
+@inject NavigationManager Navigation
+@inject IAuthState AuthState
+
+@if (!_initialized)
+{
+    <MudThemeProvider @bind-IsDarkMode="_isDarkMode"/>
+    <MudPopoverProvider/>
+    <MudDialogProvider/>
+    <MudSnackbarProvider/>
+    <MudLayout>
+        <MudMainContent>
+            <MudContainer Class="d-flex justify-center align-center" Style="min-height: 80vh;">
+                <MudProgressCircular Size="Size.Large" Indeterminate="true"/>
+            </MudContainer>
+        </MudMainContent>
+    </MudLayout>
+}
+else if (!AuthState.IsAuthenticated)
+{
+    Navigation.NavigateTo("/login", true);
+}
+else
+{
+    <MudThemeProvider @bind-IsDarkMode="_isDarkMode"/>
+    <MudPopoverProvider/>
+    <MudDialogProvider/>
+    <MudSnackbarProvider/>
+    <MudLayout>
+        <MudAppBar Elevation="1">
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit"
+                           Edge="Edge.Start" OnClick="ToggleDrawer"/>
+            <MudText Typo="Typo.h6" Class="cursor-pointer"
+                     @onclick='() => Navigation.NavigateTo("/issues")'>
+                Workbench
+            </MudText>
+            <MudSpacer/>
+
+            <MudText Typo="Typo.body2" Class="mr-2">@AuthState.Username</MudText>
+            <MudAvatar Size="Size.Small" Color="Color.Primary">
+                @(_usernameInitial)
+            </MudAvatar>
+
+            <MudTooltip Text="Logout">
+                <form method="post" action="/api/auth/logout">
+                    <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit"
+                                   ButtonType="ButtonType.Submit"/>
+                </form>
+            </MudTooltip>
+        </MudAppBar>
+
+        <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Docked" Elevation="2">
+            <MudNavMenu>
+                <MudNavLink Href="/issues" Icon="@Icons.Material.Filled.BugReport"
+                            Match="NavLinkMatch.Prefix">
+                    All Issues
+                </MudNavLink>
+                <MudNavLink Href="/issues/mine" Icon="@Icons.Material.Filled.Person"
+                            Match="NavLinkMatch.Prefix">
+                    My Issues
+                </MudNavLink>
+                @if (AuthState.Role == "Technician")
+                {
+                    <MudNavLink Href="/issues/assigned" Icon="@Icons.Material.Filled.Assignment"
+                                Match="NavLinkMatch.Prefix">
+                        Assigned Issues
+                    </MudNavLink>
+                    <MudNavLink Href="/tags" Icon="@Icons.Material.Filled.Label"
+                                Match="NavLinkMatch.All">
+                        Tags
+                    </MudNavLink>
+                    <MudNavLink Href="/invite" Icon="@Icons.Material.Filled.PersonAdd"
+                                Match="NavLinkMatch.All">
+                        Invite Tech
+                    </MudNavLink>
+                }
+            </MudNavMenu>
+        </MudDrawer>
+
+        <MudMainContent Class="px-4" Style="padding-top: calc(var(--mud-appbar-height) + 16px);">
+            @Body
+        </MudMainContent>
+    </MudLayout>
+}
+
+@code {
+    private bool _drawerOpen = true;
+    private bool _isDarkMode;
+    private bool _initialized;
+    private string _usernameInitial = "";
+
+    protected override void OnInitialized()
+    {
+        AuthState.Check();
+        _initialized = true;
+        UpdateUsernameInitial();
+    }
+
+    private void UpdateUsernameInitial()
+    {
+        _usernameInitial = !string.IsNullOrEmpty(AuthState.Username)
+            ? AuthState.Username[..1].ToUpper()
+            : "?";
+    }
+
+    private void ToggleDrawer()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+}

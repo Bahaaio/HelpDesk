@@ -1,4 +1,4 @@
-# HelpDesk API Endpoints
+# Workbench API Endpoints
 
 > Temporary reference — these endpoints exist only while the controllers are kept
 > as a test harness. The product UI talks to services directly, not over HTTP.

@@ -1,16 +1,16 @@
-# HelpDesk / Workbench — Conventions
+# Workbench / Workbench — Conventions
 
 > Read this before writing code. It exists so agents and humans make changes
 > that look like they were made by the same person.
 >
 > Stack: .NET 10 · ASP.NET Core · Blazor Server (InteractiveServer) · EF Core +
-> Npgsql · MudBlazor v9 · xUnit/Moq. Single project (`HelpDesk/`) + tests
-> (`HelpDesk.Tests/`). Product name "Workbench", code namespace `HelpDesk`.
+> Npgsql · MudBlazor v9 · xUnit/Moq. Single project (`Workbench/`) + tests
+> (`Workbench.Tests/`). Product name "Workbench", code namespace `Workbench`.
 
 ## 1. Solution layout (vertical slices)
 
 ```
-HelpDesk/
+Workbench/
 ├── Modules/<Slice>/          # one folder per feature — everything it owns lives here
 ├── Common/                   # shared kernel — contracts & helpers only, NO behavior owned here
 │   └── Exceptions|Options|Models|Extensions
@@ -107,7 +107,7 @@ No abbreviations in slice names (`Authentication`, not `Auth`).
 - Each slice owns `<Slice>/DependencyInjection.cs`:
 
   ```csharp
-  namespace HelpDesk.Modules.Comments;
+  namespace Workbench.Modules.Comments;
 
   public static class DependencyInjection
   {
@@ -133,7 +133,7 @@ No abbreviations in slice names (`Authentication`, not `Auth`).
 - Pages group by feature: `Components/Pages/<Feature>/<Page>.razor`.
   Page names follow naming convention patterns; routes are independent of location.
 - Shared usings live in `Components/_Imports.razor`; add cross-feature page
-  usings there too (e.g. `@using HelpDesk.Components.Pages.Comments` when a page
+  usings there too (e.g. `@using Workbench.Components.Pages.Comments` when a page
   opens another slice's dialog).
 - **Never inject `IHttpContextAccessor` in components** — read identity through
   `IAuthState` (scoped, populated from `ICurrentUser`).
@@ -159,7 +159,7 @@ No abbreviations in slice names (`Authentication`, not `Auth`).
 - Configurations auto-discovered via `ApplyConfigurationsFromAssembly` — moving
   config files between folders is safe; renaming entity NAMESPACES is not
   (the migration snapshot tracks full CLR names → spurious destructive diffs).
-- Connection string key: `"Default"` (Npgsql, docker compose in `HelpDesk/compose.yml`).
+- Connection string key: `"Default"` (Npgsql, docker compose in `Workbench/compose.yml`).
 
 ## 10. Testing
 

@@ -1,0 +1,72 @@
+@page "/register"
+@using Workbench.Components.Layout
+@layout AuthLayout
+
+<MudContainer Class="d-flex justify-center align-center" Style="min-height: 80vh;">
+    <MudPaper Class="d-flex flex-column align-center pa-6" Style="width: 380px;" Elevation="4">
+        <MudIcon Icon="@Icons.Material.Filled.PersonAdd" Size="Size.Large" Color="Color.Primary"
+                 Class="mb-2"/>
+        <MudText Typo="Typo.h5" Class="mb-4">
+            @(_isInvite ? "Create Technician Account" : "Create Account")
+        </MudText>
+
+        @if (_isInvite)
+        {
+            <MudAlert Severity="Severity.Info" Class="mb-4" Dense="true">
+                You've been invited to register as a technician.
+            </MudAlert>
+        }
+
+        <form method="post" action="/api/auth/register" class="d-flex flex-column"
+              style="width: 100%;">
+            <input type="hidden" name="Code" value="@_code"/>
+
+            <MudTextField T="string" Label="Username" Name="Username" Required="true" MinLength="2"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Person"
+                          Class="mb-3" FullWidth="true"/>
+
+            <MudTextField T="string" Label="Email" Name="Email" InputType="InputType.Email"
+                          Required="true"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Email"
+                          Class="mb-3" FullWidth="true"/>
+
+            <MudTextField T="string" Label="Password" Name="Password" InputType="InputType.Password"
+                          Required="true" MinLength="8"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Key"
+                          Class="mb-3" FullWidth="true"/>
+
+            <div class="mb-3">
+                <label>
+                    <input type="checkbox" name="RememberMe" value="true" checked/>
+                    Remember me
+                </label>
+            </div>
+
+            <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled"
+                       FullWidth="true" Size="Size.Large">
+                Register
+            </MudButton>
+        </form>
+
+        @if (!string.IsNullOrWhiteSpace(_error))
+        {
+            <MudAlert Severity="Severity.Error" Class="mt-4" Dense="true">@_error</MudAlert>
+        }
+
+        <MudText Class="mt-4">
+            Already have an account?
+            <MudLink Href="/login">Sign in</MudLink>
+        </MudText>
+    </MudPaper>
+</MudContainer>
+
+@code {
+
+    [SupplyParameterFromQuery(Name = "error")]
+    private string? _error { get; set; }
+
+    [SupplyParameterFromQuery(Name = "code")]
+    private string? _code { get; set; }
+
+    private bool _isInvite => !string.IsNullOrEmpty(_code);
+}

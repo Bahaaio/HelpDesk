@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="src/Workbench/Workbench.csproj" />
+  <Project Path="src/Workbench.Tests/Workbench.Tests.csproj">
+    <Build Solution="Debug|*" Project="false" />
+  </Project>
+</Solution>

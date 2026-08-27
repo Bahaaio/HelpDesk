@@ -1,0 +1,17 @@
+@inherits LayoutComponentBase
+
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudContainer Class="d-flex flex-column justify-center align-center" Style="min-height: 100vh;">
+    <MudText Typo="Typo.h4" Class="mb-2 cursor-pointer" @onclick='() => Navigation.NavigateTo("/login")'>
+        Workbench
+    </MudText>
+    @Body
+</MudContainer>
+
+@code {
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+}

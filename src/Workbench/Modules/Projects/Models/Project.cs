@@ -1,0 +1,26 @@
+using Workbench.Common.Models;
+using Workbench.Modules.Auth.Models;
+using Workbench.Modules.Authorization.Models;
+using Workbench.Modules.Issues.Models;
+using Workbench.Modules.Kanban.Models;
+using Workbench.Modules.Milestones.Models;
+
+namespace Workbench.Modules.Projects.Models;
+
+public class Project : IEntity<int>, IOwnedByUser
+{
+    public int Id { get; set; }
+
+    public required int OwnerId { get; set; }
+    public ApplicationUser Owner { get; set; } = null!;
+
+    public required string Name { get; set; } = string.Empty;
+    public required string? Description { get; set; }
+    public DateTime CreatedAt { get; set; }
+
+    public Board Board { get; set; } = null!;
+
+    public ICollection<Issue> Issues { get; set; } = [];
+    public ICollection<ProjectMembership> Members { get; set; } = [];
+    public ICollection<Milestone> Milestones { get; set; } = [];
+}

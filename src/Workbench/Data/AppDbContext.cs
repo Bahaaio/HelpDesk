@@ -1,19 +1,26 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Workbench.Modules.Attachments.Models;
 using Workbench.Modules.Auth.Models;
 using Workbench.Modules.Comments.Models;
 using Workbench.Modules.Invites.Models;
 using Workbench.Modules.Issues.Models;
 using Workbench.Modules.Issues.Votes.Models;
+using Workbench.Modules.Kanban.Models;
+using Workbench.Modules.Milestones.Models;
+using Workbench.Modules.Projects.Models;
 using Workbench.Modules.Tags.Models;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore;
 
 namespace Workbench.Data;
 
 public class AppDbContext(DbContextOptions options)
     : IdentityDbContext<ApplicationUser, IdentityRole<int>, int>(options)
 {
+    public DbSet<Project> Projects { get; set; }
+    public DbSet<ProjectMembership> ProjectMemberships { get; set; }
+    public DbSet<Board> Boards { get; set; }
+    public DbSet<Milestone> Milestones { get; set; }
     public DbSet<Issue> Issues { get; set; }
     public DbSet<Attachment> Attachments { get; set; }
     public DbSet<Comment> Comments { get; set; }

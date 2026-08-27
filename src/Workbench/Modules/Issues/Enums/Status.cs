@@ -6,5 +6,6 @@ namespace Workbench.Modules.Issues.Enums;
 public enum Status
 {
     Open,
+    InProgress,
     Closed
 }

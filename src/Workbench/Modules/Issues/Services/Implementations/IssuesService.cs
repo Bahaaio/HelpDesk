@@ -47,7 +47,8 @@ public class IssuesService : IIssuesService
         {
             Title = request.Title,
             Description = request.Description,
-            AuthorId = _user.Id
+            AuthorId = _user.Id,
+            ProjectId = 0 // TODO: impl
         };
 
         _issuesRepository.Add(issue);

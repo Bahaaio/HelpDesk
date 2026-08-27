@@ -4,6 +4,7 @@ using Workbench.Modules.Authorization.Models;
 using Workbench.Modules.Comments.Models;
 using Workbench.Modules.Issues.Enums;
 using Workbench.Modules.Issues.Votes.Models;
+using Workbench.Modules.Projects.Models;
 using Workbench.Modules.Tags.Models;
 
 namespace Workbench.Modules.Issues.Models;
@@ -17,6 +18,9 @@ public class Issue : IOwnedByUser, IEntity<int>
     public string? Description { get; set; }
     public Status Status { get; set; }
     public DateTime CreatedAt { get; set; }
+
+    public required int ProjectId { get; set; }
+    public Project Project { get; set; } = null!;
 
     public required int AuthorId { get; set; }
     public ApplicationUser Author { get; set; } = null!;

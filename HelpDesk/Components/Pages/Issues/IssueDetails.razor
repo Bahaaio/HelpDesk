@@ -10,8 +10,6 @@
 @using HelpDesk.Modules.Issues.Options
 @using HelpDesk.Modules.Issues.Services
 @using HelpDesk.Modules.Issues.Votes.Dtos.Requests
-@using HelpDesk.Modules.Issues.Votes.Enums
-@using HelpDesk.Modules.Issues.Votes.Models
 @using HelpDesk.Modules.Issues.Votes.Services
 @using HelpDesk.Modules.Tags.Dtos
 @using HelpDesk.Modules.Tags.Services
@@ -774,7 +772,15 @@ else
         try
         {
             await IssueStatusService.UpdateStatus(Id, new UpdateIssueStatusRequest(status));
+            _statusChanges.Add(new StatusChangeDto
+            {
+                FromStatus = _issue!.Status,
+                ToStatus = status,
+                ChangedByUsername = AuthState.Username,
+                ChangedAt = DateTime.UtcNow,
+            });
             _issue = _issue! with { Status = status };
+            BuildTimeline();
             Snackbar.Add($"Issue status changed to {status}", Severity.Success);
         }
         catch (Exception ex)

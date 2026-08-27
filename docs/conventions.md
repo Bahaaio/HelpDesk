@@ -1,4 +1,4 @@
-# Workbench / Workbench — Conventions
+# Workbench — Conventions
 
 > Read this before writing code. It exists so agents and humans make changes
 > that look like they were made by the same person.
@@ -7,14 +7,17 @@
 > Npgsql · MudBlazor v9 · xUnit/Moq. Single project (`Workbench/`) + tests
 > (`Workbench.Tests/`). Product name "Workbench", code namespace `Workbench`.
 
-## 1. Solution layout (vertical slices)
+## Solution layout (vertical slices)
 
 ```
 Workbench/
 ├── Modules/<Slice>/          # one folder per feature — everything it owns lives here
 ├── Common/                   # shared kernel — contracts & helpers only, NO behavior owned here
 │   └── Exceptions|Options|Models|Extensions
-├── Data/                     # AppDbContext + Migrations/ (central, never per-module)
+├── Data/
+│   ├── Migrations/           # EF Core migrations
+│   ├── Persistence/          # base repository + unit of work
+│   └── AppDbContext.cs       # single DbContext (central, never per-module)
 ├── ClientServices/           # Blazor-side clients (Iface + Implementations/)
 ├── Components/               # Blazor shell: App, Routes, Layout/, Pages/<Feature>/
 └── Extensions/               # Program.cs bootstrap glue ONLY (OpenApi, Ui, Security…)
@@ -26,7 +29,7 @@ Workbench/
 - Several slices → `Common/` (contracts/helpers) or its own infra slice
 - Only Program.cs → root `Extensions/`
 
-## 2. Module internal structure
+## Module internal structure
 
 **Every module uses the same layered structure — always**, regardless of size
 (even a 2-file module follows the pattern; folders only exist for kinds the
@@ -41,6 +44,8 @@ Modules/<Slice>/
 ├── Configuration/        # EF Core IEntityTypeConfiguration<T>
 ├── Services/             # IXxxService interfaces
 │   └── Implementations/  # XxxService classes
+├── Repositories/         # IXxxRepository interfaces
+│   └── Implementations/  # XxxRepository classes
 ├── Mappers/              # entity→DTO mapping
 ├── Extensions/           # slice-only query/helper extensions
 ├── Controllers/
@@ -53,7 +58,7 @@ Child features that cannot exist without their aggregate **nest inside it**
 separate (Tags manages its own CRUD → own slice). No flat modules, no
 exceptions for small slices.
 
-## 3. Naming
+## Naming
 
 Microsoft C# conventions (PascalCase types/members, camelCase locals,
 `_camelCase` private fields, `I` prefix on interfaces).
@@ -67,13 +72,14 @@ Microsoft C# conventions (PascalCase types/members, camelCase locals,
 | Service       | `IXxxService` / `XxxService`                                               | `IIssuesService` / `IssuesService`               |
 | EF config     | `XxxConfiguration`                                                         | `IssueConfiguration`                             |
 | Mapper        | `XxxMapper`                                                                | `CommentMapper`                                  |
+| Repository    | `IXxxRepository` / `XxxRepository`                                         | `IIssuesRepository` / `IssuesRepository`         |
 | Razor page    | `<Plural>` / `<Singular>Details` / `New<Singular>` / `<Qualifier><Plural>` | `Issues`, `IssueDetails`, `NewIssue`, `MyIssues` |
 | Dialog        | `<Purpose>Dialog`                                                          | `CommentEditDialog`                              |
 | Test          | `Method_ExpectedBehavior_WhenCondition`                                    | `GetAll_ReturnsOrderedComments_WhenTicketExists` |
 
 No abbreviations in slice names (`Authentication`, not `Auth`).
 
-## 4. Services & controllers
+## Services & controllers
 
 - One `IXxxService` + `XxxService` per aggregate; services return **DTOs only** —
   entities never cross the service boundary.
@@ -91,7 +97,78 @@ No abbreviations in slice names (`Authentication`, not `Auth`).
 - `GlobalExceptionHandler` converts them to ProblemDetails.
 - Missing rows: `await _db.Issues.FindOrThrowAsync(id)` (extension on DbSet).
 
-## 5. Authorization
+## Repository pattern
+
+### Base layer (`Data/Persistence/`)
+
+```
+Data/Persistence/
+├── IRepository.cs              # IRepository<TEntity, TKey>
+├── Implementations/
+│   └── Repository.cs           # Repository<TEntity, TKey> (abstract base)
+├── IUnitOfWork.cs              # Task SaveChangesAsync()
+└── Implementations/
+    └── UnitOfWork.cs
+```
+
+Base `IRepository<TEntity, TKey>` — minimal, covers only single-entity operations:
+
+```csharp
+public interface IRepository<TEntity, TKey>
+    where TEntity : class, IEntity<TKey>
+    where TKey : notnull
+{
+    Task<TEntity?> FindAsync(TKey id);           // returns null if missing
+    Task<TEntity> GetByIdAsync(TKey id);          // throws NotFoundException
+    TEntity Add(TEntity entity);
+    Task ExistsOrThrowAsync(TKey id);             // throws NotFoundException
+    TEntity Update(TEntity entity);
+    void Remove(TEntity entity);
+}
+```
+
+Only `FindAsync` and `GetByIdAsync` are `virtual` (override for eager loading). `Add`, `ExistsOrThrowAsync`, `Update`, `Remove` are not virtual. The base class holds a `protected DbSet<TEntity>`.
+
+### Slice layer (`Modules/<Slice>/Repositories/`)
+
+Each slice defines its own interface extending the base, adding query methods
+that return DTOs via SQL-side projection:
+
+```
+Modules/<Slice>/Repositories/
+├── IIssuesRepository.cs            # extends IRepository<Issue, int>
+└── Implementations/
+    └── IssuesRepository.cs         # extends Repository<Issue, int>
+```
+
+Example (`ICommentsRepository`):
+
+```csharp
+public interface ICommentsRepository : IRepository<Comment, int>
+{
+    Task<List<CommentDto>> GetAllByIssueIdAsync(int issueId);
+}
+```
+
+### Naming conventions
+
+| Pattern                   | Purpose                                                | Example                         |
+| ------------------------- | ------------------------------------------------------ | ------------------------------- |
+| `GetAllBy<X>Async(value)` | Filtered list, projected to DTO in SQL                 | `GetAllByIssueIdAsync(issueId)` |
+| `FindForUpdateAsync(id)`  | Tracked entity with nav-props loaded (for mutations)   | `FindForUpdateAsync(id)`        |
+| `FindWith<X>Async(id)`    | Tracked entity with specific nav-props                 | `FindWithTagsAsync(id)`         |
+| `Load<X>Async(entity)`    | Load nav-prop on existing tracked entity               | `LoadAuthorAsync(issue)`        |
+| `GetByIdAsync(id)`        | Inherited — tracked entity, throws `NotFoundException` | base                            |
+| `ExistsOrThrowAsync(id)`  | Inherited — throws `NotFoundException`                 | base                            |
+
+### Rules
+
+- **Read methods** return DTOs via SQL-side projection (`.Select(Mapper.ToDtoExpression)`).
+- **Write/mutation methods** use tracked `GetByIdAsync` or `FindForUpdateAsync`.
+- Slice repos are registered as scoped: `services.AddScoped<IIssuesRepository, IssuesRepository>()`.
+- Slice-aligned plural names: `IIssuesRepository`, `ICommentsRepository`, `IProjectsRepository`.
+
+## Authorization
 
 - Mechanism lives in one place: `Modules/Authorization` — guard,
   requirement(s), handler(s), `IOwnedByUser`.
@@ -102,7 +179,7 @@ No abbreviations in slice names (`Authentication`, not `Auth`).
 - Global `FallbackPolicy = RequireAuthenticatedUser()`; public endpoints opt out
   with `[AllowAnonymous]`. Roles come from Identity (`Role.Employee/Technician`).
 
-## 6. Registration (DI)
+## Registration (DI)
 
 - Each slice owns `<Slice>/DependencyInjection.cs`:
 
@@ -128,7 +205,7 @@ No abbreviations in slice names (`Authentication`, not `Auth`).
 - Seeding is a **post-build step**, never inside registration:
   `Modules/Auth/AuthSeeder.InitializeAsync()` ← `app.SeedDataAsync()`.
 
-## 7. Blazor UI
+## Blazor UI
 
 - Pages group by feature: `Components/Pages/<Feature>/<Page>.razor`.
   Page names follow naming convention patterns; routes are independent of location.
@@ -140,7 +217,7 @@ No abbreviations in slice names (`Authentication`, not `Auth`).
 - Interactive rendering is global (`<Routes @rendermode="InteractiveServer" />`);
   auth login/register are static form POSTs to `/api/auth/*`.
 
-## 8. Attachments
+## Attachments
 
 - Single `Attachments` table, **TPH inheritance**: abstract `Attachment` base +
   `IssueAttachment` / `CommentAttachment` derived types.
@@ -153,7 +230,7 @@ No abbreviations in slice names (`Authentication`, not `Auth`).
 - Limits per type from `Attachments:*` config — never hardcode sizes/extensions
   in the UI; pickers bind to `IOptions<XxxAttachmentOptions>.Value`.
 
-## 9. Data & migrations
+## Data & migrations
 
 - Central `Data/AppDbContext` + `Data/Migrations` — never per-module contexts.
 - Configurations auto-discovered via `ApplyConfigurationsFromAssembly` — moving
@@ -161,13 +238,13 @@ No abbreviations in slice names (`Authentication`, not `Auth`).
   (the migration snapshot tracks full CLR names → spurious destructive diffs).
 - Connection string key: `"Default"` (Npgsql, docker compose in `Workbench/compose.yml`).
 
-## 10. Testing
+## Testing
 
 xUnit + Moq + EF Core SQLite in-memory. Tests mirror slice namespaces.
 Mock repositories/guards; keep SQLite only where SQL behavior is the subject
 (e.g., repository tests). Every bug fix earns a regression test when practical.
 
-## 11. Git & docs
+## Git & docs
 
 - Conventional Commits: `feat(modules): …`, `fix(ui): …`, `refactor(data): …`,
   `docs: …`. Body lists concrete changes; `BREAKING CHANGE:` footer when routes

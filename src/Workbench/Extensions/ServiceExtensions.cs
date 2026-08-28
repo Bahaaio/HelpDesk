@@ -11,6 +11,7 @@ using Workbench.Modules.Storage;
 using Workbench.Modules.Tags;
 using Workbench.Modules.Users;
 using Microsoft.EntityFrameworkCore;
+using Workbench.Modules.Projects;
 
 namespace Workbench.Extensions;
 
@@ -39,6 +40,7 @@ public static class ServiceExtensions
             services.AddTagsModule();
             services.AddIssuesModule();
             services.AddCommentsModule();
+            services.AddProjectsModule();
         }
     }
 }

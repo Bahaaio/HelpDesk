@@ -1,0 +1,89 @@
+@page "/projects"
+@using Workbench.Modules.Projects.Dtos
+@using Workbench.Modules.Projects.Services
+@rendermode InteractiveServer
+@inject IProjectsService ProjectsService
+@inject NavigationManager Navigation
+
+<PageTitle>Projects - Workbench</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+        <MudText Typo="Typo.h4">Projects</MudText>
+        <MudSpacer/>
+        <MudButton Href="/projects/new" Variant="Variant.Filled" Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Add">
+            New Project
+        </MudButton>
+    </MudStack>
+
+    @if (_loading)
+    {
+        <MudProgressCircular Indeterminate="true" Class="d-flex justify-center ma-8"/>
+    }
+    else if (_projects.Count == 0)
+    {
+        <MudPaper Class="pa-8 text-center">
+            <MudIcon Icon="@Icons.Material.Filled.FolderOpen" Size="Size.Large" Color="Color.Default"/>
+            <MudText Typo="Typo.h6" Class="mt-2">No projects yet</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Default" Class="mt-1">
+                Create your first project to get started.
+            </MudText>
+        </MudPaper>
+    }
+    else
+    {
+        <MudGrid>
+            @foreach (var project in _projects)
+            {
+                <MudItem xs="12" sm="6" md="4">
+                    <MudCard Class="cursor-pointer" @onclick="() => NavigateToProject(project.Id)">
+                        <MudCardContent>
+                            <MudText Typo="Typo.h6">@project.Name</MudText>
+                            @if (!string.IsNullOrEmpty(project.Description))
+                            {
+                                <MudText Typo="Typo.body2" Color="Color.Default" Class="mt-1"
+                                         Style="overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                                    @project.Description
+                                </MudText>
+                            }
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-3">
+                                <MudAvatar Size="Size.Small" Color="Color.Primary">
+                                    @(project.OwnerUsername[..1].ToUpper())
+                                </MudAvatar>
+                                <MudText Typo="Typo.caption">@project.OwnerUsername</MudText>
+                                <MudSpacer/>
+                                <MudText Typo="Typo.caption" Color="Color.Default">
+                                    @project.CreatedAt.ToString("MMM dd, yyyy")
+                                </MudText>
+                            </MudStack>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+</MudContainer>
+
+@code {
+    private List<ProjectDto> _projects = new();
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _projects = await ProjectsService.GetAll();
+        }
+        catch
+        {
+        }
+
+        _loading = false;
+    }
+
+    private void NavigateToProject(int projectId)
+    {
+        Navigation.NavigateTo($"/projects/{projectId}/issues");
+    }
+}

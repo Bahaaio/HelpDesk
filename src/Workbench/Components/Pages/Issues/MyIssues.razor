@@ -12,11 +12,6 @@
 <MudContainer MaxWidth="MaxWidth.Large">
     <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
         <MudText Typo="Typo.h4">My Issues</MudText>
-        <MudSpacer/>
-        <MudButton Href="/issues/new" Variant="Variant.Filled" Color="Color.Primary"
-                   StartIcon="@Icons.Material.Filled.Add">
-            New Issue
-        </MudButton>
     </MudStack>
 
     <MudStack Row="true" Class="mb-4" AlignItems="AlignItems.Center">
@@ -56,6 +51,7 @@
     {
         <MudTable Items="_issues" Hover="true" Dense="true" Striped="true">
             <HeaderContent>
+                <MudTh>Project</MudTh>
                 <MudTh>Title</MudTh>
                 <MudTh>Status</MudTh>
                 <MudTh>Tags</MudTh>
@@ -63,8 +59,11 @@
                 <MudTh>Created</MudTh>
             </HeaderContent>
             <RowTemplate>
+                <MudTd DataLabel="Project">
+                    <MudLink Href="@($"/projects/{context.ProjectId}/issues")">@context.ProjectName</MudLink>
+                </MudTd>
                 <MudTd DataLabel="Title">
-                    <MudLink Href="@($"/issues/{context.Id}")">
+                    <MudLink Href="@($"/projects/{context.ProjectId}/issues/{context.Id}")">
                         <span style="opacity: 0.5;">#@context.Id</span> @context.Title
                     </MudLink>
                 </MudTd>

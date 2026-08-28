@@ -1,4 +1,4 @@
-@page "/issues"
+@page "/projects/{ProjectId:int}/issues"
 @using Workbench.Modules.Issues.Dtos
 @using Workbench.Modules.Issues.Dtos.Requests
 @using Workbench.Modules.Issues.Enums
@@ -16,7 +16,7 @@
     <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
         <MudText Typo="Typo.h4">Issues</MudText>
         <MudSpacer/>
-        <MudButton Href="/issues/new" Variant="Variant.Filled" Color="Color.Primary"
+        <MudButton Href="@($"/projects/{ProjectId}/issues/new")" Variant="Variant.Filled" Color="Color.Primary"
                    StartIcon="@Icons.Material.Filled.Add">
             New Issue
         </MudButton>
@@ -32,6 +32,7 @@
                    SelectedValuesChanged="_ => LoadIssues()">
             <MudSelectItem Value="@("all")">All</MudSelectItem>
             <MudSelectItem Value="@("Open")">Open</MudSelectItem>
+            <MudSelectItem Value="@("InProgress")">In Progress</MudSelectItem>
             <MudSelectItem Value="@("Closed")">Closed</MudSelectItem>
         </MudSelect>
 
@@ -48,8 +49,7 @@
                    SelectedValuesChanged="_ => LoadIssues()">
             <MudSelectItem Value="@("Latest")">Newest first</MudSelectItem>
             <MudSelectItem Value="@("Oldest")">Oldest first</MudSelectItem>
-            <MudSelectItem Value="@("HighestScore")">Highest score</MudSelectItem>
-            <MudSelectItem Value="@("LowestScore")">Lowest score</MudSelectItem>
+            <MudSelectItem Value="@("Votes")">Highest score</MudSelectItem>
         </MudSelect>
     </MudStack>
 
@@ -76,7 +76,7 @@
             </HeaderContent>
             <RowTemplate>
                 <MudTd DataLabel="Title">
-                    <MudLink Href="@($"/issues/{context.Id}")">
+                    <MudLink Href="@($"/projects/{ProjectId}/issues/{context.Id}")">
                         <span style="opacity: 0.5;">#@context.Id</span> @context.Title
                     </MudLink>
                 </MudTd>
@@ -84,6 +84,10 @@
                     @if (context.Status == Status.Open)
                     {
                         <MudChip T="string" Size="Size.Small" Color="Color.Success">Open</MudChip>
+                    }
+                    else if (context.Status == Status.InProgress)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Warning">In Progress</MudChip>
                     }
                     else
                     {
@@ -108,6 +112,8 @@
 </MudContainer>
 
 @code {
+    [Parameter] public int ProjectId { get; set; }
+
     private List<IssueDto> _issues = new();
     private List<TagDto> _allTags = new();
     private bool _loading = true;
@@ -162,7 +168,7 @@
                 Enum.Parse<IssueSort>(_sortBy)
             );
 
-            _issues = await IssuesService.GetAll(query);
+            _issues = await IssuesService.GetAll(ProjectId, query);
         }
         catch
         {
@@ -170,5 +176,4 @@
 
         _loading = false;
     }
-
 }

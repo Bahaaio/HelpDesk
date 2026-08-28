@@ -1,0 +1,65 @@
+@page "/projects/new"
+@using Workbench.Modules.Projects.Dtos.Requests
+@using Workbench.Modules.Projects.Services
+@rendermode InteractiveServer
+@inject IProjectsService ProjectsService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<PageTitle>New Project - Workbench</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Href="/projects"/>
+        <MudText Typo="Typo.h4">Create Project</MudText>
+    </MudStack>
+
+    <MudPaper Class="pa-6">
+        <MudTextField @bind-Value="_name" Label="Name" Required="true" MaxLength="100"
+                      Class="mb-4" FullWidth="true"/>
+
+        <MudTextField @bind-Value="_description" Label="Description" Lines="5" MaxLength="2000"
+                      Class="mb-4" FullWidth="true"/>
+
+        <MudStack Row="true" Justify="Justify.FlexEnd">
+            <MudButton Href="/projects" Variant="Variant.Outlined" Class="mr-2">Cancel</MudButton>
+            <MudButton OnClick="CreateAsync" Color="Color.Primary" Variant="Variant.Filled"
+                       Disabled="_loading || string.IsNullOrWhiteSpace(_name)">
+                @if (_loading)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2"/>
+                }
+                Create
+            </MudButton>
+        </MudStack>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private string _name = "";
+    private string? _description;
+    private bool _loading;
+
+    private async Task CreateAsync()
+    {
+        _loading = true;
+        try
+        {
+            var project = await ProjectsService.Create(new CreateProjectRequest
+            {
+                Name = _name,
+                Description = _description
+            });
+
+            Navigation.NavigateTo($"/projects/{project.Id}/issues");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

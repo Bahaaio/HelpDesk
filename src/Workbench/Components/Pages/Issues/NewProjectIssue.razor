@@ -1,4 +1,4 @@
-@page "/issues/new"
+@page "/projects/{ProjectId:int}/issues/new"
 @using Workbench.Modules.Issues.Dtos.Requests
 @using Workbench.Modules.Issues.Options
 @using Workbench.Modules.Issues.Services
@@ -13,7 +13,7 @@
 
 <MudContainer MaxWidth="MaxWidth.Medium">
     <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
-        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Href="/issues"/>
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Href="@($"/projects/{ProjectId}/issues")"/>
         <MudText Typo="Typo.h4">Create Issue</MudText>
     </MudStack>
 
@@ -73,7 +73,7 @@
         }
 
         <MudStack Row="true" Justify="Justify.FlexEnd">
-            <MudButton Href="/issues" Variant="Variant.Outlined" Class="mr-2">Cancel</MudButton>
+            <MudButton Href="@($"/projects/{ProjectId}/issues")" Variant="Variant.Outlined" Class="mr-2">Cancel</MudButton>
             <MudButton OnClick="CreateAsync" Color="Color.Primary" Variant="Variant.Filled"
                        Disabled="_loading || string.IsNullOrWhiteSpace(_title)">
                 @if (_loading)
@@ -87,6 +87,8 @@
 </MudContainer>
 
 @code {
+    [Parameter] public int ProjectId { get; set; }
+
     private string _title = "";
     private string? _description;
     private bool _loading;
@@ -154,7 +156,7 @@
         _loading = true;
         try
         {
-            var issue = await IssuesService.Create(new CreateIssueRequest
+            var issue = await IssuesService.Create(ProjectId, new CreateIssueRequest
             {
                 Title = _title,
                 Description = _description
@@ -174,7 +176,7 @@
                 }
             }
 
-            Navigation.NavigateTo($"/issues/{issue.Id}");
+            Navigation.NavigateTo($"/projects/{ProjectId}/issues/{issue.Id}");
         }
         catch (Exception ex)
         {
@@ -185,5 +187,4 @@
             _loading = false;
         }
     }
-
 }

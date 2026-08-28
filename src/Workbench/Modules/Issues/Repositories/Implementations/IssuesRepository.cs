@@ -28,6 +28,7 @@ public class IssuesRepository : Repository<Issue, int>, IIssuesRepository
             .Include(i => i.Tags)
             .Include(i => i.Attachments)
             .Include(i => i.Votes)
+            .AsSplitQuery()
             .SingleOrDefaultAsync()
         ?? throw new NotFoundException($"Issue with id {id} not found");
 

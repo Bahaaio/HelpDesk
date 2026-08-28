@@ -1,3 +1,4 @@
+using Workbench.Modules.Projects.Memberships;
 using Workbench.Modules.Projects.Repositories;
 using Workbench.Modules.Projects.Repositories.Implementations;
 using Workbench.Modules.Projects.Services;
@@ -13,6 +14,8 @@ public static class DependencyInjection
         {
             services.AddScoped<IProjectsService, ProjectsService>();
             services.AddScoped<IProjectsRepository, ProjectsRepository>();
+
+            services.AddProjectMembershipsModule();
         }
     }
 }

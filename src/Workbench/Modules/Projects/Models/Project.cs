@@ -4,6 +4,7 @@ using Workbench.Modules.Authorization.Models;
 using Workbench.Modules.Issues.Models;
 using Workbench.Modules.Kanban.Models;
 using Workbench.Modules.Milestones.Models;
+using Workbench.Modules.Projects.Memberships.Models;
 
 namespace Workbench.Modules.Projects.Models;
 

@@ -9,6 +9,7 @@ using Workbench.Modules.Issues.Models;
 using Workbench.Modules.Issues.Votes.Models;
 using Workbench.Modules.Kanban.Models;
 using Workbench.Modules.Milestones.Models;
+using Workbench.Modules.Projects.Memberships.Models;
 using Workbench.Modules.Projects.Models;
 using Workbench.Modules.Tags.Models;
 

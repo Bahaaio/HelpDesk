@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Workbench.Modules.Comments.Models;
 using Workbench.Modules.Issues.Models;
 using Workbench.Modules.Issues.Votes.Models;
+using Workbench.Modules.Projects.Memberships.Models;
 using Workbench.Modules.Projects.Models;
 
 namespace Workbench.Modules.Auth.Models;

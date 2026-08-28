@@ -1,6 +1,6 @@
+using Microsoft.EntityFrameworkCore;
 using Workbench.Common.Exceptions;
 using Workbench.Common.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace Workbench.Common.Extensions;
 
@@ -27,7 +27,7 @@ public static class DbContextExtensions
             var entity = await set.FindAsync(key);
 
             if (entity is null)
-                throw new NotFoundException($"Resource with id {key} not found");
+                throw new NotFoundException($"{typeof(TEntity).Name} with id {key} not found");
 
             return entity;
         }
@@ -42,7 +42,7 @@ public static class DbContextExtensions
             var exists = await set.AnyAsync(e => e.Id.Equals(key));
 
             if (!exists)
-                throw new NotFoundException($"Resource with id {key} not found");
+                throw new NotFoundException($"{typeof(TEntity).Name} with id {key} not found");
         }
     }
 }

@@ -1,7 +1,6 @@
-using Workbench.Common.Exceptions;
+using Microsoft.EntityFrameworkCore;
 using Workbench.Common.Extensions;
 using Workbench.Common.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace Workbench.Data.Persistence.Implementations;
 
@@ -23,9 +22,7 @@ public abstract class Repository<TEntity, TKey> : IRepository<TEntity, TKey>
 
     public virtual async Task<TEntity?> FindAsync(TKey id) => await DbSet.FindAsync(id);
 
-    public virtual async Task<TEntity> GetByIdAsync(TKey id) =>
-        await DbSet.FindAsync(id) ??
-        throw new NotFoundException($"Resource with id {id} not found");
+    public virtual Task<TEntity> GetByIdAsync(TKey id) => DbSet.FindOrThrowAsync(id);
 
     public TEntity Add(TEntity entity) => DbSet.Add(entity).Entity;
 

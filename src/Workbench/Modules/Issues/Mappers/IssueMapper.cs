@@ -1,11 +1,7 @@
 using System.Linq.Expressions;
-using Workbench.Modules.Attachments.Dtos;
-using Workbench.Modules.Attachments.Models;
-using Workbench.Modules.Attachments.Services;
+using Workbench.Modules.Attachments.Mappers;
 using Workbench.Modules.Issues.Dtos;
 using Workbench.Modules.Issues.Models;
-
-using Workbench.Modules.Attachments.Mappers;
 
 namespace Workbench.Modules.Issues.Mappers;
 
@@ -16,6 +12,8 @@ public static class IssueMapper
     public static Expression<Func<Issue, IssueDto>> ToDtoExpression => t => new IssueDto
     {
         Id = t.Id,
+        ProjectId = t.ProjectId,
+        ProjectName = t.Project.Name,
         Title = t.Title,
         Description = t.Description,
         Status = t.Status,

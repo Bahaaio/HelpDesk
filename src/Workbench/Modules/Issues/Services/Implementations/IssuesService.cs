@@ -8,6 +8,7 @@ using Workbench.Modules.Issues.Dtos.Requests;
 using Workbench.Modules.Issues.Mappers;
 using Workbench.Modules.Issues.Models;
 using Workbench.Modules.Issues.Repositories;
+using Workbench.Modules.Projects.Repositories;
 
 namespace Workbench.Modules.Issues.Services.Implementations;
 
@@ -17,12 +18,13 @@ public class IssuesService : IIssuesService
     private readonly IAuthorizationGuard _authGuard;
     private readonly IIssuesRepository _issuesRepository;
     private readonly ILogger<IssuesService> _logger;
+    private readonly IProjectsRepository _projectsRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUser _user;
 
     public IssuesService(IIssuesRepository issuesRepository, IUnitOfWork unitOfWork,
         ICurrentUser user, IAuthorizationGuard authGuard, ILogger<IssuesService> logger,
-        IAttachmentsService<Issue> attachmentsService)
+        IAttachmentsService<Issue> attachmentsService, IProjectsRepository projectsRepository)
     {
         _issuesRepository = issuesRepository;
         _unitOfWork = unitOfWork;
@@ -30,25 +32,35 @@ public class IssuesService : IIssuesService
         _authGuard = authGuard;
         _logger = logger;
         _attachmentsService = attachmentsService;
+        _projectsRepository = projectsRepository;
     }
 
-    public Task<List<IssueDto>> GetAll(IssueQuery issueQuery) =>
-        _issuesRepository.GetAllAsync(issueQuery);
+    public async Task<IssueDto> GetById(int projectId, int issueId)
+    {
+        await _projectsRepository.ExistsOrThrowAsync(projectId);
+        return (await _issuesRepository.GetByIdAsync(issueId)).ToDto();
+    }
+
+    public async Task<List<IssueDto>> GetAll(int projectId, IssueQuery issueQuery)
+    {
+        await _projectsRepository.ExistsOrThrowAsync(projectId);
+        return await _issuesRepository.GetAllAsync(projectId, issueQuery);
+    }
 
     public Task<List<IssueDto>> GetCurrentUserIssues(IssueQuery issueQuery) =>
         _issuesRepository.GetAllByAuthorAsync(_user.Id, issueQuery);
 
-    public async Task<IssueDto> GetById(int id) =>
-        (await _issuesRepository.GetByIdAsync(id)).ToDto();
-
-    public async Task<IssueDto> Create(CreateIssueRequest request)
+    public async Task<IssueDto> Create(int projectId, CreateIssueRequest request)
     {
+        var project = await _projectsRepository.GetByIdAsync(projectId);
+
         var issue = new Issue
         {
             Title = request.Title,
             Description = request.Description,
             AuthorId = _user.Id,
-            ProjectId = 0 // TODO: impl
+            ProjectId = projectId,
+            Project = project
         };
 
         _issuesRepository.Add(issue);
@@ -60,9 +72,11 @@ public class IssuesService : IIssuesService
         return issue.ToDto();
     }
 
-    public async Task<IssueDto> Update(int id, UpdateIssueRequest request)
+    public async Task<IssueDto> Update(int projectId, int issueId, UpdateIssueRequest request)
     {
-        var issue = await _issuesRepository.GetByIdAsync(id);
+        // TODO: authz
+        var project = _projectsRepository.GetByIdAsync(projectId);
+        var issue = await _issuesRepository.GetByIdAsync(issueId);
         await _authGuard.AuthorizeOwnerOrTechnician(issue);
 
         issue.Title = request.Title;
@@ -72,16 +86,18 @@ public class IssuesService : IIssuesService
         return issue.ToDto();
     }
 
-    public async Task Delete(int id)
+    public async Task Delete(int projectId, int issueId)
     {
-        var issue = await _issuesRepository.GetByIdAsync(id);
+        // TODO: authz
+        var project = _projectsRepository.GetByIdAsync(projectId);
+        var issue = await _issuesRepository.GetByIdAsync(issueId);
         await _authGuard.AuthorizeOwnerOrTechnician(issue);
 
-        await _attachmentsService.DeleteAll(id);
+        await _attachmentsService.DeleteAll(issueId);
 
         _issuesRepository.Remove(issue);
         await _unitOfWork.SaveChangesAsync();
 
-        _logger.LogInformation("User {userId} deleted issue {issueId}", _user.Id, id);
+        _logger.LogInformation("User {userId} deleted issue {issueId}", _user.Id, issueId);
     }
 }

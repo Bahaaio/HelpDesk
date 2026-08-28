@@ -8,7 +8,7 @@ namespace Workbench.Modules.Issues.Repositories;
 public interface IIssuesRepository : IRepository<Issue, int>
 {
     /// <summary>Returns all issues matching <paramref name="query" />, projected to DTOs.</summary>
-    Task<List<IssueDto>> GetAllAsync(IssueQuery query);
+    Task<List<IssueDto>> GetAllAsync(int projectId, IssueQuery query);
 
     /// <summary>
     ///     Returns an issue with all nav-props loaded for mutation (auth + update), or

@@ -13,7 +13,7 @@ public interface IIssuesService
     ///     Returns all issues matching the specified filters.
     /// </summary>
     /// <param name="issueQuery">Optional filters for status, tag, author, and free-text search.</param>
-    Task<List<IssueDto>> GetAll(IssueQuery issueQuery);
+    Task<List<IssueDto>> GetAll(int projectId, IssueQuery issueQuery);
 
     /// <summary>
     ///     Returns issues created by the current user, matching the specified filters.
@@ -24,27 +24,27 @@ public interface IIssuesService
     /// <summary>
     ///     Returns a single issue by its ID.
     /// </summary>
-    /// <param name="id">The issue ID.</param>
+    /// <param name="issueId">The issue ID.</param>
     /// <exception cref="NotFoundException">Thrown if the issue does not exist.</exception>
-    Task<IssueDto> GetById(int id);
+    Task<IssueDto> GetById(int projectId, int issueId);
 
     /// <summary>
     ///     Creates a new issue assigned to the current user.
     /// </summary>
     /// <param name="request">The issue title and optional description.</param>
-    Task<IssueDto> Create(CreateIssueRequest request);
+    Task<IssueDto> Create(int projectId, CreateIssueRequest request);
 
     /// <summary>
     ///     Updates an existing issue. Only the issue author or a technician may update.
     /// </summary>
-    /// <param name="id">The issue ID.</param>
+    /// <param name="issueId">The issue ID.</param>
     /// <param name="request">The updated title and optional description.</param>
-    Task<IssueDto> Update(int id, UpdateIssueRequest request);
+    Task<IssueDto> Update(int projectId, int issueId, UpdateIssueRequest request);
 
     /// <summary>
     ///     Deletes a issue and its attachments from storage. Only the issue author or a technician may
     ///     delete.
     /// </summary>
-    /// <param name="id">The issue ID.</param>
-    Task Delete(int id);
+    /// <param name="issueId">The issue ID.</param>
+    Task Delete(int projectId, int issueId);
 }

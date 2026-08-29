@@ -1,11 +1,18 @@
 @page "/projects/{ProjectId:int}/issues/new"
+@using Workbench.ClientServices
+@using Workbench.Components.Shared.Components
 @using Workbench.Modules.Issues.Dtos.Requests
 @using Workbench.Modules.Issues.Options
 @using Workbench.Modules.Issues.Services
+@using Workbench.Modules.Projects.Services
 @rendermode InteractiveServer
 @inject IIssuesService IssuesService
+@inject IIssueTagsService IssueTagsService
 @inject IIssueAttachmentsClient AttachmentsClient
 @inject IOptions<IssueAttachmentOptions> IssueAttachmentOptions
+@inject IProjectMembershipState ProjectMembership
+@inject IAuthState AuthState
+@inject IProjectsService ProjectsService
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
 
@@ -23,6 +30,13 @@
 
         <MudTextField @bind-Value="_description" Label="Description" Lines="5" MaxLength="2000"
                       Class="mb-4" FullWidth="true"/>
+
+        @if (ProjectMembership.IsMember)
+        {
+            <TagSelect ProjectId="ProjectId" Label="Tags"
+                       SelectedValues="_selectedTags" SelectedValuesChanged="v => _selectedTags = v.ToList()"
+                       Class="mb-4"/>
+        }
 
         <MudFileUpload @bind-Files="Files" AppendMultipleFiles
                        Accept="@string.Join(',', IssueAttachmentOptions.Value.AllowedExtensions)"
@@ -92,6 +106,7 @@
     private string _title = "";
     private string? _description;
     private bool _loading;
+    private List<string> _selectedTags = new();
     private IReadOnlyList<IBrowserFile>? _files;
     private readonly Dictionary<IBrowserFile, string?> _previewUrls = new();
 
@@ -162,6 +177,17 @@
                 Description = _description
             });
 
+            if (_selectedTags.Count > 0)
+            {
+                try
+                {
+                    await IssueTagsService.UpdateTags(issue.Id, _selectedTags);
+                }
+                catch
+                {
+                }
+            }
+
             if (_files is { Count: > 0 })
             {
                 foreach (var file in _files)
@@ -185,6 +211,19 @@
         finally
         {
             _loading = false;
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var project = await ProjectsService.GetById(ProjectId);
+            await ProjectMembership.Load(ProjectId);
+            ProjectMembership.SetOwner(AuthState.Username == project.OwnerUsername);
+        }
+        catch
+        {
         }
     }
 }

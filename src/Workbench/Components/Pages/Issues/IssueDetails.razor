@@ -1,5 +1,6 @@
 @page "/projects/{ProjectId:int}/issues/{Id:int}"
 @using System.Text.RegularExpressions
+@using Workbench.Components.Shared.Components
 @using Workbench.Modules.Comments.Dtos
 @using Workbench.Modules.Comments.Dtos.Requests
 @using Workbench.Modules.Comments.Options
@@ -13,15 +14,12 @@
 @using Workbench.Modules.Issues.Votes.Services
 @using Workbench.Modules.Projects.Dtos
 @using Workbench.Modules.Projects.Services
-@using Workbench.Modules.Tags.Dtos
-@using Workbench.Modules.Tags.Services
 @rendermode InteractiveServer
 @inject IIssuesService IssuesService
 @inject IProjectsService ProjectsService
 @inject IIssueStatusService IssueStatusService
 @inject IVotesService VotesService
 @inject ICommentsService CommentsService
-@inject ITagsService TagsService
 @inject IIssueTagsService IssueTagsService
 @inject IIssueAttachmentsClient AttachmentsClient
 @inject ICommentAttachmentsClient CommentAttachmentsClient
@@ -438,13 +436,8 @@ else
                       Class="mb-4" FullWidth="true"/>
         @if (ProjectMembership.IsMember)
         {
-            <MudSelect T="string" Label="Tags" MultiSelection="true"
-                       SelectedValues="_editSelectedTags" SelectedValuesChanged="OnEditTagsChanged">
-                @foreach (var tag in _allTags)
-                {
-                    <MudSelectItem Value="@tag.Name">@tag.Name</MudSelectItem>
-                }
-            </MudSelect>
+            <TagSelect ProjectId="ProjectId" Label="Tags"
+                       SelectedValues="_editSelectedTags" SelectedValuesChanged="OnEditTagsChanged"/>
         }
 
         <MudDivider Class="my-4"/>
@@ -583,7 +576,6 @@ else
     private string _editTitle = "";
     private string? _editDescription;
     private bool _savingEdit;
-    private List<TagDto> _allTags = new();
     private HashSet<string> _editSelectedTags = new();
     private IReadOnlyList<IBrowserFile>? _editFiles;
     private readonly Dictionary<IBrowserFile, string?> _editPreviewUrls = new();
@@ -634,11 +626,6 @@ else
             _isAssignedToCurrentUser = AuthState.IsAuthenticated
                                        && _issue?.AssignedToUsername == AuthState.Username;
 
-            if (_canEdit)
-            {
-                _allTags = await TagsService.GetAll(ProjectId);
-            }
-
             await LoadReferencedIssues();
         }
         catch (Exception ex)
@@ -662,7 +649,7 @@ else
         _editDialogOpen = true;
     }
 
-    private void OnEditTagsChanged(IEnumerable<string> values)
+    private void OnEditTagsChanged(IReadOnlyCollection<string> values)
     {
         _editSelectedTags = new HashSet<string>(values);
     }

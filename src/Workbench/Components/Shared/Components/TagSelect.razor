@@ -1,0 +1,50 @@
+@using Workbench.Modules.Tags.Dtos
+@using Workbench.Modules.Tags.Services
+@inject ITagsService TagsService
+
+<MudSelect T="string" Label="@Label" MultiSelection="true" Dense="true"
+           SelectedValues="SelectedValues" SelectedValuesChanged="OnSelectedValuesChanged"
+           AdornmentIcon="@Icons.Material.Filled.Label" Adornment="Adornment.Start"
+           FullWidth="true" Class="@Class">
+    @foreach (var tag in _tags)
+    {
+        <MudSelectItem Value="@tag.Name">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                <MudText Typo="Typo.body2">@tag.Name</MudText>
+                @if (!string.IsNullOrEmpty(tag.Description))
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Default" Style="opacity: 0.6;">
+                        — @tag.Description
+                    </MudText>
+                }
+            </MudStack>
+        </MudSelectItem>
+    }
+</MudSelect>
+
+@code {
+    [Parameter] public int ProjectId { get; set; }
+    [Parameter] public string Label { get; set; } = "Tags";
+    [Parameter] public IReadOnlyCollection<string> SelectedValues { get; set; } = Array.Empty<string>();
+    [Parameter] public EventCallback<IReadOnlyCollection<string>> SelectedValuesChanged { get; set; }
+    [Parameter] public string? Class { get; set; }
+
+    private List<TagDto> _tags = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
+            _tags = await TagsService.GetAll(ProjectId);
+        }
+        catch
+        {
+            _tags = new();
+        }
+    }
+
+    private Task OnSelectedValuesChanged(IReadOnlyCollection<string> values)
+    {
+        return SelectedValuesChanged.InvokeAsync(values);
+    }
+}

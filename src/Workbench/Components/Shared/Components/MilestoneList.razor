@@ -50,7 +50,7 @@
                         }
                     </CellTemplate>
                 </TemplateColumn>
-                <TemplateColumn Title="Progress" Width="200px">
+                <TemplateColumn Title="Progress" Style="width: 200px;">
                     <CellTemplate>
                         @{
                             var total = context.Item.TotalItems;
@@ -73,7 +73,7 @@
                         }
                     </CellTemplate>
                 </TemplateColumn>
-                <TemplateColumn Title="Due Date" Width="140px">
+                <TemplateColumn Title="Due Date" Style="width: 140px;">
                     <CellTemplate>
                         @if (context.Item.DueDate.HasValue)
                         {
@@ -91,7 +91,7 @@
                 </TemplateColumn>
                 @if (IsLead)
                 {
-                    <TemplateColumn Title="Actions" Sortable="false" Filterable="false" Width="100px">
+                    <TemplateColumn Title="Actions" Sortable="false" Filterable="false" Style="width: 100px;">
                         <CellTemplate>
                             <div @onclick:stopPropagation>
                                 <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"

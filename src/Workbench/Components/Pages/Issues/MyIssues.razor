@@ -60,7 +60,7 @@
             </HeaderContent>
             <RowTemplate>
                 <MudTd DataLabel="Project">
-                    <MudLink Href="@($"/projects/{context.ProjectId}/issues")">@context.ProjectName</MudLink>
+                    <MudLink Href="@($"/projects/{context.ProjectId}?tab=issues")">@context.ProjectName</MudLink>
                 </MudTd>
                 <MudTd DataLabel="Title">
                     <MudLink Href="@($"/projects/{context.ProjectId}/issues/{context.Id}")">

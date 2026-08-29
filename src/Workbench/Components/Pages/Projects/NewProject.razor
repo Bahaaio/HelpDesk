@@ -51,7 +51,7 @@
                 Description = _description
             });
 
-            Navigation.NavigateTo($"/projects/{project.Id}/issues");
+            Navigation.NavigateTo($"/projects/{project.Id}?tab=issues");
         }
         catch (Exception ex)
         {

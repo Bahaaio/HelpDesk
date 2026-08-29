@@ -20,7 +20,7 @@
 
 <MudContainer MaxWidth="MaxWidth.Medium">
     <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
-        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Href="@($"/projects/{ProjectId}/issues")"/>
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Href="@($"/projects/{ProjectId}?tab=issues")"/>
         <MudText Typo="Typo.h4">Create Issue</MudText>
     </MudStack>
 
@@ -87,7 +87,7 @@
         }
 
         <MudStack Row="true" Justify="Justify.FlexEnd">
-            <MudButton Href="@($"/projects/{ProjectId}/issues")" Variant="Variant.Outlined" Class="mr-2">Cancel</MudButton>
+            <MudButton Href="@($"/projects/{ProjectId}?tab=issues")" Variant="Variant.Outlined" Class="mr-2">Cancel</MudButton>
             <MudButton OnClick="CreateAsync" Color="Color.Primary" Variant="Variant.Filled"
                        Disabled="_loading || string.IsNullOrWhiteSpace(_title)">
                 @if (_loading)

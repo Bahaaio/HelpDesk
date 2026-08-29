@@ -40,7 +40,7 @@ public class AuthController : Controller
         try
         {
             await _authService.Register(registerRequest);
-            return Redirect("/");
+            return Redirect("/issues");
         }
         catch (BadRequestException ex)
         {

@@ -1,0 +1,66 @@
+@using Workbench.Modules.Projects.Dtos
+@using Workbench.Modules.Projects.Enums
+@using Workbench.Modules.Projects.Memberships.Dtos
+@inject IProjectMembershipState ProjectMembership
+
+<MudStack Class="pa-4">
+    @if (!string.IsNullOrEmpty(Project.Description))
+    {
+        <MudText Typo="Typo.body1" Class="mb-4">@Project.Description</MudText>
+    }
+
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
+        <MudAvatar Size="Size.Small" Color="Color.Primary">
+            @(Project.OwnerUsername[..1].ToUpper())
+        </MudAvatar>
+        <MudText Typo="Typo.body2">
+            Owned by <strong>@Project.OwnerUsername</strong>
+        </MudText>
+        <MudSpacer/>
+        <MudText Typo="Typo.caption" Color="Color.Default">
+            Created @Project.CreatedAt.ToString("MMM dd, yyyy")
+        </MudText>
+    </MudStack>
+
+    <MudDivider Class="my-4"/>
+
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
+        <MudText Typo="Typo.h6">Members</MudText>
+        <MudSpacer/>
+        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">
+            @Members.Count
+        </MudChip>
+    </MudStack>
+
+    @if (Members.Count == 0)
+    {
+        <MudText Typo="Typo.body2" Color="Color.Default" Class="ml-2">No members yet.</MudText>
+    }
+    else
+    {
+        <MudList T="ProjectMembershipDto" Dense="true">
+            @foreach (var member in Members)
+            {
+                <MudListItem Value="member">
+                    <MudStack Row="true" AlignItems="AlignItems.Center">
+                        <MudAvatar Size="Size.Small" Color="Color.Primary">
+                            @(member.Username[..1].ToUpper())
+                        </MudAvatar>
+                        <MudText Typo="Typo.body2">@member.Username</MudText>
+                        <MudSpacer/>
+                        <MudChip T="string" Size="Size.Small"
+                                 Color="@(member.Role == ProjectMemberRole.Lead ? Color.Primary : Color.Default)"
+                                 Variant="Variant.Outlined">
+                            @member.Role
+                        </MudChip>
+                    </MudStack>
+                </MudListItem>
+            }
+        </MudList>
+    }
+</MudStack>
+
+@code {
+    [Parameter] public ProjectDto Project { get; set; } = default!;
+    [Parameter] public List<ProjectMembershipDto> Members { get; set; } = new();
+}

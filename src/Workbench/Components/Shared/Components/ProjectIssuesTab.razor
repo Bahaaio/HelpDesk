@@ -1,0 +1,198 @@
+@using Workbench.Modules.Issues.Dtos
+@using Workbench.Modules.Issues.Dtos.Requests
+@using Workbench.Modules.Issues.Enums
+@using Workbench.Modules.Issues.Services
+@using Workbench.Modules.Tags.Dtos
+@using Workbench.Modules.Tags.Services
+@rendermode InteractiveServer
+@inject IIssuesService IssuesService
+@inject ITagsService TagsService
+@inject IProjectMembershipState ProjectMembership
+@inject IAuthState AuthState
+
+<MudStack Class="pa-4">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+        <MudSpacer/>
+        <MudButton Href="@($"/projects/{ProjectId}/issues/new")" Variant="Variant.Filled"
+                   Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">
+            New Issue
+        </MudButton>
+    </MudStack>
+
+    <MudStack Row="true" Class="mb-4" AlignItems="AlignItems.Center">
+        <MudTextField Value="_searchText" ValueChanged="(string v) => OnSearchInput(v)"
+                      Placeholder="Search issues..."
+                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                      Style="max-width: 300px;" Immediate="true"/>
+
+        <MudSelect T="string" @bind-Value="_selectedStatus" Label="Status" Style="width: 150px;"
+                   SelectedValuesChanged="_ => LoadIssues()">
+            <MudSelectItem Value="@("all")">All</MudSelectItem>
+            <MudSelectItem Value="@("Open")">Open</MudSelectItem>
+            <MudSelectItem Value="@("InProgress")">In Progress</MudSelectItem>
+            <MudSelectItem Value="@("Closed")">Closed</MudSelectItem>
+        </MudSelect>
+
+        <MudSelect T="string" @bind-Value="_selectedTag" Label="Tag" Style="width: 150px;"
+                   SelectedValuesChanged="_ => LoadIssues()">
+            <MudSelectItem Value="@("all")">All Tags</MudSelectItem>
+            @foreach (var tag in _allTags)
+            {
+                <MudSelectItem Value="@tag.Name">@tag.Name</MudSelectItem>
+            }
+        </MudSelect>
+
+        <MudSelect T="string" @bind-Value="_sortBy" Label="Sort by" Style="width: 180px;"
+                   SelectedValuesChanged="_ => LoadIssues()">
+            <MudSelectItem Value="@("Latest")">Newest first</MudSelectItem>
+            <MudSelectItem Value="@("Oldest")">Oldest first</MudSelectItem>
+            <MudSelectItem Value="@("HighestScore")">Highest score</MudSelectItem>
+            <MudSelectItem Value="@("LowestScore")">Lowest score</MudSelectItem>
+        </MudSelect>
+
+        @if (ProjectMembership.IsMember)
+        {
+            <MudSelect T="string" @bind-Value="_viewFilter" Label="View" Style="width: 150px;"
+                       SelectedValuesChanged="_ => LoadIssues()">
+                <MudSelectItem Value="@("All")">All Issues</MudSelectItem>
+                <MudSelectItem Value="@("AssignedToMe")">Assigned to Me</MudSelectItem>
+            </MudSelect>
+        }
+    </MudStack>
+
+    @if (_issuesLoading)
+    {
+        <MudProgressCircular Indeterminate="true" Class="d-flex justify-center ma-8"/>
+    }
+    else if (_issues.Count == 0)
+    {
+        <MudPaper Class="pa-8 text-center">
+            <MudIcon Icon="@Icons.Material.Filled.Inbox" Size="Size.Large" Color="Color.Default"/>
+            <MudText Typo="Typo.h6" Class="mt-2">No issues found</MudText>
+        </MudPaper>
+    }
+    else
+    {
+        <MudTable Items="_issues" Hover="true" Dense="true" Striped="true">
+            <HeaderContent>
+                <MudTh>Title</MudTh>
+                <MudTh>Status</MudTh>
+                <MudTh>Tags</MudTh>
+                <MudTh>Score</MudTh>
+                <MudTh>Created</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Title">
+                    <MudLink Href="@($"/projects/{ProjectId}/issues/{context.Id}")">
+                        <span style="opacity: 0.5;">#@context.Id</span> @context.Title
+                    </MudLink>
+                </MudTd>
+                <MudTd DataLabel="Status">
+                    @if (context.Status == Status.Open)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Success">Open</MudChip>
+                    }
+                    else if (context.Status == Status.InProgress)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Warning">In Progress
+                        </MudChip>
+                    }
+                    else
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Default">Closed</MudChip>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Tags">
+                    @foreach (var tag in context.Tags)
+                    {
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined"
+                                 Class="mr-1">@tag</MudChip>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Score">
+                    <MudIcon Icon="@Icons.Material.Filled.ThumbUp" Size="Size.Small" Class="mr-1"/>
+                    @context.VoteScore
+                </MudTd>
+                <MudTd DataLabel="Created">@context.CreatedAt.ToString("MMM dd, yyyy")</MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+</MudStack>
+
+@code {
+    [Parameter] public int ProjectId { get; set; }
+
+    private List<IssueDto> _issues = new();
+    private List<TagDto> _allTags = new();
+    private bool _issuesLoading;
+    private string _searchText = "";
+    private string _selectedStatus = "all";
+    private string _selectedTag = "all";
+    private string _sortBy = "Latest";
+    private string _viewFilter = "All";
+    private CancellationTokenSource? _searchCts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTags();
+        await LoadIssues();
+    }
+
+    private async Task LoadTags()
+    {
+        try
+        {
+            _allTags = await TagsService.GetAll(ProjectId);
+        }
+        catch
+        {
+        }
+    }
+
+    private async Task OnSearchInput(string value)
+    {
+        _searchText = value;
+        _searchCts?.Cancel();
+        _searchCts = new CancellationTokenSource();
+        var token = _searchCts.Token;
+        try
+        {
+            await Task.Delay(300, token);
+            if (!token.IsCancellationRequested)
+                await LoadIssues();
+        }
+        catch (TaskCanceledException)
+        {
+        }
+    }
+
+    private async Task LoadIssues()
+    {
+        _issuesLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var query = new IssueQuery(
+                _selectedStatus != "all" ? Enum.Parse<Status>(_selectedStatus) : null,
+                _selectedTag != "all" ? _selectedTag : null,
+                null,
+                string.IsNullOrWhiteSpace(_searchText) ? null : _searchText,
+                Enum.Parse<IssueSort>(_sortBy)
+            );
+
+            var allIssues = await IssuesService.GetAll(ProjectId, query);
+
+            _issues = _viewFilter == "AssignedToMe"
+                ? allIssues.Where(i => i.AssignedToUsername == AuthState.Username).ToList()
+                : allIssues;
+        }
+        catch
+        {
+        }
+
+        _issuesLoading = false;
+        StateHasChanged();
+    }
+
+}

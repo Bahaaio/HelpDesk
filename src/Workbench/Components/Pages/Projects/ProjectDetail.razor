@@ -1,27 +1,15 @@
 @page "/projects/{ProjectId:int}"
 @using Workbench.ClientServices
 @using Workbench.Components.Shared.Components
-@using Workbench.Modules.Issues.Dtos
-@using Workbench.Modules.Issues.Dtos.Requests
-@using Workbench.Modules.Issues.Enums
-@using Workbench.Modules.Issues.Services
-@using Workbench.Modules.Milestones.Dtos
-@using Workbench.Modules.Milestones.Services
 @using Workbench.Modules.Projects.Dtos
 @using Workbench.Modules.Projects.Dtos.Requests
-@using Workbench.Modules.Projects.Enums
 @using Workbench.Modules.Projects.Memberships.Dtos
 @using Workbench.Modules.Projects.Memberships.Services
 @using Workbench.Modules.Projects.Services
-@using Workbench.Modules.Tags.Dtos
-@using Workbench.Modules.Tags.Dtos.Requests
-@using Workbench.Modules.Tags.Services
 @rendermode InteractiveServer
 @inject IProjectsService ProjectsService
 @inject IProjectMembershipsService MembershipsService
 @inject IProjectMembershipState ProjectMembership
-@inject IIssuesService IssuesService
-@inject ITagsService TagsService
 @inject IAuthState AuthState
 @inject NavigationManager Navigation
 @inject ISnackbar Snackbar
@@ -60,172 +48,11 @@
 
         <MudTabs @bind-ActivePanelIndex="_activeTab" ApplyEffectsToContainer="true" Class="mt-2">
             <MudTabPanel Text="Overview" Icon="@Icons.Material.Filled.Info">
-                <MudStack Class="pa-4">
-                    @if (!string.IsNullOrEmpty(_project.Description))
-                    {
-                        <MudText Typo="Typo.body1" Class="mb-4">@_project.Description</MudText>
-                    }
-
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
-                        <MudAvatar Size="Size.Small" Color="Color.Primary">
-                            @(_project.OwnerUsername[..1].ToUpper())
-                        </MudAvatar>
-                        <MudText Typo="Typo.body2">
-                            Owned by <strong>@_project.OwnerUsername</strong>
-                        </MudText>
-                        <MudSpacer/>
-                        <MudText Typo="Typo.caption" Color="Color.Default">
-                            Created @_project.CreatedAt.ToString("MMM dd, yyyy")
-                        </MudText>
-                    </MudStack>
-
-                    <MudDivider Class="my-4"/>
-
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
-                        <MudText Typo="Typo.h6">Members</MudText>
-                        <MudSpacer/>
-                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">
-                            @_members.Count
-                        </MudChip>
-                    </MudStack>
-
-                    @if (_members.Count == 0)
-                    {
-                        <MudText Typo="Typo.body2" Color="Color.Default" Class="ml-2">No members yet.</MudText>
-                    }
-                    else
-                    {
-                        <MudList T="ProjectMembershipDto" Dense="true">
-                            @foreach (var member in _members)
-                            {
-                                <MudListItem Value="member">
-                                    <MudStack Row="true" AlignItems="AlignItems.Center">
-                                        <MudAvatar Size="Size.Small" Color="Color.Primary">
-                                            @(member.Username[..1].ToUpper())
-                                        </MudAvatar>
-                                        <MudText Typo="Typo.body2">@member.Username</MudText>
-                                        <MudSpacer/>
-                                        <MudChip T="string" Size="Size.Small"
-                                                 Color="@(member.Role == ProjectMemberRole.Lead ? Color.Primary : Color.Default)"
-                                                 Variant="Variant.Outlined">
-                                            @member.Role
-                                        </MudChip>
-                                    </MudStack>
-                                </MudListItem>
-                            }
-                        </MudList>
-                    }
-                </MudStack>
+                <ProjectOverview Project="_project" Members="_members"/>
             </MudTabPanel>
 
             <MudTabPanel Text="Issues" Icon="@Icons.Material.Filled.BugReport">
-                <MudStack Class="pa-4">
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
-                        <MudSpacer/>
-                        <MudButton Href="@($"/projects/{ProjectId}/issues/new")" Variant="Variant.Filled"
-                                   Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">
-                            New Issue
-                        </MudButton>
-                    </MudStack>
-
-                    <MudStack Row="true" Class="mb-4" AlignItems="AlignItems.Center">
-                        <MudTextField Value="_searchText" ValueChanged="(string v) => OnSearchInput(v)"
-                                      Placeholder="Search issues..."
-                                      Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
-                                      Style="max-width: 300px;" Immediate="true"/>
-
-                        <MudSelect T="string" @bind-Value="_selectedStatus" Label="Status" Style="width: 150px;"
-                                   SelectedValuesChanged="_ => LoadIssues()">
-                            <MudSelectItem Value="@("all")">All</MudSelectItem>
-                            <MudSelectItem Value="@("Open")">Open</MudSelectItem>
-                            <MudSelectItem Value="@("InProgress")">In Progress</MudSelectItem>
-                            <MudSelectItem Value="@("Closed")">Closed</MudSelectItem>
-                        </MudSelect>
-
-                        <MudSelect T="string" @bind-Value="_selectedTag" Label="Tag" Style="width: 150px;"
-                                   SelectedValuesChanged="_ => LoadIssues()">
-                            <MudSelectItem Value="@("all")">All Tags</MudSelectItem>
-                            @foreach (var tag in _allTags)
-                            {
-                                <MudSelectItem Value="@tag.Name">@tag.Name</MudSelectItem>
-                            }
-                        </MudSelect>
-
-                        <MudSelect T="string" @bind-Value="_sortBy" Label="Sort by" Style="width: 180px;"
-                                   SelectedValuesChanged="_ => LoadIssues()">
-                            <MudSelectItem Value="@("Latest")">Newest first</MudSelectItem>
-                            <MudSelectItem Value="@("Oldest")">Oldest first</MudSelectItem>
-                            <MudSelectItem Value="@("HighestScore")">Highest score</MudSelectItem>
-                            <MudSelectItem Value="@("LowestScore")">Lowest score</MudSelectItem>
-                        </MudSelect>
-
-                        @if (ProjectMembership.IsMember)
-                        {
-                            <MudSelect T="string" @bind-Value="_viewFilter" Label="View" Style="width: 150px;"
-                                       SelectedValuesChanged="_ => LoadIssues()">
-                                <MudSelectItem Value="@("All")">All Issues</MudSelectItem>
-                                <MudSelectItem Value="@("AssignedToMe")">Assigned to Me</MudSelectItem>
-                            </MudSelect>
-                        }
-                    </MudStack>
-
-                    @if (_issuesLoading)
-                    {
-                        <MudProgressCircular Indeterminate="true" Class="d-flex justify-center ma-8"/>
-                    }
-                    else if (_issues.Count == 0)
-                    {
-                        <MudPaper Class="pa-8 text-center">
-                            <MudIcon Icon="@Icons.Material.Filled.Inbox" Size="Size.Large" Color="Color.Default"/>
-                            <MudText Typo="Typo.h6" Class="mt-2">No issues found</MudText>
-                        </MudPaper>
-                    }
-                    else
-                    {
-                        <MudTable Items="_issues" Hover="true" Dense="true" Striped="true">
-                            <HeaderContent>
-                                <MudTh>Title</MudTh>
-                                <MudTh>Status</MudTh>
-                                <MudTh>Tags</MudTh>
-                                <MudTh>Score</MudTh>
-                                <MudTh>Created</MudTh>
-                            </HeaderContent>
-                            <RowTemplate>
-                                <MudTd DataLabel="Title">
-                                    <MudLink Href="@($"/projects/{ProjectId}/issues/{context.Id}")">
-                                        <span style="opacity: 0.5;">#@context.Id</span> @context.Title
-                                    </MudLink>
-                                </MudTd>
-                                <MudTd DataLabel="Status">
-                                    @if (context.Status == Status.Open)
-                                    {
-                                        <MudChip T="string" Size="Size.Small" Color="Color.Success">Open</MudChip>
-                                    }
-                                    else if (context.Status == Status.InProgress)
-                                    {
-                                        <MudChip T="string" Size="Size.Small" Color="Color.Warning">In Progress</MudChip>
-                                    }
-                                    else
-                                    {
-                                        <MudChip T="string" Size="Size.Small" Color="Color.Default">Closed</MudChip>
-                                    }
-                                </MudTd>
-                                <MudTd DataLabel="Tags">
-                                    @foreach (var tag in context.Tags)
-                                    {
-                                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined"
-                                                 Class="mr-1">@tag</MudChip>
-                                    }
-                                </MudTd>
-                                <MudTd DataLabel="Score">
-                                    <MudIcon Icon="@Icons.Material.Filled.ThumbUp" Size="Size.Small" Class="mr-1"/>
-                                    @context.VoteScore
-                                </MudTd>
-                                <MudTd DataLabel="Created">@context.CreatedAt.ToString("MMM dd, yyyy")</MudTd>
-                            </RowTemplate>
-                        </MudTable>
-                    }
-                </MudStack>
+                <ProjectIssuesTab ProjectId="ProjectId"/>
             </MudTabPanel>
 
             <MudTabPanel Text="Milestones" Icon="@Icons.Material.Filled.Flag">
@@ -235,60 +62,13 @@
             @if (ProjectMembership.IsMember)
             {
                 <MudTabPanel Text="Tags" Icon="@Icons.Material.Filled.Label">
-                    <MudStack Class="pa-4">
-                        <MudPaper Class="pa-4 mb-4">
-                            <MudStack Row="true" AlignItems="AlignItems.Center">
-                                <MudTextField @bind-Value="_newTagName" Label="Tag Name" MaxLength="50"
-                                              Style="width: 200px;"/>
-                                <MudTextField @bind-Value="_newTagDescription" Label="Description (optional)"
-                                              MaxLength="2000" Style="width: 300px;"/>
-                                <MudButton OnClick="CreateTagAsync" Color="Color.Primary" Variant="Variant.Filled"
-                                           Disabled="_tagsLoading || string.IsNullOrWhiteSpace(_newTagName)">
-                                    <MudIcon Icon="@Icons.Material.Filled.Add" Size="Size.Small" Class="mr-1"/>
-                                    Add
-                                </MudButton>
-                            </MudStack>
-                        </MudPaper>
-
-                        @if (_tagsLoading)
-                        {
-                            <MudProgressCircular Indeterminate="true" Class="d-flex justify-center ma-8"/>
-                        }
-                        else if (_tags.Count == 0)
-                        {
-                            <MudPaper Class="pa-8 text-center">
-                                <MudIcon Icon="@Icons.Material.Filled.LabelOff" Size="Size.Large"/>
-                                <MudText Typo="Typo.h6" Class="mt-2">No tags yet</MudText>
-                            </MudPaper>
-                        }
-                        else
-                        {
-                            <MudDataGrid Items="_tags" Hover="true" Dense="true" Striped="true">
-                                <Columns>
-                                    <PropertyColumn Property="x => x.Name" Title="Name"/>
-                                    <PropertyColumn Property="x => x.Description" Title="Description"/>
-                                    <TemplateColumn Title="Actions" Sortable="false" Filterable="false">
-                                        <CellTemplate>
-                                            <div @onclick:stopPropagation>
-                                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
-                                                               OnClick="() => StartEditTag(context.Item)"/>
-                                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                                               Color="Color.Error"
-                                                               OnClick="() => ConfirmDeleteTag(context.Item)"/>
-                                            </div>
-                                        </CellTemplate>
-                                    </TemplateColumn>
-                                </Columns>
-                            </MudDataGrid>
-                        }
-                    </MudStack>
+                    <ProjectTagsTab ProjectId="ProjectId"/>
                 </MudTabPanel>
             }
         </MudTabs>
     }
 </MudContainer>
 
-@* Edit Project Dialog *@
 <MudDialog @bind-Visible="_editDialogVisible" Options="_dialogOptions">
     <TitleContent>
         <MudText Typo="Typo.h6">Edit Project</MudText>
@@ -305,7 +85,6 @@
     </DialogActions>
 </MudDialog>
 
-@* Delete Project Dialog *@
 <MudDialog @bind-Visible="_deleteDialogVisible" Options="_dialogOptions">
     <TitleContent>
         <MudText Typo="Typo.h6">Delete Project</MudText>
@@ -319,34 +98,6 @@
     <DialogActions>
         <MudButton OnClick="() => _deleteDialogVisible = false">Cancel</MudButton>
         <MudButton Color="Color.Error" OnClick="ConfirmDelete" Disabled="_deleting">Delete</MudButton>
-    </DialogActions>
-</MudDialog>
-
-@* Edit Tag Dialog *@
-<MudDialog @bind-Visible="_editTagDialogVisible" Options="_dialogOptions">
-    <TitleContent>
-        <MudText Typo="Typo.h6">Edit Tag: @_editingTag?.Name</MudText>
-    </TitleContent>
-    <DialogContent>
-        <MudTextField @bind-Value="_editTagDescription" Label="Description" MaxLength="2000"/>
-    </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="() => _editTagDialogVisible = false">Cancel</MudButton>
-        <MudButton OnClick="SaveTagAsync" Color="Color.Primary" Disabled="_savingTag">Save</MudButton>
-    </DialogActions>
-</MudDialog>
-
-@* Delete Tag Dialog *@
-<MudDialog @bind-Visible="_deleteTagDialogVisible" Options="_dialogOptions">
-    <TitleContent>
-        <MudText Typo="Typo.h6">Delete Tag</MudText>
-    </TitleContent>
-    <DialogContent>
-        <MudText>Are you sure you want to delete <strong>@_deletingTag?.Name</strong>?</MudText>
-    </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="() => _deleteTagDialogVisible = false">Cancel</MudButton>
-        <MudButton OnClick="DeleteTagAsync" Color="Color.Error" Disabled="_deletingTagLoading">Delete</MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -372,38 +123,12 @@
 
     private int _activeTabIndex;
 
-    // Project edit/delete
     private bool _editDialogVisible;
     private bool _deleteDialogVisible;
     private bool _saving;
     private bool _deleting;
     private string _editName = "";
     private string? _editDescription;
-
-    // Issues tab
-    private List<IssueDto> _allIssues = new();
-    private List<IssueDto> _issues = new();
-    private bool _issuesLoading;
-    private string _searchText = "";
-    private string _selectedStatus = "all";
-    private string _selectedTag = "all";
-    private string _sortBy = "Latest";
-    private string _viewFilter = "All";
-    private CancellationTokenSource? _searchCts;
-
-    // Tags tab
-    private List<TagDto> _tags = new();
-    private List<TagDto> _allTags = new();
-    private bool _tagsLoading;
-    private string _newTagName = "";
-    private string? _newTagDescription;
-    private bool _editTagDialogVisible;
-    private TagDto? _editingTag;
-    private string? _editTagDescription;
-    private bool _savingTag;
-    private bool _deleteTagDialogVisible;
-    private TagDto? _deletingTag;
-    private bool _deletingTagLoading;
 
     private readonly DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
 
@@ -421,8 +146,6 @@
         }
 
         _loading = false;
-
-        _ = LoadTabData();
     }
 
     protected override void OnAfterRender(bool firstRender)
@@ -456,163 +179,6 @@
         };
         Navigation.NavigateTo($"/projects/{ProjectId}?tab={tab}", replace: true);
     }
-
-    private async Task LoadTabData()
-    {
-        try
-        {
-            _allTags = await TagsService.GetAll(ProjectId);
-            _tags = new List<TagDto>(_allTags);
-        }
-        catch
-        {
-        }
-
-        await LoadIssues();
-    }
-
-    // --- Issues ---
-
-    private async Task OnSearchInput(string value)
-    {
-        _searchText = value;
-        _searchCts?.Cancel();
-        _searchCts = new CancellationTokenSource();
-        var token = _searchCts.Token;
-        try
-        {
-            await Task.Delay(300, token);
-            if (!token.IsCancellationRequested)
-                await LoadIssues();
-        }
-        catch (TaskCanceledException)
-        {
-        }
-    }
-
-    private async Task LoadIssues()
-    {
-        _issuesLoading = true;
-        StateHasChanged();
-
-        try
-        {
-            var query = new IssueQuery(
-                _selectedStatus != "all" ? Enum.Parse<Status>(_selectedStatus) : null,
-                _selectedTag != "all" ? _selectedTag : null,
-                null,
-                string.IsNullOrWhiteSpace(_searchText) ? null : _searchText,
-                Enum.Parse<IssueSort>(_sortBy)
-            );
-
-            _allIssues = await IssuesService.GetAll(ProjectId, query);
-
-            _issues = _viewFilter == "AssignedToMe"
-                ? _allIssues.Where(i => i.AssignedToUsername == AuthState.Username).ToList()
-                : _allIssues;
-        }
-        catch
-        {
-        }
-
-        _issuesLoading = false;
-        StateHasChanged();
-    }
-
-    // --- Tags ---
-
-    private async Task CreateTagAsync()
-    {
-        if (string.IsNullOrWhiteSpace(_newTagName)) return;
-
-        try
-        {
-            await TagsService.Create(ProjectId, new CreateTagRequest(_newTagName.Trim(), _newTagDescription));
-            _newTagName = "";
-            _newTagDescription = "";
-            Snackbar.Add("Tag created", Severity.Success);
-            await LoadTags();
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add(ex.Message, Severity.Error);
-        }
-    }
-
-    private async Task LoadTags()
-    {
-        _tagsLoading = true;
-        try
-        {
-            _tags = await TagsService.GetAll(ProjectId);
-            _allTags = new List<TagDto>(_tags);
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add(ex.Message, Severity.Error);
-        }
-        _tagsLoading = false;
-        StateHasChanged();
-    }
-
-    private void StartEditTag(TagDto tag)
-    {
-        _editingTag = tag;
-        _editTagDescription = tag.Description;
-        _editTagDialogVisible = true;
-    }
-
-    private async Task SaveTagAsync()
-    {
-        if (_editingTag is null) return;
-
-        _savingTag = true;
-        try
-        {
-            await TagsService.Update(ProjectId, _editingTag.Name, new UpdateTagRequest(_editTagDescription));
-            _editTagDialogVisible = false;
-            Snackbar.Add("Tag updated", Severity.Success);
-            await LoadTags();
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add(ex.Message, Severity.Error);
-        }
-        finally
-        {
-            _savingTag = false;
-        }
-    }
-
-    private void ConfirmDeleteTag(TagDto tag)
-    {
-        _deletingTag = tag;
-        _deleteTagDialogVisible = true;
-    }
-
-    private async Task DeleteTagAsync()
-    {
-        if (_deletingTag is null) return;
-
-        _deletingTagLoading = true;
-        try
-        {
-            await TagsService.Delete(ProjectId, _deletingTag.Name);
-            _deleteTagDialogVisible = false;
-            Snackbar.Add("Tag deleted", Severity.Success);
-            await LoadTags();
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add(ex.Message, Severity.Error);
-        }
-        finally
-        {
-            _deletingTagLoading = false;
-        }
-    }
-
-    // --- Project ---
 
     private void OpenEditDialog()
     {

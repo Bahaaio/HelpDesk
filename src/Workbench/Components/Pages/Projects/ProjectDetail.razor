@@ -1,0 +1,237 @@
+@page "/projects/{ProjectId:int}"
+@using Workbench.ClientServices
+@using Workbench.Modules.Projects.Dtos
+@using Workbench.Modules.Projects.Dtos.Requests
+@using Workbench.Modules.Projects.Enums
+@using Workbench.Modules.Projects.Memberships.Dtos
+@using Workbench.Modules.Projects.Memberships.Services
+@using Workbench.Modules.Projects.Services
+@rendermode InteractiveServer
+@inject IProjectsService ProjectsService
+@inject IProjectMembershipsService MembershipsService
+@inject IProjectMembershipState ProjectMembership
+@inject IAuthState AuthState
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<PageTitle>@(_project?.Name ?? "Project") - Workbench</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium">
+    @if (_loading)
+    {
+        <MudProgressCircular Indeterminate="true" Class="d-flex justify-center ma-8"/>
+    }
+    else if (_project is null)
+    {
+        <MudPaper Class="pa-8 text-center">
+            <MudText Typo="Typo.h6">Project not found</MudText>
+        </MudPaper>
+    }
+    else
+    {
+        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Href="/projects"/>
+            <MudText Typo="Typo.h4">@_project.Name</MudText>
+            <MudSpacer/>
+            @if (ProjectMembership.IsOwner)
+            {
+                <MudTooltip Text="Edit project">
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Inherit"
+                                   OnClick="OpenEditDialog"/>
+                </MudTooltip>
+                <MudTooltip Text="Delete project">
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                                   OnClick="() => _deleteDialogVisible = true"/>
+                </MudTooltip>
+            }
+        </MudStack>
+
+        @if (!string.IsNullOrEmpty(_project.Description))
+        {
+            <MudText Typo="Typo.body1" Class="mb-4">@_project.Description</MudText>
+        }
+
+        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
+            <MudAvatar Size="Size.Small" Color="Color.Primary">
+                @(_project.OwnerUsername[..1].ToUpper())
+            </MudAvatar>
+            <MudText Typo="Typo.body2">
+                Owned by <strong>@_project.OwnerUsername</strong>
+            </MudText>
+            <MudSpacer/>
+            <MudText Typo="Typo.caption" Color="Color.Default">
+                Created @_project.CreatedAt.ToString("MMM dd, yyyy")
+            </MudText>
+        </MudStack>
+
+        <MudDivider Class="my-4"/>
+
+        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
+            <MudText Typo="Typo.h6">Members</MudText>
+            <MudSpacer/>
+            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">
+                @_members.Count
+            </MudChip>
+        </MudStack>
+
+        @if (_members.Count == 0)
+        {
+            <MudText Typo="Typo.body2" Color="Color.Default" Class="ml-2">No members yet.</MudText>
+        }
+        else
+        {
+            <MudList T="ProjectMembershipDto" Dense="true">
+                @foreach (var member in _members)
+                {
+                    <MudListItem Value="member">
+                        <MudStack Row="true" AlignItems="AlignItems.Center">
+                            <MudAvatar Size="Size.Small" Color="Color.Primary">
+                                @(member.Username[..1].ToUpper())
+                            </MudAvatar>
+                            <MudText Typo="Typo.body2">@member.Username</MudText>
+                            <MudSpacer/>
+                            <MudChip T="string" Size="Size.Small"
+                                     Color="@(member.Role == ProjectMemberRole.Lead ? Color.Primary : Color.Default)"
+                                     Variant="Variant.Outlined">
+                                @member.Role
+                            </MudChip>
+                        </MudStack>
+                    </MudListItem>
+                }
+            </MudList>
+        }
+
+        <MudDivider Class="my-4"/>
+
+        <MudStack Row="true" Spacing="2">
+            <MudButton Href="@($"/projects/{ProjectId}/issues")" Variant="Variant.Outlined"
+                       StartIcon="@Icons.Material.Filled.BugReport">
+                Issues
+            </MudButton>
+            @if (ProjectMembership.IsMember)
+            {
+                <MudButton Href="@($"/projects/{ProjectId}/tags")" Variant="Variant.Outlined"
+                           StartIcon="@Icons.Material.Filled.Label">
+                    Tags
+                </MudButton>
+            }
+        </MudStack>
+    }
+</MudContainer>
+
+@* Edit Dialog *@
+<MudDialog @bind-Visible="_editDialogVisible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Edit Project</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="_editName" Label="Name" Required="true" MaxLength="100"
+                      Class="mb-4" FullWidth="true"/>
+        <MudTextField @bind-Value="_editDescription" Label="Description" Lines="3" MaxLength="500"
+                      FullWidth="true"/>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _editDialogVisible = false">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="SaveEdit" Disabled="_saving">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@* Delete Dialog *@
+<MudDialog @bind-Visible="_deleteDialogVisible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Delete Project</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText>Are you sure you want to delete <strong>@_project?.Name</strong>?</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Error" Class="mt-2">
+            This action cannot be undone. All issues, tags, and memberships will be removed.
+        </MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _deleteDialogVisible = false">Cancel</MudButton>
+        <MudButton Color="Color.Error" OnClick="ConfirmDelete" Disabled="_deleting">Delete</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter] public int ProjectId { get; set; }
+
+    private ProjectDto? _project;
+    private List<ProjectMembershipDto> _members = new();
+    private bool _loading = true;
+
+    private bool _editDialogVisible;
+    private bool _deleteDialogVisible;
+    private bool _saving;
+    private bool _deleting;
+    private string _editName = "";
+    private string? _editDescription;
+
+    private DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _project = await ProjectsService.GetById(ProjectId);
+            _members = await MembershipsService.GetProjectMemberships(ProjectId);
+            await ProjectMembership.Load(ProjectId);
+            ProjectMembership.SetOwner(AuthState.Username == _project.OwnerUsername);
+        }
+        catch
+        {
+        }
+
+        _loading = false;
+    }
+
+    private void OpenEditDialog()
+    {
+        _editName = _project!.Name;
+        _editDescription = _project.Description;
+        _editDialogVisible = true;
+    }
+
+    private async Task SaveEdit()
+    {
+        _saving = true;
+        StateHasChanged();
+
+        try
+        {
+            _project = await ProjectsService.Update(ProjectId, new UpdateProjectRequest
+            {
+                Name = _editName,
+                Description = _editDescription
+            });
+            _editDialogVisible = false;
+            Snackbar.Add("Project updated", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to update project: {ex.Message}", Severity.Error);
+        }
+
+        _saving = false;
+        StateHasChanged();
+    }
+
+    private async Task ConfirmDelete()
+    {
+        _deleting = true;
+        StateHasChanged();
+
+        try
+        {
+            await ProjectsService.Delete(ProjectId);
+            Snackbar.Add("Project deleted", Severity.Success);
+            Navigation.NavigateTo("/projects");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to delete project: {ex.Message}", Severity.Error);
+            _deleting = false;
+            StateHasChanged();
+        }
+    }
+}

@@ -20,12 +20,12 @@ public class AuthController : Controller
     [AllowAnonymous]
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromForm] LoginRequest loginRequest,
-        string returnUrl = "/issues")
+        string returnUrl = "/")
     {
         try
         {
             await _authService.Login(loginRequest);
-            return RedirectToLocal(returnUrl, "/issues");
+            return RedirectToLocal(returnUrl, "/");
         }
         catch (Exception)
         {
@@ -40,7 +40,7 @@ public class AuthController : Controller
         try
         {
             await _authService.Register(registerRequest);
-            return Redirect("/issues");
+            return Redirect("/");
         }
         catch (BadRequestException ex)
         {

@@ -9,17 +9,18 @@ using Workbench.Modules.Tags.Models;
 
 namespace Workbench.Modules.Issues.Models;
 
-public class Issue : IOwnedByUser, IEntity<int>
+public class Issue : IEntity<int>, IOwnedByUser, IBelongsToProject
 {
     public int Id { get; set; }
     public int OwnerId => AuthorId;
+
+    public required int ProjectId { get; set; }
 
     public required string Title { get; set; }
     public string? Description { get; set; }
     public Status Status { get; set; }
     public DateTime CreatedAt { get; set; }
 
-    public required int ProjectId { get; set; }
     public Project Project { get; set; } = null!;
 
     public required int AuthorId { get; set; }

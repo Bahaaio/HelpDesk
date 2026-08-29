@@ -74,10 +74,10 @@ public class IssuesService : IIssuesService
 
     public async Task<IssueDto> Update(int projectId, int issueId, UpdateIssueRequest request)
     {
-        // TODO: authz
-        var project = _projectsRepository.GetByIdAsync(projectId);
+        await _projectsRepository.ExistsOrThrowAsync(projectId);
         var issue = await _issuesRepository.GetByIdAsync(issueId);
-        await _authGuard.AuthorizeOwnerOrTechnician(issue);
+
+        await _authGuard.AuthorizeProjectMember(issue);
 
         issue.Title = request.Title;
         issue.Description = request.Description;
@@ -88,14 +88,14 @@ public class IssuesService : IIssuesService
 
     public async Task Delete(int projectId, int issueId)
     {
-        // TODO: authz
-        var project = _projectsRepository.GetByIdAsync(projectId);
+        await _projectsRepository.ExistsOrThrowAsync(projectId);
         var issue = await _issuesRepository.GetByIdAsync(issueId);
-        await _authGuard.AuthorizeOwnerOrTechnician(issue);
+
+        await _authGuard.AuthorizeOwnerOrProjectLead(issue);
 
         await _attachmentsService.DeleteAll(issueId);
-
         _issuesRepository.Remove(issue);
+
         await _unitOfWork.SaveChangesAsync();
 
         _logger.LogInformation("User {userId} deleted issue {issueId}", _user.Id, issueId);

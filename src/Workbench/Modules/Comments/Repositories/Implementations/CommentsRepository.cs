@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Workbench.Common.Exceptions;
 using Workbench.Common.Extensions;
 using Workbench.Data;
@@ -6,7 +7,6 @@ using Workbench.Modules.Comments.Dtos;
 using Workbench.Modules.Comments.Mappers;
 using Workbench.Modules.Comments.Models;
 using Workbench.Modules.Issues.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace Workbench.Modules.Comments.Repositories.Implementations;
 
@@ -24,6 +24,7 @@ public class CommentsRepository : Repository<Comment, int>, ICommentsRepository
             .Where(c => c.Id == id)
             .Include(c => c.Author)
             .Include(c => c.Attachments)
+            .Include(c => c.Issue).ThenInclude(i => i.Project)
             .SingleOrDefaultAsync()
         ?? throw new NotFoundException($"Comment with id: {id} not found");
 

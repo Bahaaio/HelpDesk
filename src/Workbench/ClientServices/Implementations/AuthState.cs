@@ -13,7 +13,6 @@ public class AuthState : IAuthState
 
     public bool IsAuthenticated { get; private set; }
     public string Username { get; private set; } = "";
-    public string Role { get; private set; } = "";
 
     public void Check()
     {
@@ -23,7 +22,6 @@ public class AuthState : IAuthState
             {
                 IsAuthenticated = true;
                 Username = _currentUser.UserName;
-                Role = _currentUser.Role;
                 return;
             }
         }
@@ -34,6 +32,5 @@ public class AuthState : IAuthState
 
         IsAuthenticated = false;
         Username = "";
-        Role = "";
     }
 }

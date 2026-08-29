@@ -14,5 +14,5 @@ public class ApplicationUser : IdentityUser<int>
     public ICollection<Comment> Comments { get; set; } = [];
     public ICollection<Issue> AssignedIssues { get; set; } = [];
     public ICollection<Project> OwnedProjects { get; set; } = [];
-    public IEnumerable<ProjectMembership> ProjectMemberships { get; set; } = [];
+    public ICollection<ProjectMembership> ProjectMemberships { get; set; } = [];
 }

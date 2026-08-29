@@ -1,13 +1,10 @@
-using Workbench.Modules.Auth.Enums;
+using Microsoft.AspNetCore.Mvc;
 using Workbench.Modules.Invites.Dtos;
 using Workbench.Modules.Invites.Dtos.Requests;
 using Workbench.Modules.Invites.Services;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 
 namespace Workbench.Modules.Invites.Controllers;
 
-[Authorize(Roles = Role.Technician)]
 [ApiController]
 [Route("api/[controller]")]
 public class InvitesController : ControllerBase

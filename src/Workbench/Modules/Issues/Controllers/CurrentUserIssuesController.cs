@@ -1,9 +1,7 @@
-using Workbench.Modules.Auth.Enums;
+using Microsoft.AspNetCore.Mvc;
 using Workbench.Modules.Issues.Dtos;
 using Workbench.Modules.Issues.Dtos.Requests;
 using Workbench.Modules.Issues.Services;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 
 namespace Workbench.Modules.Issues.Controllers;
 
@@ -25,7 +23,6 @@ public class CurrentUserIssuesController : ControllerBase
     public async Task<ActionResult<IssueDto>> GetMyIssues([FromQuery] IssueQuery query) =>
         Ok(await _issuesService.GetCurrentUserIssues(query));
 
-    [Authorize(Roles = Role.Technician)]
     [HttpGet("assigned")]
     public async Task<ActionResult<IssueDto>> GetAssignedIssues([FromQuery] IssueQuery query) =>
         Ok(await _issueAssignmentsService.GetCurrentUserAssignedIssues(query));

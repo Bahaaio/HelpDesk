@@ -18,12 +18,6 @@ public interface IAuthState
     string Username { get; }
 
     /// <summary>
-    ///     The current user's role (e.g. <see cref="Workbench.Modules.Auth.Enums.Role" />),
-    ///     or an empty string when unauthenticated.
-    /// </summary>
-    string Role { get; }
-
-    /// <summary>
     ///     Refreshes the state from the current <c>ICurrentUser</c> principal.
     ///     Safe to call when no authentication context exists.
     /// </summary>

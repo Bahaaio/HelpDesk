@@ -1,8 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Workbench.Common.Exceptions;
 using Workbench.Modules.Auth.Dtos;
 using Workbench.Modules.Auth.Services;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 
 namespace Workbench.Modules.Auth.Controllers;
 
@@ -52,7 +52,6 @@ public class AuthController : Controller
         }
     }
 
-    [Authorize]
     [HttpPost("logout")]
     public async Task<IActionResult> Logout(string returnUrl = "/login")
     {

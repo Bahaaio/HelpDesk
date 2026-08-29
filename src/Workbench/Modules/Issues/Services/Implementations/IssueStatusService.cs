@@ -33,8 +33,7 @@ public class IssueStatusService : IIssueStatusService
     public async Task UpdateStatus(int issueId, UpdateIssueStatusRequest request)
     {
         var issue = await _issuesRepository.GetByIdAsync(issueId);
-
-        await _authGuard.AuthorizeOwnerOrTechnician(issue);
+        await _authGuard.AuthorizeProjectMember(issue);
 
         if (issue.Status == request.Status)
             return;

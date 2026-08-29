@@ -1,5 +1,4 @@
 using Workbench.Common.Exceptions;
-using Workbench.Common.Extensions;
 using Workbench.Components;
 using Workbench.Extensions;
 
@@ -16,8 +15,6 @@ builder.Services.AddExceptionHandling();
 builder.Services.AddUiServices();
 
 var app = builder.Build();
-
-await app.SeedDataAsync();
 
 if (app.Environment.IsDevelopment())
     app.UseOpenApiUi();

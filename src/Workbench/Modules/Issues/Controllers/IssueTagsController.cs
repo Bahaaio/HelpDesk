@@ -1,11 +1,8 @@
-using Workbench.Modules.Auth.Enums;
-using Workbench.Modules.Issues.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Workbench.Modules.Issues.Services;
 
 namespace Workbench.Modules.Issues.Controllers;
 
-[Authorize(Roles = Role.Technician)]
 [ApiController]
 [Route("api/issues/{issueId:int}/tags")]
 public class IssueTagsController : ControllerBase

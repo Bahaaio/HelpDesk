@@ -12,5 +12,5 @@ public class UsersService : IUsersService
         _user = user;
     }
 
-    public UserDto GetCurrentUser() => new(_user.UserName, _user.Role);
+    public UserDto GetCurrentUser() => new(_user.UserName);
 }

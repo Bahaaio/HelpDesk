@@ -1,13 +1,10 @@
-using Workbench.Modules.Auth.Enums;
+using Microsoft.AspNetCore.Mvc;
 using Workbench.Modules.Issues.Votes.Dtos;
 using Workbench.Modules.Issues.Votes.Dtos.Requests;
 using Workbench.Modules.Issues.Votes.Services;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 
 namespace Workbench.Modules.Issues.Votes.Controllers;
 
-[Authorize(Roles = Role.Employee)]
 [ApiController]
 [Route("api/issues/{issueId:int}/[controller]")]
 public class VotesController : ControllerBase

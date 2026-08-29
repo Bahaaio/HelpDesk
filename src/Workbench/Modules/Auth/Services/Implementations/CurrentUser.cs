@@ -11,6 +11,5 @@ public class CurrentUser : ICurrentUser
 
     public int Id => int.Parse(Principal.FindFirstValue(ClaimTypes.NameIdentifier)!);
     public string UserName => Principal.FindFirstValue(ClaimTypes.Name)!;
-    public string Role => Principal.FindFirstValue(ClaimTypes.Role)!;
     public ClaimsPrincipal Principal { get; }
 }

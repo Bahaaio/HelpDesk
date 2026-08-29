@@ -7,6 +7,7 @@ using Workbench.Modules.Invites.Repositories;
 
 namespace Workbench.Modules.Invites.Services.Implementations;
 
+// TODO: rework
 public class InvitesService : IInvitesService
 {
     private readonly IInvitesRepository _invitesRepository;

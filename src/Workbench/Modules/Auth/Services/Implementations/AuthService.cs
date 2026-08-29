@@ -1,39 +1,26 @@
+using Microsoft.AspNetCore.Identity;
 using Workbench.Common.Exceptions;
 using Workbench.Modules.Auth.Dtos;
-using Workbench.Modules.Auth.Enums;
 using Workbench.Modules.Auth.Models;
-using Workbench.Modules.Invites.Services;
-using Microsoft.AspNetCore.Identity;
 
 namespace Workbench.Modules.Auth.Services.Implementations;
 
 public class AuthService : IAuthService
 {
-    private readonly IInvitesService _invitesService;
     private readonly ILogger<AuthService> _logger;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly UserManager<ApplicationUser> _userManager;
 
     public AuthService(UserManager<ApplicationUser> userManager,
-        SignInManager<ApplicationUser> signInManager, ILogger<AuthService> logger,
-        IInvitesService invitesService)
+        SignInManager<ApplicationUser> signInManager, ILogger<AuthService> logger)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _logger = logger;
-        _invitesService = invitesService;
     }
 
     public async Task Register(RegisterRequest request)
     {
-        var role = Role.Employee;
-
-        if (request.Code is not null)
-        {
-            await _invitesService.ValidateAndConsume(request.Code);
-            role = Role.Technician;
-        }
-
         var user = new ApplicationUser
         {
             UserName = request.Username,
@@ -48,7 +35,6 @@ public class AuthService : IAuthService
 
         _logger.LogInformation("User created: {username}", user.UserName);
 
-        await _userManager.AddToRoleAsync(user, role);
         await _signInManager.SignInAsync(user, request.RememberMe);
     }
 

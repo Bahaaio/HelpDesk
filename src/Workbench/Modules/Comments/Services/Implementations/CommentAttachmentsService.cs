@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Options;
 using Workbench.Data.Persistence;
 using Workbench.Modules.Attachments.Dtos;
 using Workbench.Modules.Attachments.Options;
@@ -11,7 +12,6 @@ using Workbench.Modules.Comments.Models;
 using Workbench.Modules.Comments.Options;
 using Workbench.Modules.Comments.Repositories;
 using Workbench.Modules.Storage.Services;
-using Microsoft.Extensions.Options;
 
 namespace Workbench.Modules.Comments.Services.Implementations;
 
@@ -41,7 +41,7 @@ public class CommentAttachmentsService : AttachmentsService<Comment, CommentAtta
     public override async Task<AttachmentDto> Add(int parentId, IFormFile file)
     {
         var comment = await GetOwnerEntity(parentId);
-        await _authGuard.AuthorizeOwnerOrTechnician(comment);
+        await _authGuard.AuthorizeOwnerOrProjectMember(comment);
 
         return await base.Add(parentId, file);
     }
@@ -49,7 +49,7 @@ public class CommentAttachmentsService : AttachmentsService<Comment, CommentAtta
     public override async Task Delete(Guid attachmentId)
     {
         var comment = await GetOwnerEntity(attachmentId);
-        await _authGuard.AuthorizeOwnerOrTechnician(comment);
+        await _authGuard.AuthorizeOwnerOrProjectMember(comment);
 
         await base.Delete(attachmentId);
     }

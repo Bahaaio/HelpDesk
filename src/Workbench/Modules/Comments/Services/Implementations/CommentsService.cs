@@ -59,7 +59,7 @@ public class CommentsService : ICommentsService
     public async Task<CommentDto> Update(int commentId, UpdateCommentRequest request)
     {
         var comment = await _commentsRepository.GetByIdAsync(commentId);
-        await _authGuard.AuthorizeOwnerOrTechnician(comment);
+        await _authGuard.AuthorizeOwnerOrProjectMember(comment);
 
         comment.Content = request.Content;
         await _unitOfWork.SaveChangesAsync();
@@ -72,8 +72,7 @@ public class CommentsService : ICommentsService
     public async Task Delete(int commentId)
     {
         var comment = await _commentsRepository.GetByIdAsync(commentId);
-
-        await _authGuard.AuthorizeOwnerOrTechnician(comment);
+        await _authGuard.AuthorizeOwnerOrProjectMember(comment);
 
         _commentsRepository.Remove(comment);
         await _unitOfWork.SaveChangesAsync();

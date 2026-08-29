@@ -5,10 +5,11 @@ using Workbench.Modules.Issues.Models;
 
 namespace Workbench.Modules.Comments.Models;
 
-public class Comment : IOwnedByUser, IEntity<int>
+public class Comment : IEntity<int>, IOwnedByUser, IBelongsToProject
 {
     public int Id { get; set; }
     public int OwnerId => AuthorId;
+    public int ProjectId => Issue.ProjectId;
 
     public required string Content { get; set; }
     public DateTime CreatedAt { get; set; }

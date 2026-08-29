@@ -1,10 +1,8 @@
-using Workbench.Common.Extensions;
+using Microsoft.AspNetCore.Identity;
 using Workbench.Data;
 using Workbench.Modules.Auth.Models;
-using Workbench.Modules.Auth.Options;
 using Workbench.Modules.Auth.Services;
 using Workbench.Modules.Auth.Services.Implementations;
-using Microsoft.AspNetCore.Identity;
 
 namespace Workbench.Modules.Auth;
 
@@ -18,8 +16,6 @@ public static class DependencyInjection
             services.AddHttpContextAccessor();
             services.AddScoped<ICurrentUser, CurrentUser>();
             services.AddScoped<IAuthService, AuthService>();
-
-            services.AddKeyableOptions<DefaultTechnicianOptions>();
         }
 
         private void AddIdentityServices()

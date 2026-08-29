@@ -1,6 +1,8 @@
 using Workbench.Common.Exceptions;
 using Workbench.Data.Persistence;
 using Workbench.Modules.Auth.Services;
+using Workbench.Modules.Authorization.Extensions;
+using Workbench.Modules.Authorization.Services;
 using Workbench.Modules.Issues.Dtos;
 using Workbench.Modules.Issues.Dtos.Requests;
 using Workbench.Modules.Issues.Enums;
@@ -10,21 +12,24 @@ namespace Workbench.Modules.Issues.Services.Implementations;
 
 public class IssueAssignmentsService : IIssueAssignmentsService
 {
+    private readonly IAuthorizationGuard _authGuard;
     private readonly IIssuesRepository _issuesRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUser _user;
 
     public IssueAssignmentsService(IIssuesRepository issuesRepository, IUnitOfWork unitOfWork,
-        ICurrentUser user)
+        ICurrentUser user, IAuthorizationGuard authGuard)
     {
         _issuesRepository = issuesRepository;
         _unitOfWork = unitOfWork;
         _user = user;
+        _authGuard = authGuard;
     }
 
     public async Task AssignCurrentUser(int issueId)
     {
         var issue = await _issuesRepository.GetByIdAsync(issueId);
+        await _authGuard.AuthorizeProjectMember(issue);
 
         if (issue.Status == Status.Closed)
             throw new ConflictException("Issue is already closed");
@@ -39,6 +44,7 @@ public class IssueAssignmentsService : IIssueAssignmentsService
     public async Task UnassignCurrentUser(int issueId)
     {
         var issue = await _issuesRepository.GetByIdAsync(issueId);
+        await _authGuard.AuthorizeAssignedOrProjectLead(issue);
 
         if (issue.Status == Status.Closed)
             throw new ConflictException("Issue is already closed");

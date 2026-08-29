@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Options;
 using Workbench.Data.Persistence;
 using Workbench.Modules.Attachments.Dtos;
 using Workbench.Modules.Attachments.Options;
@@ -11,7 +12,6 @@ using Workbench.Modules.Issues.Models;
 using Workbench.Modules.Issues.Options;
 using Workbench.Modules.Issues.Repositories;
 using Workbench.Modules.Storage.Services;
-using Microsoft.Extensions.Options;
 
 namespace Workbench.Modules.Issues.Services.Implementations;
 
@@ -41,7 +41,7 @@ public class IssueAttachmentsService : AttachmentsService<Issue, IssueAttachment
     public override async Task<AttachmentDto> Add(int parentId, IFormFile file)
     {
         var issue = await GetOwnerEntity(parentId);
-        await _authGuard.AuthorizeOwnerOrTechnician(issue);
+        await _authGuard.AuthorizeOwnerOrProjectMember(issue);
 
         return await base.Add(parentId, file);
     }
@@ -49,7 +49,7 @@ public class IssueAttachmentsService : AttachmentsService<Issue, IssueAttachment
     public override async Task Delete(Guid attachmentId)
     {
         var issue = await GetOwnerEntity(attachmentId);
-        await _authGuard.AuthorizeOwnerOrTechnician(issue);
+        await _authGuard.AuthorizeOwnerOrProjectMember(issue);
 
         await base.Delete(attachmentId);
     }

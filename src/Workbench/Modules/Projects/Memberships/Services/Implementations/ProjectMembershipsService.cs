@@ -1,4 +1,3 @@
-using Workbench.Data.Persistence;
 using Workbench.Modules.Auth.Services;
 using Workbench.Modules.Projects.Memberships.Dtos;
 using Workbench.Modules.Projects.Memberships.Mappers;
@@ -9,14 +8,12 @@ namespace Workbench.Modules.Projects.Memberships.Services.Implementations;
 public class ProjectMembershipsService : IProjectMembershipsService
 {
     private readonly IProjectMembershipsRepository _projectMembershipsRepository;
-    private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUser _user;
 
     public ProjectMembershipsService(IProjectMembershipsRepository projectMembershipsRepository,
-        IUnitOfWork unitOfWork, ICurrentUser user)
+        ICurrentUser user)
     {
         _projectMembershipsRepository = projectMembershipsRepository;
-        _unitOfWork = unitOfWork;
         _user = user;
     }
 

@@ -7,5 +7,6 @@ public interface IProjectMembershipsRepository
 {
     Task<ProjectMembership?> GetMembershipByProjectIdAndUserId(int projectId, int userId);
     Task<List<ProjectMembershipDto>> GetMembershipsByProjectId(int projectId);
+    void Add(ProjectMembership membership);
     void Remove(ProjectMembership membership);
 }

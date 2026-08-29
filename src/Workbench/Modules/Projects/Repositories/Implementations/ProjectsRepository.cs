@@ -10,8 +10,11 @@ namespace Workbench.Modules.Projects.Repositories.Implementations;
 
 public class ProjectsRepository : Repository<Project, int>, IProjectsRepository
 {
+    private readonly AppDbContext _context;
+
     public ProjectsRepository(AppDbContext context) : base(context)
     {
+        _context = context;
     }
 
     public override async Task<Project> GetByIdAsync(int id) =>
@@ -30,5 +33,5 @@ public class ProjectsRepository : Repository<Project, int>, IProjectsRepository
             .ToListAsync();
 
     public Task LoadOwnerAsync(Project project) =>
-        DbSet.Entry(project).Reference(p => p.Owner).LoadAsync();
+        _context.Entry(project).Reference(p => p.Owner).LoadAsync();
 }

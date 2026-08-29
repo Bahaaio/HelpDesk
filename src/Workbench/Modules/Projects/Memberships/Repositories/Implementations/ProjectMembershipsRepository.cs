@@ -16,13 +16,17 @@ public class ProjectMembershipsRepository : IProjectMembershipsRepository
     }
 
     public Task<ProjectMembership?> GetMembershipByProjectIdAndUserId(int projectId, int userId) =>
-        _dbSet.SingleOrDefaultAsync(m => m.ProjectId == projectId && m.UserId == userId);
+        _dbSet
+            .Include(pm => pm.User)
+            .SingleOrDefaultAsync(pm => pm.ProjectId == projectId && pm.UserId == userId);
 
     public Task<List<ProjectMembershipDto>> GetMembershipsByProjectId(int projectId) =>
         _dbSet
             .Where(m => m.ProjectId == projectId)
             .Select(ProjectMembershipMapper.ToDtoExpression)
             .ToListAsync();
+
+    public void Add(ProjectMembership membership) => _dbSet.Add(membership);
 
     public void Remove(ProjectMembership membership) => _dbSet.Remove(membership);
 }

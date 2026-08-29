@@ -4,7 +4,10 @@ using Workbench.Modules.Authorization.Extensions;
 using Workbench.Modules.Authorization.Services;
 using Workbench.Modules.Projects.Dtos;
 using Workbench.Modules.Projects.Dtos.Requests;
+using Workbench.Modules.Projects.Enums;
 using Workbench.Modules.Projects.Mappers;
+using Workbench.Modules.Projects.Memberships.Models;
+using Workbench.Modules.Projects.Memberships.Repositories;
 using Workbench.Modules.Projects.Models;
 using Workbench.Modules.Projects.Repositories;
 
@@ -13,14 +16,17 @@ namespace Workbench.Modules.Projects.Services.Implementations;
 public class ProjectsService : IProjectsService
 {
     private readonly IAuthorizationGuard _authGuard;
+    private readonly IProjectMembershipsRepository _projectMembershipsRepository;
     private readonly IProjectsRepository _projectsRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUser _user;
 
-    public ProjectsService(IProjectsRepository projectsRepository, ICurrentUser user,
-        IUnitOfWork unitOfWork, IAuthorizationGuard authGuard)
+    public ProjectsService(IProjectsRepository projectsRepository,
+        IProjectMembershipsRepository projectMembershipsRepository,
+        ICurrentUser user, IUnitOfWork unitOfWork, IAuthorizationGuard authGuard)
     {
         _projectsRepository = projectsRepository;
+        _projectMembershipsRepository = projectMembershipsRepository;
         _user = user;
         _unitOfWork = unitOfWork;
         _authGuard = authGuard;
@@ -46,6 +52,14 @@ public class ProjectsService : IProjectsService
         _projectsRepository.Add(project);
         await _unitOfWork.SaveChangesAsync();
 
+        _projectMembershipsRepository.Add(new ProjectMembership
+        {
+            ProjectId = project.Id,
+            UserId = _user.Id,
+            Role = ProjectMemberRole.Lead
+        });
+        await _unitOfWork.SaveChangesAsync();
+
         await _projectsRepository.LoadOwnerAsync(project);
 
         return project.ToDto();
@@ -54,8 +68,7 @@ public class ProjectsService : IProjectsService
     public async Task<ProjectDto> Update(int id, UpdateProjectRequest request)
     {
         var project = await _projectsRepository.GetByIdAsync(id);
-        // TODO: change to authorize only owner
-        await _authGuard.AuthorizeOwnerOrTechnician(project);
+        await _authGuard.AuthorizeOwner(project);
 
         project.Name = request.Name;
         if (request.Description is not null) project.Description = request.Description;
@@ -68,8 +81,7 @@ public class ProjectsService : IProjectsService
     public async Task Delete(int id)
     {
         var project = await _projectsRepository.GetByIdAsync(id);
-        // TODO: change to authorize only owner
-        await _authGuard.AuthorizeOwnerOrTechnician(project);
+        await _authGuard.AuthorizeOwner(project);
 
         _projectsRepository.Remove(project);
         await _unitOfWork.SaveChangesAsync();

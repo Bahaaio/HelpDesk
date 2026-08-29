@@ -1,6 +1,5 @@
 @page "/projects/{ProjectId:int}/issues/{Id:int}"
 @using System.Text.RegularExpressions
-@using Workbench.ClientServices
 @using Workbench.Modules.Comments.Dtos
 @using Workbench.Modules.Comments.Dtos.Requests
 @using Workbench.Modules.Comments.Options
@@ -47,14 +46,17 @@ else if (_issue is null)
     <MudContainer Class="text-center pa-8">
         <MudIcon Icon="@Icons.Material.Filled.ErrorOutline" Size="Size.Large" Color="Color.Error"/>
         <MudText Typo="Typo.h6" Class="mt-2">Issue not found</MudText>
-        <MudButton Href="@($"/projects/{ProjectId}/issues")" Class="mt-4" Variant="Variant.Outlined">Back to Issues</MudButton>
+        <MudButton Href="@($"/projects/{ProjectId}/issues")" Class="mt-4"
+                   Variant="Variant.Outlined">Back to Issues
+        </MudButton>
     </MudContainer>
 }
 else
 {
     <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-2">
         <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
-            <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Href="@($"/projects/{ProjectId}/issues")"/>
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowBack"
+                           Href="@($"/projects/{ProjectId}/issues")"/>
             <MudText Typo="Typo.h4">
                 <span style="opacity: 0.5; font-weight: 400;">#@_issue.Id</span>
                 @_issue.Title
@@ -77,6 +79,10 @@ else
             @if (_issue.Status == Status.Open)
             {
                 <MudChip T="string" Color="Color.Success" Size="Size.Medium">Open</MudChip>
+            }
+            else if (_issue.Status == Status.InProgress)
+            {
+                <MudChip T="string" Color="Color.Warning" Size="Size.Medium">In Progress</MudChip>
             }
             else
             {
@@ -114,27 +120,43 @@ else
             <MudSpacer/>
             @if (_canUpdateStatus)
             {
-                <MudButtonGroup Variant="Variant.Outlined" Size="Size.Small">
-                    <MudButton OnClick="() => SetStatus(Status.Open)"
-                               Color="@(_issue.Status == Status.Open ? Color.Success : Color.Default)"
-                               Disabled="_issue.Status == Status.Open">
-                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small"
-                                 Class="mr-1"/>
-                        Open
-                    </MudButton>
-                    <MudButton OnClick="() => SetStatus(Status.Closed)"
-                               Color="@(_issue.Status == Status.Closed ? Color.Error : Color.Default)"
-                               Disabled="_issue.Status == Status.Closed">
-                        <MudIcon Icon="@Icons.Material.Filled.Cancel" Size="Size.Small"
-                                 Class="mr-1"/>
-                        Close
-                    </MudButton>
-                </MudButtonGroup>
+                <MudStack Row="true" AlignItems="AlignItems.Center">
+                    <MudSelect T="Status" Value="_issue.Status" ValueChanged="SetStatus"
+                               Dense="true" Style="width: 160px;">
+                        <MudSelectItem Value="Status.Open">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small"
+                                         Color="Color.Success"/>
+                                Open
+                            </MudStack>
+                        </MudSelectItem>
+                        <MudSelectItem Value="Status.InProgress">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.Pending" Size="Size.Small"
+                                         Color="Color.Warning"/>
+                                In Progress
+                            </MudStack>
+                        </MudSelectItem>
+                        <MudSelectItem Value="Status.Closed">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.Cancel" Size="Size.Small"
+                                         Color="Color.Default"/>
+                                Closed
+                            </MudStack>
+                        </MudSelectItem>
+                    </MudSelect>
+                </MudStack>
             }
             else
             {
                 <MudText Typo="Typo.body2" Color="Color.Default">
-                    @(_issue.Status == Status.Open ? "Open" : "Closed")
+                    @(_issue.Status switch
+                    {
+                        Status.Open => "Open",
+                        Status.InProgress => "In Progress",
+                        Status.Closed => "Closed",
+                        _ => "Unknown"
+                    })
                 </MudText>
             }
         </MudStack>
@@ -151,7 +173,7 @@ else
                             @(_issue.AssignedToUsername?[..1].ToUpper() ?? "?")
                         </MudAvatar>
                         <MudText Typo="Typo.body2">@_issue.AssignedToUsername</MudText>
-                        @if ((_isAssignedToCurrentUser || ProjectMembership.IsLead) && _issue.Status == Status.Open)
+                        @if ((_isAssignedToCurrentUser || ProjectMembership.IsLead) && _issue.Status != Status.Closed)
                         {
                             <MudButton Variant="Variant.Outlined" Size="Size.Small"
                                        Color="Color.Error"
@@ -164,7 +186,7 @@ else
                 }
                 else
                 {
-                    @if (ProjectMembership.IsMember && _issue.Status == Status.Open)
+                    @if (ProjectMembership.IsMember && _issue.Status != Status.Closed)
                     {
                         <MudButton Variant="Variant.Outlined" Size="Size.Small"
                                    Color="Color.Primary"
@@ -257,17 +279,17 @@ else
                         <MudText Typo="Typo.body2">
                             <strong>@sc.ChangedByUsername</strong> changed status from
                             <MudChip T="string" Size="Size.Small"
-                                     Color="@(sc.FromStatus == Status.Open ? Color.Success : Color.Default)"
+                                     Color="@(sc.FromStatus switch { Status.Open => Color.Success, Status.InProgress => Color.Warning, _ => Color.Default })"
                                      Variant="Variant.Outlined"
                                      Style="height: 18px; font-size: 0.7rem; pointer-events: none;">
-                                @(sc.FromStatus == Status.Open ? "Open" : "Closed")
+                                @(sc.FromStatus switch { Status.Open => "Open", Status.InProgress => "In Progress", _ => "Closed" })
                             </MudChip>
                             to
                             <MudChip T="string" Size="Size.Small"
-                                     Color="@(sc.ToStatus == Status.Open ? Color.Success : Color.Default)"
+                                     Color="@(sc.ToStatus switch { Status.Open => Color.Success, Status.InProgress => Color.Warning, _ => Color.Default })"
                                      Variant="Variant.Outlined"
                                      Style="height: 18px; font-size: 0.7rem; pointer-events: none;">
-                                @(sc.ToStatus == Status.Open ? "Open" : "Closed")
+                                @(sc.ToStatus switch { Status.Open => "Open", Status.InProgress => "In Progress", _ => "Closed" })
                             </MudChip>
                         </MudText>
                         <MudSpacer/>
@@ -310,13 +332,14 @@ else
                             {
                                 @if (seg.IsReference && _referencedIssues.TryGetValue(seg.IssueId, out var refIssue))
                                 {
-                                    <MudLink Href="@($"/projects/{ProjectId}/issues/{seg.IssueId}")" Target="_blank"
+                                    <MudLink Href="@($"/projects/{ProjectId}/issues/{seg.IssueId}")"
+                                             Target="_blank"
                                              Style="vertical-align: middle; text-decoration: none;">
                                         <MudChip T="string" Size="Size.Small"
-                                                 Color="@(refIssue.Status == Status.Open ? Color.Success : Color.Default)"
+                                                 Color="@(refIssue.Status switch { Status.Open => Color.Success, Status.InProgress => Color.Warning, _ => Color.Default })"
                                                  Variant="Variant.Outlined"
                                                  Style="height: 20px; font-size: 0.7rem; vertical-align: middle; pointer-events: none;">
-                                            @(refIssue.Status == Status.Open ? "Open" : "Closed")
+                                            @(refIssue.Status switch { Status.Open => "Open", Status.InProgress => "In Progress", _ => "Closed" })
                                         </MudChip>
                                         <span
                                             style="font-size: 0.875rem; text-decoration: underline;">
@@ -791,7 +814,7 @@ else
                 FromStatus = _issue!.Status,
                 ToStatus = status,
                 ChangedByUsername = AuthState.Username,
-                ChangedAt = DateTime.UtcNow,
+                ChangedAt = DateTime.UtcNow
             });
             _issue = _issue! with { Status = status };
             BuildTimeline();

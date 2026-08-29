@@ -72,6 +72,10 @@
                     {
                         <MudChip T="string" Size="Size.Small" Color="Color.Success">Open</MudChip>
                     }
+                    else if (context.Status == Status.InProgress)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Warning">In Progress</MudChip>
+                    }
                     else
                     {
                         <MudChip T="string" Size="Size.Small" Color="Color.Default">Closed</MudChip>

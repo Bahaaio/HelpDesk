@@ -33,17 +33,16 @@
         }
 
         <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-3">
-            <MudFileUpload T="IBrowserFile"
-                           Accept="@string.Join(',', CommentAttachmentOptions.Value.AllowedExtensions)"
-                           FilesChanged="OnFileSelected">
-                <CustomContent Context="fileUpload">
-                    <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Image"
-                               Size="Size.Small"
-                               OnClick="@fileUpload.OpenFilePickerAsync">
-                        @(Comment.Attachments.Count > 0 ? "Replace Image" : "Attach Image")
-                    </MudButton>
-                </CustomContent>
-            </MudFileUpload>
+            <InputFile id="editCommentFile"
+                       key="@_editFileKey"
+                       accept="@string.Join(',', CommentAttachmentOptions.Value.AllowedExtensions)"
+                       OnChange="OnFileSelected"
+                       hidden/>
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Image"
+                       Size="Size.Small"
+                       HtmlTag="label" for="editCommentFile">
+                @(Comment.Attachments.Count > 0 ? "Replace Image" : "Attach Image")
+            </MudButton>
             @if (_selectedFile is not null)
             {
                 <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small"
@@ -97,6 +96,7 @@
     private IBrowserFile? _selectedFile;
     private string? _previewUrl;
     private bool _removeImage;
+    private int _editFileKey;
 
     private bool _hasImage => Comment.Attachments.Count > 0;
     private bool _contentChanged => !string.IsNullOrWhiteSpace(_content) && _content != Comment.Content;
@@ -108,16 +108,12 @@
         _content = Comment.Content;
     }
 
-    private async Task OnFileSelected(IBrowserFile? file)
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
     {
         _previewUrl = null;
         _removeImage = false;
 
-        if (file is null)
-        {
-            _selectedFile = null;
-            return;
-        }
+        var file = e.File;
 
         var extension = Path.GetExtension(file.Name).ToLowerInvariant();
         var allowedExtensions = CommentAttachmentOptions.Value.AllowedExtensions;
@@ -152,6 +148,7 @@
     {
         _selectedFile = null;
         _previewUrl = null;
+        _editFileKey++;
     }
 
     private void Cancel() => MudDialog.Cancel();

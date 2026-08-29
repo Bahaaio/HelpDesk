@@ -386,17 +386,16 @@ else
                               Lines="3" MaxLength="2000"/>
 
                 <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-2 gap-2">
-                    <MudFileUpload T="IBrowserFile"
-                                   Accept="@string.Join(',', CommentAttachmentOptions.Value.AllowedExtensions)"
-                                   FilesChanged="OnNewCommentImageSelected">
-                        <CustomContent Context="fileUpload">
-                            <MudButton Variant="Variant.Outlined" Size="Size.Small"
-                                       StartIcon="@Icons.Material.Filled.Image"
-                                       OnClick="@fileUpload.OpenFilePickerAsync">
-                                Attach Image
-                            </MudButton>
-                        </CustomContent>
-                    </MudFileUpload>
+                    <InputFile id="newCommentFile"
+                               key="@_newCommentFileKey"
+                               accept="@string.Join(',', CommentAttachmentOptions.Value.AllowedExtensions)"
+                               OnChange="OnNewCommentImageSelected"
+                               hidden/>
+                    <MudButton Variant="Variant.Outlined" Size="Size.Small"
+                               StartIcon="@Icons.Material.Filled.Image"
+                               HtmlTag="label" for="newCommentFile">
+                        Attach Image
+                    </MudButton>
                     @if (_newCommentImage is not null)
                     {
                         @if (_newCommentImagePreviewUrl is not null)
@@ -573,6 +572,7 @@ else
     private bool _submittingComment;
     private IBrowserFile? _newCommentImage;
     private string? _newCommentImagePreviewUrl;
+    private int _newCommentFileKey;
     private bool _canUpdateStatus;
     private bool _canEdit;
     private bool _canDelete;
@@ -932,15 +932,11 @@ else
         }
     }
 
-    private async Task OnNewCommentImageSelected(IBrowserFile? file)
+    private async Task OnNewCommentImageSelected(InputFileChangeEventArgs e)
     {
         _newCommentImagePreviewUrl = null;
 
-        if (file is null)
-        {
-            _newCommentImage = null;
-            return;
-        }
+        var file = e.File;
 
         var extension = Path.GetExtension(file.Name).ToLowerInvariant();
         var allowedExtensions = CommentAttachmentOptions.Value.AllowedExtensions;
@@ -975,6 +971,7 @@ else
     {
         _newCommentImage = null;
         _newCommentImagePreviewUrl = null;
+        _newCommentFileKey++;
     }
 
     private async Task OpenCommentEditDialog(CommentDto comment)

@@ -45,6 +45,13 @@ public static class AuthorizationGuardExtensions
             authorizationGuard.Authorize(resource, new TeamMemberRequirement());
 
         /// <summary>
+        ///     Authorizes the current user as a lead of the project.
+        /// </summary>
+        /// <param name="resource">The resource to authorize against.</param>
+        public Task AuthorizeProjectLead(IBelongsToProject resource) =>
+            authorizationGuard.Authorize(resource, new ProjectLeadRequirement());
+
+        /// <summary>
         ///     Authorizes the current user as either the assigned user of the issue or a lead of the project.
         /// </summary>
         /// <param name="resource">The issue resource to authorize against.</param>

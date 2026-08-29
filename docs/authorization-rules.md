@@ -89,3 +89,14 @@ This document describes who can perform each operation in Workbench.
 | ------------- | ---------------------- |
 | Vote on issue | Any authenticated user |
 | Remove vote   | Any authenticated user |
+
+## Milestones
+
+| Operation               | Who Can Do It    |
+| ----------------------- | ---------------- |
+| View milestones         | Any authenticated user |
+| Create milestone        | Project Lead     |
+| Update milestone        | Project Lead     |
+| Delete milestone        | Project Lead     |
+| Add issue to milestone  | Project Lead     |
+| Remove issue from milestone | Project Lead  |

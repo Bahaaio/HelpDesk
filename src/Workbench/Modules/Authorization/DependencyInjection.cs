@@ -16,6 +16,7 @@ public static class DependencyInjection
             services.AddScoped<IAuthorizationHandler, OwnerOrLeadHandler>();
             services.AddScoped<IAuthorizationHandler, OwnerOrTeamMemberHandler>();
             services.AddScoped<IAuthorizationHandler, TeamMemberHandler>();
+            services.AddScoped<IAuthorizationHandler, ProjectLeadHandler>();
             services.AddScoped<IAuthorizationHandler, AssignedOrLeadHandler>();
 
             services.AddAuthorization(options =>

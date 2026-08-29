@@ -7,6 +7,7 @@ using Workbench.Modules.Authorization;
 using Workbench.Modules.Comments;
 using Workbench.Modules.Invites;
 using Workbench.Modules.Issues;
+using Workbench.Modules.Milestones;
 using Workbench.Modules.Storage;
 using Workbench.Modules.Tags;
 using Workbench.Modules.Users;
@@ -41,6 +42,7 @@ public static class ServiceExtensions
             services.AddIssuesModule();
             services.AddCommentsModule();
             services.AddProjectsModule();
+            services.AddMilestonesModule();
         }
     }
 }

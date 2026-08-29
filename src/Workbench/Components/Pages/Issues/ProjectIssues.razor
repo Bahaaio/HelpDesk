@@ -1,13 +1,18 @@
 @page "/projects/{ProjectId:int}/issues"
+@using Workbench.ClientServices
 @using Workbench.Modules.Issues.Dtos
 @using Workbench.Modules.Issues.Dtos.Requests
 @using Workbench.Modules.Issues.Enums
 @using Workbench.Modules.Issues.Services
+@using Workbench.Modules.Projects.Dtos
+@using Workbench.Modules.Projects.Services
 @using Workbench.Modules.Tags.Dtos
 @using Workbench.Modules.Tags.Services
 @rendermode InteractiveServer
 @inject IIssuesService IssuesService
 @inject ITagsService TagsService
+@inject IProjectMembershipState ProjectMembership
+@inject IAuthState AuthState
 @inject NavigationManager Navigation
 
 <PageTitle>Issues - Workbench</PageTitle>
@@ -16,6 +21,13 @@
     <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
         <MudText Typo="Typo.h4">Issues</MudText>
         <MudSpacer/>
+        @if (ProjectMembership.IsMember)
+        {
+            <MudButton Href="@($"/projects/{ProjectId}/tags")" Variant="Variant.Outlined" Color="Color.Default"
+                       StartIcon="@Icons.Material.Filled.Label" Class="mr-2">
+                Tags
+            </MudButton>
+        }
         <MudButton Href="@($"/projects/{ProjectId}/issues/new")" Variant="Variant.Filled" Color="Color.Primary"
                    StartIcon="@Icons.Material.Filled.Add">
             New Issue
@@ -49,8 +61,18 @@
                    SelectedValuesChanged="_ => LoadIssues()">
             <MudSelectItem Value="@("Latest")">Newest first</MudSelectItem>
             <MudSelectItem Value="@("Oldest")">Oldest first</MudSelectItem>
-            <MudSelectItem Value="@("Votes")">Highest score</MudSelectItem>
+            <MudSelectItem Value="@("HighestScore")">Highest score</MudSelectItem>
+            <MudSelectItem Value="@("LowestScore")">Lowest score</MudSelectItem>
         </MudSelect>
+
+        @if (ProjectMembership.IsMember)
+        {
+            <MudSelect T="string" @bind-Value="_viewFilter" Label="View" Style="width: 150px;"
+                       SelectedValuesChanged="_ => LoadIssues()">
+                <MudSelectItem Value="@("All")">All Issues</MudSelectItem>
+                <MudSelectItem Value="@("AssignedToMe")">Assigned to Me</MudSelectItem>
+            </MudSelect>
+        }
     </MudStack>
 
     @if (_loading)
@@ -114,6 +136,7 @@
 @code {
     [Parameter] public int ProjectId { get; set; }
 
+    private List<IssueDto> _allIssues = new();
     private List<IssueDto> _issues = new();
     private List<TagDto> _allTags = new();
     private bool _loading = true;
@@ -121,13 +144,20 @@
     private string _selectedStatus = "all";
     private string _selectedTag = "all";
     private string _sortBy = "Latest";
+    private string _viewFilter = "All";
     private CancellationTokenSource? _searchCts;
+
+    [Inject] public IProjectsService ProjectsService { get; set; } = default!;
 
     protected override async Task OnInitializedAsync()
     {
+        var project = await ProjectsService.GetById(ProjectId);
+        await ProjectMembership.Load(ProjectId);
+        ProjectMembership.SetOwner(AuthState.Username == project.OwnerUsername);
+
         try
         {
-            _allTags = await TagsService.GetAll();
+            _allTags = await TagsService.GetAll(ProjectId);
         }
         catch
         {
@@ -168,7 +198,11 @@
                 Enum.Parse<IssueSort>(_sortBy)
             );
 
-            _issues = await IssuesService.GetAll(ProjectId, query);
+            _allIssues = await IssuesService.GetAll(ProjectId, query);
+
+            _issues = _viewFilter == "AssignedToMe"
+                ? _allIssues.Where(i => i.AssignedToUsername == AuthState.Username).ToList()
+                : _allIssues;
         }
         catch
         {

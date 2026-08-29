@@ -1,5 +1,6 @@
 @page "/projects/{ProjectId:int}/issues/{Id:int}"
 @using System.Text.RegularExpressions
+@using Workbench.ClientServices
 @using Workbench.Modules.Comments.Dtos
 @using Workbench.Modules.Comments.Dtos.Requests
 @using Workbench.Modules.Comments.Options
@@ -11,10 +12,13 @@
 @using Workbench.Modules.Issues.Services
 @using Workbench.Modules.Issues.Votes.Dtos.Requests
 @using Workbench.Modules.Issues.Votes.Services
+@using Workbench.Modules.Projects.Dtos
+@using Workbench.Modules.Projects.Services
 @using Workbench.Modules.Tags.Dtos
 @using Workbench.Modules.Tags.Services
 @rendermode InteractiveServer
 @inject IIssuesService IssuesService
+@inject IProjectsService ProjectsService
 @inject IIssueStatusService IssueStatusService
 @inject IVotesService VotesService
 @inject ICommentsService CommentsService
@@ -26,6 +30,7 @@
 @inject IOptions<IssueAttachmentOptions> IssueAttachmentOptions
 @inject IIssueAssignmentsService IssueAssignmentsService
 @inject IAuthState AuthState
+@inject IProjectMembershipState ProjectMembership
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject NavigationManager Navigation
@@ -61,6 +66,9 @@ else
                     <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Inherit"
                                    OnClick="OpenEditDialog"/>
                 </MudTooltip>
+            }
+            @if (_canDelete)
+            {
                 <MudTooltip Text="Delete issue">
                     <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
                                    OnClick="() => _deleteDialogVisible = true"/>
@@ -131,7 +139,7 @@ else
             }
         </MudStack>
 
-        @if (!string.IsNullOrEmpty(_issue.AssignedToUsername) || AuthState.Role == "Technician")
+        @if (!string.IsNullOrEmpty(_issue.AssignedToUsername) || ProjectMembership.IsMember)
         {
             <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
                 <MudText Typo="Typo.h6">Assigned to</MudText>
@@ -143,7 +151,7 @@ else
                             @(_issue.AssignedToUsername?[..1].ToUpper() ?? "?")
                         </MudAvatar>
                         <MudText Typo="Typo.body2">@_issue.AssignedToUsername</MudText>
-                        @if (AuthState.Role == "Technician" && _isAssignedToCurrentUser && _issue.Status == Status.Open)
+                        @if ((_isAssignedToCurrentUser || ProjectMembership.IsLead) && _issue.Status == Status.Open)
                         {
                             <MudButton Variant="Variant.Outlined" Size="Size.Small"
                                        Color="Color.Error"
@@ -156,7 +164,7 @@ else
                 }
                 else
                 {
-                    @if (AuthState.Role == "Technician" && _issue.Status == Status.Open)
+                    @if (ProjectMembership.IsMember && _issue.Status == Status.Open)
                     {
                         <MudButton Variant="Variant.Outlined" Size="Size.Small"
                                    Color="Color.Primary"
@@ -281,7 +289,7 @@ else
                             <MudText Typo="Typo.caption" Color="Color.Default">
                                 @comment.CreatedAt.ToString("MMM dd, yyyy HH:mm")
                             </MudText>
-                            @if (AuthState.Username == comment.AuthorUsername || AuthState.Role == "Technician")
+                            @if (AuthState.Username == comment.AuthorUsername || ProjectMembership.IsMember)
                             {
                                 <MudTooltip Text="Edit">
                                     <MudIconButton Icon="@Icons.Material.Filled.Edit"
@@ -406,7 +414,7 @@ else
                       Class="mb-4" FullWidth="true"/>
         <MudTextField @bind-Value="_editDescription" Label="Description" Lines="5" MaxLength="2000"
                       Class="mb-4" FullWidth="true"/>
-        @if (AuthState.Role == "Technician")
+        @if (ProjectMembership.IsMember)
         {
             <MudSelect T="string" Label="Tags" MultiSelection="true"
                        SelectedValues="_editSelectedTags" SelectedValuesChanged="OnEditTagsChanged">
@@ -531,6 +539,7 @@ else
     [Parameter] public int Id { get; set; }
 
     private IssueDto? _issue;
+    private ProjectDto? _project;
     private List<AttachmentDto> _attachments = new();
     private List<CommentDto> _comments = new();
     private List<StatusChangeDto> _statusChanges = new();
@@ -543,6 +552,7 @@ else
     private string? _newCommentImagePreviewUrl;
     private bool _canUpdateStatus;
     private bool _canEdit;
+    private bool _canDelete;
     private bool _isAssignedToCurrentUser;
     private bool _assigning;
 
@@ -570,6 +580,9 @@ else
             _issue = await IssuesService.GetById(ProjectId, Id);
             _attachments = _issue.Attachments;
             _comments = await CommentsService.GetAll(Id);
+            _project = await ProjectsService.GetById(ProjectId);
+            await ProjectMembership.Load(ProjectId);
+            ProjectMembership.SetOwner(AuthState.Username == _project.OwnerUsername);
 
             try
             {
@@ -591,16 +604,16 @@ else
                 Logger.LogWarning(ex, "Failed to load vote for issue {IssueId}", Id);
             }
 
-            _canUpdateStatus = AuthState.IsAuthenticated
-                               && (AuthState.Role == "Technician" || AuthState.Username == _issue?.AuthorUsername);
-            _canEdit = AuthState.IsAuthenticated
-                       && (AuthState.Role == "Technician" || AuthState.Username == _issue?.AuthorUsername);
+            _canUpdateStatus = AuthState.IsAuthenticated && ProjectMembership.IsMember;
+            _canEdit = AuthState.IsAuthenticated && ProjectMembership.IsMember;
+            _canDelete = AuthState.IsAuthenticated
+                         && (AuthState.Username == _issue?.AuthorUsername || ProjectMembership.IsLead);
             _isAssignedToCurrentUser = AuthState.IsAuthenticated
                                        && _issue?.AssignedToUsername == AuthState.Username;
 
-            if (_canEdit && AuthState.Role == "Technician")
+            if (_canEdit)
             {
-                _allTags = await TagsService.GetAll();
+                _allTags = await TagsService.GetAll(ProjectId);
             }
 
             await LoadReferencedIssues();
@@ -696,7 +709,7 @@ else
             });
             _issue = updated;
 
-            if (AuthState.Role == "Technician")
+            if (ProjectMembership.IsMember)
             {
                 await IssueTagsService.UpdateTags(Id, _editSelectedTags.ToList());
             }

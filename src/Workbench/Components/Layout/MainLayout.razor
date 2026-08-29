@@ -59,17 +59,6 @@ else
                             Match="NavLinkMatch.Prefix">
                     My Issues
                 </MudNavLink>
-                @if (AuthState.Role == "Technician")
-                {
-                    <MudNavLink Href="/tags" Icon="@Icons.Material.Filled.Label"
-                                Match="NavLinkMatch.All">
-                        Tags
-                    </MudNavLink>
-                    <MudNavLink Href="/invite" Icon="@Icons.Material.Filled.PersonAdd"
-                                Match="NavLinkMatch.All">
-                        Invite Tech
-                    </MudNavLink>
-                }
             </MudNavMenu>
         </MudDrawer>
 

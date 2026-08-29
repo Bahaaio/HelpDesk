@@ -4,31 +4,34 @@ using Workbench.Modules.Tags.Dtos.Requests;
 namespace Workbench.Modules.Tags.Services;
 
 /// <summary>
-///     Manages issue category tags. Only technicians may create or update tags.
+///     Service interface for managing tags within a project.
 /// </summary>
 public interface ITagsService
 {
     /// <summary>
-    ///     Returns all available tags.
+    ///     Retrieves all tags for a given project.
     /// </summary>
-    Task<List<TagDto>> GetAll();
+    Task<List<TagDto>> GetAll(int projectId);
 
     /// <summary>
-    ///     Creates a new tag. Requires technician role.
+    ///     Creates a new tag for a given project.
     /// </summary>
+    /// <param name="projectId">The projectId to create the tag for.</param>
     /// <param name="request">The tag name and optional description.</param>
-    Task<TagDto> Create(CreateTagRequest request);
+    Task<TagDto> Create(int projectId, CreateTagRequest request);
 
     /// <summary>
-    ///     Updates an existing tag's description. Requires technician role.
+    ///     Updates the description of an existing tag.
     /// </summary>
-    /// <param name="name">The name of the tag to update.</param>
+    /// <param name="projectId">The projectId of the tag to update.</param>
+    /// <param name="tagName">The tagName of the tag to update.</param>
     /// <param name="request">The updated description.</param>
-    Task<TagDto> Update(string name, UpdateTagRequest request);
+    Task<TagDto> Update(int projectId, string tagName, UpdateTagRequest request);
 
     /// <summary>
-    ///     Deletes a tag by name. Requires technician role.
+    ///     Deletes an existing tag from a project.
     /// </summary>
-    /// <param name="name">The name of the tag to delete.</param>
-    Task Delete(string name);
+    /// <param name="projectId">The projectId of the tag to delete.</param>
+    /// <param name="tagName">The tagName of the tag to delete.</param>
+    Task Delete(int projectId, string tagName);
 }

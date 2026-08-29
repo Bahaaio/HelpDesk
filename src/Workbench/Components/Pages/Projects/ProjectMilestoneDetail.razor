@@ -1,0 +1,280 @@
+@page "/projects/{ProjectId:int}/milestones/{MilestoneId:int}"
+@using Workbench.ClientServices
+@using Workbench.Modules.Issues.Dtos
+@using Workbench.Modules.Issues.Dtos.Requests
+@using Workbench.Modules.Issues.Enums
+@using Workbench.Modules.Issues.Services
+@using Workbench.Modules.Milestones.Dtos
+@using Workbench.Modules.Milestones.Services
+@using Workbench.Modules.Projects.Services
+@inject IMilestonesService MilestonesService
+@inject IMilestoneIssuesService MilestoneIssuesService
+@inject IIssuesService IssuesService
+@inject IProjectsService ProjectsService
+@inject IProjectMembershipState ProjectMembership
+@inject IAuthState AuthState
+@inject ISnackbar Snackbar
+
+<PageTitle>@(_milestone?.Name ?? "Milestone") - Workbench</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large">
+    @if (_loading)
+    {
+        <MudProgressCircular Indeterminate="true" Class="d-flex justify-center ma-8"/>
+    }
+    else if (_milestone is null)
+    {
+        <MudPaper Class="pa-8 text-center">
+            <MudText Typo="Typo.h6">Milestone not found</MudText>
+        </MudPaper>
+    }
+    else
+    {
+        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowBack"
+                           Href="@($"/projects/{ProjectId}?tab=milestones")"/>
+            <MudText Typo="Typo.h4">@_milestone.Name</MudText>
+            <MudSpacer/>
+            @if (_milestone.TotalItems > 0)
+            {
+                var percent = (int)((double)_milestone.CompletedItems / _milestone.TotalItems * 100);
+                <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined">
+                    @_milestone.CompletedItems/@_milestone.TotalItems completed (@percent%)
+                </MudChip>
+            }
+        </MudStack>
+
+        @if (!string.IsNullOrEmpty(_milestone.Description))
+        {
+            <MudText Typo="Typo.body1" Class="mb-2">@_milestone.Description</MudText>
+        }
+
+        @if (_milestone.DueDate.HasValue)
+        {
+            var isOverdue = _milestone.DueDate.Value < DateTime.UtcNow;
+            <MudText Typo="Typo.body2" Color="@(isOverdue ? Color.Error : Color.Default)" Class="mb-4">
+                <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Size="Size.Small" Class="mr-1"/>
+                Due @_milestone.DueDate.Value.ToString("MMM dd, yyyy")
+                @(isOverdue ? " (overdue)" : "")
+            </MudText>
+        }
+
+        <MudDivider Class="my-4"/>
+
+        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2">
+            <MudText Typo="Typo.h6">Issues</MudText>
+            <MudSpacer/>
+            @if (ProjectMembership.IsLead)
+            {
+                <MudButton OnClick="OpenAddIssueDialog" Variant="Variant.Outlined"
+                           Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Size="Size.Small">
+                    Add Issue
+                </MudButton>
+            }
+        </MudStack>
+
+        @if (_issues.Count == 0)
+        {
+            <MudPaper Class="pa-8 text-center">
+                <MudIcon Icon="@Icons.Material.Filled.Inbox" Size="Size.Large" Color="Color.Default"/>
+                <MudText Typo="Typo.h6" Class="mt-2">No issues in this milestone</MudText>
+            </MudPaper>
+        }
+        else
+        {
+            <MudTable Items="_issues" Hover="true" Dense="true" Striped="true">
+                <HeaderContent>
+                    <MudTh>Title</MudTh>
+                    <MudTh>Status</MudTh>
+                    <MudTh>Tags</MudTh>
+                    <MudTh>Score</MudTh>
+                    @if (ProjectMembership.IsLead)
+                    {
+                        <MudTh></MudTh>
+                    }
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Title">
+                        <MudLink Href="@($"/projects/{ProjectId}/issues/{context.Id}")">
+                            <span style="opacity: 0.5;">#@context.Id</span> @context.Title
+                        </MudLink>
+                    </MudTd>
+                    <MudTd DataLabel="Status">
+                        @if (context.Status == Status.Open)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Success">Open</MudChip>
+                        }
+                        else if (context.Status == Status.InProgress)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Warning">In Progress</MudChip>
+                        }
+                        else
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Default">Closed</MudChip>
+                        }
+                    </MudTd>
+                    <MudTd DataLabel="Tags">
+                        @foreach (var tag in context.Tags)
+                        {
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined"
+                                     Class="mr-1">@tag</MudChip>
+                        }
+                    </MudTd>
+                    <MudTd DataLabel="Score">
+                        <MudIcon Icon="@Icons.Material.Filled.ThumbUp" Size="Size.Small" Class="mr-1"/>
+                        @context.VoteScore
+                    </MudTd>
+                    @if (ProjectMembership.IsLead)
+                    {
+                        <MudTd>
+                            <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small"
+                                           Color="Color.Error"
+                                           OnClick="() => RemoveIssueAsync(context.Id)"
+                                           Title="Remove from milestone"/>
+                        </MudTd>
+                    }
+                </RowTemplate>
+            </MudTable>
+        }
+    }
+</MudContainer>
+
+@* Add Issue Dialog *@
+<MudDialog @bind-Visible="_addIssueDialogVisible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Add Issue to Milestone</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (_availableIssues.Count == 0)
+        {
+            <MudText Typo="Typo.body2" Color="Color.Default">No available issues to add.</MudText>
+        }
+        else
+        {
+            <MudList T="IssueDto" Dense="true">
+                @foreach (var issue in _availableIssues)
+                {
+                    <MudListItem Value="issue" OnClick="() => AddIssueAsync(issue.Id)">
+                        <MudStack Row="true" AlignItems="AlignItems.Center">
+                            <MudText Typo="Typo.body2">
+                                <span style="opacity: 0.5;">#@issue.Id</span> @issue.Title
+                            </MudText>
+                            <MudSpacer/>
+                            @if (issue.Status == Status.Open)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Success">Open</MudChip>
+                            }
+                            else if (issue.Status == Status.InProgress)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Warning">In Progress</MudChip>
+                            }
+                            else
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Default">Closed</MudChip>
+                            }
+                        </MudStack>
+                    </MudListItem>
+                }
+            </MudList>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _addIssueDialogVisible = false">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter] public int ProjectId { get; set; }
+    [Parameter] public int MilestoneId { get; set; }
+
+    private MilestoneDto? _milestone;
+    private List<IssueDto> _issues = new();
+    private bool _loading = true;
+
+    private bool _addIssueDialogVisible;
+    private List<IssueDto> _availableIssues = new();
+
+    private readonly DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var project = await ProjectsService.GetById(ProjectId);
+            await ProjectMembership.Load(ProjectId);
+            ProjectMembership.SetOwner(AuthState.Username == project.OwnerUsername);
+
+            _milestone = await MilestonesService.GetById(ProjectId, MilestoneId);
+            _issues = await MilestoneIssuesService.GetAllIssues(ProjectId, MilestoneId);
+        }
+        catch
+        {
+        }
+
+        _loading = false;
+    }
+
+    private async Task LoadMilestoneData()
+    {
+        try
+        {
+            _milestone = await MilestonesService.GetById(ProjectId, MilestoneId);
+            _issues = await MilestoneIssuesService.GetAllIssues(ProjectId, MilestoneId);
+        }
+        catch
+        {
+        }
+        StateHasChanged();
+    }
+
+    private async Task LoadAvailableIssues()
+    {
+        try
+        {
+            var allIssues = await IssuesService.GetAll(ProjectId,
+                new Modules.Issues.Dtos.Requests.IssueQuery(null, null, null, null));
+            var issueIdsInMilestone = new HashSet<int>(_issues.Select(i => i.Id));
+            _availableIssues = allIssues.Where(i => !issueIdsInMilestone.Contains(i.Id)).ToList();
+        }
+        catch
+        {
+            _availableIssues = new();
+        }
+    }
+
+    private async Task OpenAddIssueDialog()
+    {
+        await LoadAvailableIssues();
+        _addIssueDialogVisible = true;
+        StateHasChanged();
+    }
+
+    private async Task AddIssueAsync(int issueId)
+    {
+        try
+        {
+            await MilestoneIssuesService.AddIssue(ProjectId, MilestoneId, issueId);
+            _addIssueDialogVisible = false;
+            Snackbar.Add("Issue added to milestone", Severity.Success);
+            await LoadMilestoneData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task RemoveIssueAsync(int issueId)
+    {
+        try
+        {
+            await MilestoneIssuesService.RemoveIssue(ProjectId, MilestoneId, issueId);
+            Snackbar.Add("Issue removed from milestone", Severity.Success);
+            await LoadMilestoneData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+}

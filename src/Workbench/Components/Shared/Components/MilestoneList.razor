@@ -1,0 +1,302 @@
+@using Workbench.Modules.Milestones.Dtos
+@using Workbench.Modules.Milestones.Dtos.Requests
+@using Workbench.Modules.Milestones.Services
+@inject IMilestonesService MilestonesService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<MudStack Class="pa-4">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+        <MudSpacer/>
+        @if (IsLead)
+        {
+            <MudButton OnClick="() => _createDialogVisible = true" Variant="Variant.Filled" Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Add">
+                New Milestone
+            </MudButton>
+        }
+    </MudStack>
+
+    @if (_loading)
+    {
+        <MudProgressCircular Indeterminate="true" Class="d-flex justify-center ma-8"/>
+    }
+    else if (_milestones.Count == 0)
+    {
+        <MudPaper Class="pa-8 text-center">
+            <MudIcon Icon="@Icons.Material.Filled.Flag" Size="Size.Large" Color="Color.Default"/>
+            <MudText Typo="Typo.h6" Class="mt-2">No milestones yet</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Default" Class="mt-1">
+                Create a milestone to group related issues.
+            </MudText>
+        </MudPaper>
+    }
+    else
+    {
+        <MudDataGrid Items="_milestones" Hover="true" Dense="true" Striped="true">
+            <Columns>
+                <TemplateColumn Title="Milestone">
+                    <CellTemplate>
+                        <MudLink Href="@($"/projects/{ProjectId}/milestones/{context.Item.Id}")"
+                                 Typo="Typo.body1" Style="font-weight: 500;">
+                            @context.Item.Name
+                        </MudLink>
+                        @if (!string.IsNullOrEmpty(context.Item.Description))
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Default"
+                                     Style="display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 400px;">
+                                @context.Item.Description
+                            </MudText>
+                        }
+                    </CellTemplate>
+                </TemplateColumn>
+                <TemplateColumn Title="Progress" Width="200px">
+                    <CellTemplate>
+                        @{
+                            var total = context.Item.TotalItems;
+                            var completed = context.Item.CompletedItems;
+                            var percent = total > 0 ? (int)((double)completed / total * 100) : 0;
+                        }
+                        @if (total > 0)
+                        {
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                <MudProgressLinear Value="percent" Color="Color.Primary" Class="flex-grow-1"
+                                                   Style="height: 8px;"/>
+                                <MudText Typo="Typo.caption" Style="white-space: nowrap;">
+                                    @completed/@total
+                                </MudText>
+                            </MudStack>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Default">No issues</MudText>
+                        }
+                    </CellTemplate>
+                </TemplateColumn>
+                <TemplateColumn Title="Due Date" Width="140px">
+                    <CellTemplate>
+                        @if (context.Item.DueDate.HasValue)
+                        {
+                            var isOverdue = context.Item.DueDate.Value < DateTime.UtcNow;
+                            <MudText Typo="Typo.body2"
+                                     Color="@(isOverdue ? Color.Error : Color.Default)">
+                                @context.Item.DueDate.Value.ToString("MMM dd, yyyy")
+                            </MudText>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.body2" Color="Color.Default">No due date</MudText>
+                        }
+                    </CellTemplate>
+                </TemplateColumn>
+                @if (IsLead)
+                {
+                    <TemplateColumn Title="Actions" Sortable="false" Filterable="false" Width="100px">
+                        <CellTemplate>
+                            <div @onclick:stopPropagation>
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                               OnClick="() => StartEdit(context.Item)"/>
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                               Color="Color.Error"
+                                               OnClick="() => ConfirmDelete(context.Item)"/>
+                            </div>
+                        </CellTemplate>
+                    </TemplateColumn>
+                }
+            </Columns>
+        </MudDataGrid>
+    }
+</MudStack>
+
+@* Create Dialog *@
+<MudDialog @bind-Visible="_createDialogVisible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">New Milestone</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="_createName" Label="Name" Required="true" MaxLength="255"
+                      Class="mb-4" FullWidth="true"/>
+        <MudTextField @bind-Value="_createDescription" Label="Description" Lines="3" MaxLength="1000"
+                      Class="mb-4" FullWidth="true"/>
+        <MudDatePicker @bind-Date="_createDueDate" Label="Due Date (optional)" Class="mb-4"/>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _createDialogVisible = false">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="CreateMilestoneAsync" Disabled="_savingMilestone">Create</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@* Edit Dialog *@
+<MudDialog @bind-Visible="_editDialogVisible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Edit Milestone</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="_editName" Label="Name" Required="true" MaxLength="255"
+                      Class="mb-4" FullWidth="true"/>
+        <MudTextField @bind-Value="_editDescription" Label="Description" Lines="3" MaxLength="1000"
+                      Class="mb-4" FullWidth="true"/>
+        <MudDatePicker @bind-Date="_editDueDate" Label="Due Date (optional)" Class="mb-4"/>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _editDialogVisible = false">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="SaveMilestoneAsync" Disabled="_savingMilestone">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@* Delete Dialog *@
+<MudDialog @bind-Visible="_deleteDialogVisible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Delete Milestone</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText>Are you sure you want to delete <strong>@_deletingMilestone?.Name</strong>?</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Error" Class="mt-2">
+            This will remove all issue associations but won't delete the issues themselves.
+        </MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _deleteDialogVisible = false">Cancel</MudButton>
+        <MudButton Color="Color.Error" OnClick="DeleteMilestoneAsync" Disabled="_deletingMilestoneLoading">Delete</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter] public int ProjectId { get; set; }
+    [Parameter] public bool IsLead { get; set; }
+
+    private List<MilestoneDto> _milestones = new();
+    private bool _loading = true;
+
+    private bool _createDialogVisible;
+    private string _createName = "";
+    private string? _createDescription;
+    private DateTime? _createDueDate;
+
+    private bool _editDialogVisible;
+    private MilestoneDto? _editingMilestone;
+    private string _editName = "";
+    private string? _editDescription;
+    private DateTime? _editDueDate;
+
+    private bool _deleteDialogVisible;
+    private MilestoneDto? _deletingMilestone;
+    private bool _deletingMilestoneLoading;
+    private bool _savingMilestone;
+
+    private readonly DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadMilestones();
+    }
+
+    private async Task LoadMilestones()
+    {
+        _loading = true;
+        try
+        {
+            _milestones = await MilestonesService.GetAll(ProjectId);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        _loading = false;
+        StateHasChanged();
+    }
+
+    private async Task CreateMilestoneAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_createName)) return;
+
+        _savingMilestone = true;
+        try
+        {
+            await MilestonesService.Create(ProjectId, new CreateMilestoneRequest
+            {
+                Name = _createName.Trim(),
+                Description = _createDescription,
+                DueDate = _createDueDate?.ToUniversalTime()
+            });
+            _createDialogVisible = false;
+            _createName = "";
+            _createDescription = "";
+            _createDueDate = null;
+            Snackbar.Add("Milestone created", Severity.Success);
+            await LoadMilestones();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _savingMilestone = false;
+        }
+    }
+
+    private void StartEdit(MilestoneDto milestone)
+    {
+        _editingMilestone = milestone;
+        _editName = milestone.Name;
+        _editDescription = milestone.Description;
+        _editDueDate = milestone.DueDate;
+        _editDialogVisible = true;
+    }
+
+    private async Task SaveMilestoneAsync()
+    {
+        if (_editingMilestone is null) return;
+
+        _savingMilestone = true;
+        try
+        {
+            await MilestonesService.Update(ProjectId, _editingMilestone.Id, new UpdateMilestoneRequest
+            {
+                Name = _editName.Trim(),
+                Description = _editDescription,
+                DueDate = _editDueDate?.ToUniversalTime()
+            });
+            _editDialogVisible = false;
+            Snackbar.Add("Milestone updated", Severity.Success);
+            await LoadMilestones();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _savingMilestone = false;
+        }
+    }
+
+    private void ConfirmDelete(MilestoneDto milestone)
+    {
+        _deletingMilestone = milestone;
+        _deleteDialogVisible = true;
+    }
+
+    private async Task DeleteMilestoneAsync()
+    {
+        if (_deletingMilestone is null) return;
+
+        _deletingMilestoneLoading = true;
+        try
+        {
+            await MilestonesService.Delete(ProjectId, _deletingMilestone.Id);
+            _deleteDialogVisible = false;
+            Snackbar.Add("Milestone deleted", Severity.Success);
+            await LoadMilestones();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _deletingMilestoneLoading = false;
+        }
+    }
+}

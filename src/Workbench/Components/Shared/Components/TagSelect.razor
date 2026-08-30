@@ -1,4 +1,5 @@
 @using Workbench.ClientServices
+@using Workbench.Common.Enums
 @using Workbench.Modules.Tags.Dtos
 @using Workbench.Modules.Tags.Services
 @inject ITagsService TagsService
@@ -11,12 +12,10 @@
     {
         <MudSelectItem Value="@tag.Name">
             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                <MudIcon Icon="@Icons.Material.Filled.Circle" Size="Size.Small"
-                         Color="@(tag.Color.ToMudColor())"/>
-                <MudText Typo="Typo.body2">@tag.Name</MudText>
+                <TagChip Name="@tag.Name" Color="@tag.Color"/>
                 @if (!string.IsNullOrEmpty(tag.Description))
                 {
-                    <MudText Typo="Typo.caption" Color="Color.Default" Style="opacity: 0.6;">
+                    <MudText Typo="Typo.caption" Color="MudBlazor.Color.Default" Style="opacity: 0.6;">
                         — @tag.Description
                     </MudText>
                 }

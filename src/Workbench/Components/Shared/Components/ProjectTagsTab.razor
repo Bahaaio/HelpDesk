@@ -1,11 +1,9 @@
-@using Workbench.Common.Enums
-@using Workbench.ClientServices
-@using Workbench.Modules.Tags.Dtos
-@using Workbench.Modules.Tags.Dtos.Requests
-@using Workbench.Modules.Tags.Services
 @rendermode InteractiveServer
 @inject ITagsService TagsService
 @inject ISnackbar Snackbar
+@using Workbench.Modules.Tags.Dtos
+@using Workbench.Modules.Tags.Dtos.Requests
+@using Workbench.Modules.Tags.Services
 @using Color = Workbench.Common.Enums.Color
 
 <MudStack Class="pa-4">
@@ -34,11 +32,7 @@
             <Columns>
                 <TemplateColumn Title="Name">
                     <CellTemplate>
-                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                            <MudIcon Icon="@Icons.Material.Filled.Circle" Size="Size.Small"
-                                     Color="@(context.Item.Color.ToMudColor())"/>
-                            <MudText Typo="Typo.body2">@context.Item.Name</MudText>
-                        </MudStack>
+                        <TagChip Name="@context.Item.Name" Color="@context.Item.Color"/>
                     </CellTemplate>
                 </TemplateColumn>
                 <PropertyColumn Property="x => x.Description" Title="Description"/>
@@ -66,7 +60,8 @@
     <DialogContent>
         <MudTextField @bind-Value="_createName" Label="Name" Required="true" MaxLength="50"
                       Class="mb-4" FullWidth="true"/>
-        <MudTextField @bind-Value="_createDescription" Label="Description (optional)" MaxLength="2000"
+        <MudTextField @bind-Value="_createDescription" Label="Description (optional)"
+                      MaxLength="2000"
                       Class="mb-4" FullWidth="true"/>
         <MudText Typo="Typo.body2" Class="mb-2">Color</MudText>
         <MudStack Row="true" Spacing="2">
@@ -85,7 +80,8 @@
     <DialogActions>
         <MudButton OnClick="() => _createDialogVisible = false">Cancel</MudButton>
         <MudButton Color="MudBlazor.Color.Primary" OnClick="CreateTagAsync"
-                   Disabled="_savingTag || string.IsNullOrWhiteSpace(_createName)">Create</MudButton>
+                   Disabled="_savingTag || string.IsNullOrWhiteSpace(_createName)">Create
+        </MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -113,7 +109,9 @@
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="() => _editDialogVisible = false">Cancel</MudButton>
-        <MudButton Color="MudBlazor.Color.Primary" OnClick="SaveTagAsync" Disabled="_savingTag">Save</MudButton>
+        <MudButton Color="MudBlazor.Color.Primary" OnClick="SaveTagAsync" Disabled="_savingTag">
+            Save
+        </MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -127,7 +125,9 @@
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="() => _deleteDialogVisible = false">Cancel</MudButton>
-        <MudButton OnClick="DeleteTagAsync" Color="MudBlazor.Color.Error" Disabled="_deletingTagLoading">Delete</MudButton>
+        <MudButton OnClick="DeleteTagAsync" Color="MudBlazor.Color.Error"
+                   Disabled="_deletingTagLoading">Delete
+        </MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -172,6 +172,7 @@
         {
             Snackbar.Add(ex.Message, Severity.Error);
         }
+
         _tagsLoading = false;
         StateHasChanged();
     }
@@ -259,4 +260,5 @@
             _deletingTagLoading = false;
         }
     }
+
 }

@@ -38,7 +38,9 @@
             <MudSelectItem Value="@("all")">All Tags</MudSelectItem>
             @foreach (var tag in _allTags)
             {
-                <MudSelectItem Value="@tag.Name">@tag.Name</MudSelectItem>
+                <MudSelectItem Value="@tag.Name">
+                    <TagChip Name="@tag.Name" Color="@tag.Color"/>
+                </MudSelectItem>
             }
         </MudSelect>
 
@@ -105,8 +107,7 @@
                 <MudTd DataLabel="Tags">
                     @foreach (var tag in context.Tags)
                     {
-                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined"
-                                 Class="mr-1">@tag</MudChip>
+                        <TagChip Name="@tag.Name" Color="@tag.Color"/>
                     }
                 </MudTd>
                 <MudTd DataLabel="Score">

@@ -14,7 +14,7 @@ public record IssueDto
     public required DateTime CreatedAt { get; init; }
     public required string AuthorUsername { get; init; }
     public required string? AssignedToUsername { get; init; }
-    public required List<string> Tags { get; init; }
+    public required List<IssueTagDto> Tags { get; init; }
     public required List<AttachmentDto> Attachments { get; init; }
     public required int VoteScore { get; init; }
 }

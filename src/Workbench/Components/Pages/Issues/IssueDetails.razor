@@ -108,7 +108,7 @@ else
             <MudStack Row="true" Class="mt-4" AlignItems="AlignItems.Center">
                 @foreach (var tag in _issue.Tags)
                 {
-                    <MudChip T="string" Variant="Variant.Outlined" Size="Size.Small">@tag</MudChip>
+                    <TagChip Name="@tag.Name" Color="@tag.Color"/>
                 }
             </MudStack>
         </MudPaper>
@@ -642,7 +642,7 @@ else
         if (_issue is null) return;
         _editTitle = _issue.Title;
         _editDescription = _issue.Description;
-        _editSelectedTags = new HashSet<string>(_issue.Tags);
+        _editSelectedTags = new HashSet<string>(_issue.Tags.Select(t => t.Name));
         _editFiles = null;
         _editPreviewUrls.Clear();
         _editDeletedAttachmentIds.Clear();

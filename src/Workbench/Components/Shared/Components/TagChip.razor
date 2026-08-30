@@ -1,0 +1,13 @@
+@using Workbench.ClientServices
+@using Workbench.Common.Enums
+@using MudBlazor
+@using Color = Workbench.Common.Enums.Color
+
+<MudChip T="string" Variant="Variant.Outlined" Size="Size.Small" Color="@(Color?.ToMudColor() ?? MudBlazor.Color.Default)">
+    @Name
+</MudChip>
+
+@code {
+    [Parameter] public string Name { get; set; } = "";
+    [Parameter] public Color? Color { get; set; }
+}

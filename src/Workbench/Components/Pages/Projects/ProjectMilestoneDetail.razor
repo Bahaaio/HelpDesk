@@ -1,5 +1,6 @@
 @page "/projects/{ProjectId:int}/milestones/{MilestoneId:int}"
 @using Workbench.ClientServices
+@using Workbench.Components.Shared.Components
 @using Workbench.Modules.Issues.Dtos
 @using Workbench.Modules.Issues.Dtos.Requests
 @using Workbench.Modules.Issues.Enums
@@ -116,8 +117,7 @@
                     <MudTd DataLabel="Tags">
                         @foreach (var tag in context.Tags)
                         {
-                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined"
-                                     Class="mr-1">@tag</MudChip>
+                            <TagChip Name="@tag.Name" Color="@tag.Color"/>
                         }
                     </MudTd>
                     <MudTd DataLabel="Score">

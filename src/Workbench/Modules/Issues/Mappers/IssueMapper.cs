@@ -21,7 +21,7 @@ public static class IssueMapper
         AuthorUsername = t.Author.UserName!,
         AssignedToUsername = t.AssignedTo != null ? t.AssignedTo.UserName! : null,
         Tags = t.Tags.Select(tag => new IssueTagDto(tag.Name, tag.Color)).ToList(),
-        Attachments = t.Attachments.Select(ia => ia.ToDto()).ToList(),
+        Attachments = t.Attachments.AsQueryable().Select(AttachmentMapper.ToDtoExpression).ToList(),
         VoteScore = t.Votes.Sum(v => (int)v.Value)
     };
 

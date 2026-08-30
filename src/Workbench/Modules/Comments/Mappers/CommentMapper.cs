@@ -15,7 +15,7 @@ public static class CommentMapper
             c.Content,
             c.CreatedAt,
             c.Author.UserName!,
-            c.Attachments.Select(ca => ca.ToDto()).ToList()
+            c.Attachments.AsQueryable().Select(AttachmentMapper.ToDtoExpression).ToList()
         );
 
     public static CommentDto ToDto(this Comment c) => Compiled(c);

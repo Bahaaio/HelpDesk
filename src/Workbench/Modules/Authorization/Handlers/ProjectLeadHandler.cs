@@ -1,15 +1,29 @@
 using Microsoft.AspNetCore.Authorization;
 using Workbench.Modules.Authorization.Models;
 using Workbench.Modules.Authorization.Requirements;
+using Workbench.Modules.Projects.Enums;
+using Workbench.Modules.Projects.Memberships.Services;
 
 namespace Workbench.Modules.Authorization.Handlers;
 
 public class ProjectLeadHandler : AuthorizationHandler<ProjectLeadRequirement, IBelongsToProject>
 {
-    protected override Task HandleRequirementAsync(AuthorizationHandlerContext context,
-        ProjectLeadRequirement requirement, IBelongsToProject resource)
+    private readonly IProjectMembershipsService _membershipsService;
+
+    public ProjectLeadHandler(IProjectMembershipsService membershipsService)
     {
-        context.Succeed(requirement);
-        return Task.CompletedTask;
+        _membershipsService = membershipsService;
+    }
+
+    protected override async Task HandleRequirementAsync(
+        AuthorizationHandlerContext context,
+        ProjectLeadRequirement requirement,
+        IBelongsToProject resource)
+    {
+        var membership = await _membershipsService
+            .GetCurrentUserProjectMembership(resource.ProjectId);
+
+        if (membership?.Role == ProjectMemberRole.Lead)
+            context.Succeed(requirement);
     }
 }

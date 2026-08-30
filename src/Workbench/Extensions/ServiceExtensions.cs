@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Workbench.Data;
 using Workbench.Data.Persistence;
 using Workbench.Data.Persistence.Implementations;
@@ -7,12 +8,12 @@ using Workbench.Modules.Authorization;
 using Workbench.Modules.Comments;
 using Workbench.Modules.Invites;
 using Workbench.Modules.Issues;
+using Workbench.Modules.Kanban;
 using Workbench.Modules.Milestones;
+using Workbench.Modules.Projects;
 using Workbench.Modules.Storage;
 using Workbench.Modules.Tags;
 using Workbench.Modules.Users;
-using Microsoft.EntityFrameworkCore;
-using Workbench.Modules.Projects;
 
 namespace Workbench.Extensions;
 
@@ -43,6 +44,7 @@ public static class ServiceExtensions
             services.AddCommentsModule();
             services.AddProjectsModule();
             services.AddMilestonesModule();
+            services.AddKanbanModule();
         }
     }
 }

@@ -1,9 +1,10 @@
 using Workbench.Common.Models;
+using Workbench.Modules.Authorization.Models;
 using Workbench.Modules.Projects.Models;
 
 namespace Workbench.Modules.Kanban.Models;
 
-public class Board : IEntity<int>
+public class Board : IEntity<int>, IBelongsToProject
 {
     public int Id { get; set; }
     public required string Name { get; set; }

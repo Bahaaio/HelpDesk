@@ -2,12 +2,12 @@ using Workbench.Data.Persistence;
 using Workbench.Modules.Auth.Services;
 using Workbench.Modules.Authorization.Extensions;
 using Workbench.Modules.Authorization.Services;
+using Workbench.Modules.Kanban.Services;
 using Workbench.Modules.Projects.Dtos;
 using Workbench.Modules.Projects.Dtos.Requests;
 using Workbench.Modules.Projects.Enums;
 using Workbench.Modules.Projects.Mappers;
-using Workbench.Modules.Projects.Memberships.Models;
-using Workbench.Modules.Projects.Memberships.Repositories;
+using Workbench.Modules.Projects.Memberships.Services;
 using Workbench.Modules.Projects.Models;
 using Workbench.Modules.Projects.Repositories;
 
@@ -16,17 +16,20 @@ namespace Workbench.Modules.Projects.Services.Implementations;
 public class ProjectsService : IProjectsService
 {
     private readonly IAuthorizationGuard _authGuard;
-    private readonly IProjectMembershipsRepository _projectMembershipsRepository;
+    private readonly IBoardsService _boardsService;
+    private readonly IProjectMembershipsService _projectMembershipsService;
     private readonly IProjectsRepository _projectsRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUser _user;
 
     public ProjectsService(IProjectsRepository projectsRepository,
-        IProjectMembershipsRepository projectMembershipsRepository,
+        IProjectMembershipsService projectMembershipsService,
+        IBoardsService boardsService,
         ICurrentUser user, IUnitOfWork unitOfWork, IAuthorizationGuard authGuard)
     {
         _projectsRepository = projectsRepository;
-        _projectMembershipsRepository = projectMembershipsRepository;
+        _projectMembershipsService = projectMembershipsService;
+        _boardsService = boardsService;
         _user = user;
         _unitOfWork = unitOfWork;
         _authGuard = authGuard;
@@ -52,13 +55,8 @@ public class ProjectsService : IProjectsService
         _projectsRepository.Add(project);
         await _unitOfWork.SaveChangesAsync();
 
-        _projectMembershipsRepository.Add(new ProjectMembership
-        {
-            ProjectId = project.Id,
-            UserId = _user.Id,
-            Role = ProjectMemberRole.Lead
-        });
-        await _unitOfWork.SaveChangesAsync();
+        await _projectMembershipsService.AddMember(project.Id, _user.Id, ProjectMemberRole.Lead);
+        await _boardsService.CreateEmpty(project.Id);
 
         await _projectsRepository.LoadOwnerAsync(project);
 

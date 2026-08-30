@@ -42,6 +42,7 @@ public class TagsService : ITagsService
         {
             Name = request.Name.ToLower(),
             Description = request.Description,
+            Color = request.Color,
             ProjectId = projectId
         };
 
@@ -64,6 +65,7 @@ public class TagsService : ITagsService
                   ?? throw new NotFoundException($"Tag with tagName {tagName} doesn't exist");
 
         tag.Description = request.Description;
+        tag.Color = request.Color;
 
         await _unitOfWork.SaveChangesAsync();
         return tag.ToDto();

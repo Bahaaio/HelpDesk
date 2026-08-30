@@ -18,6 +18,10 @@ internal class TagConfiguration : IEntityTypeConfiguration<Tag>
         builder.Property(t => t.Description)
             .HasMaxLength(2000);
 
+        builder.Property(t => t.Color)
+            .IsRequired()
+            .HasConversion<string>();
+
         builder.HasOne(t => t.Project)
             .WithMany(p => p.Tags)
             .HasForeignKey(t => t.ProjectId)

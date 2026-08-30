@@ -1,24 +1,21 @@
+@using Workbench.Common.Enums
+@using Workbench.ClientServices
 @using Workbench.Modules.Tags.Dtos
 @using Workbench.Modules.Tags.Dtos.Requests
 @using Workbench.Modules.Tags.Services
 @rendermode InteractiveServer
 @inject ITagsService TagsService
 @inject ISnackbar Snackbar
+@using Color = Workbench.Common.Enums.Color
 
 <MudStack Class="pa-4">
-    <MudPaper Class="pa-4 mb-4">
-        <MudStack Row="true" AlignItems="AlignItems.Center">
-            <MudTextField @bind-Value="_newTagName" Label="Tag Name" MaxLength="50"
-                          Style="width: 200px;"/>
-            <MudTextField @bind-Value="_newTagDescription" Label="Description (optional)"
-                          MaxLength="2000" Style="width: 300px;"/>
-            <MudButton OnClick="CreateTagAsync" Color="Color.Primary" Variant="Variant.Filled"
-                       Disabled="_tagsLoading || string.IsNullOrWhiteSpace(_newTagName)">
-                <MudIcon Icon="@Icons.Material.Filled.Add" Size="Size.Small" Class="mr-1"/>
-                Add
-            </MudButton>
-        </MudStack>
-    </MudPaper>
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+        <MudSpacer/>
+        <MudButton OnClick="() => _createDialogVisible = true" Variant="Variant.Filled"
+                   Color="MudBlazor.Color.Primary" StartIcon="@Icons.Material.Filled.Add">
+            New Tag
+        </MudButton>
+    </MudStack>
 
     @if (_tagsLoading)
     {
@@ -35,7 +32,15 @@
     {
         <MudDataGrid Items="_tags" Hover="true" Dense="true" Striped="true">
             <Columns>
-                <PropertyColumn Property="x => x.Name" Title="Name"/>
+                <TemplateColumn Title="Name">
+                    <CellTemplate>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudIcon Icon="@Icons.Material.Filled.Circle" Size="Size.Small"
+                                     Color="@(context.Item.Color.ToMudColor())"/>
+                            <MudText Typo="Typo.body2">@context.Item.Name</MudText>
+                        </MudStack>
+                    </CellTemplate>
+                </TemplateColumn>
                 <PropertyColumn Property="x => x.Description" Title="Description"/>
                 <TemplateColumn Title="Actions" Sortable="false" Filterable="false">
                     <CellTemplate>
@@ -43,7 +48,7 @@
                             <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
                                            OnClick="() => StartEditTag(context.Item)"/>
                             <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                           Color="Color.Error"
+                                           Color="MudBlazor.Color.Error"
                                            OnClick="() => ConfirmDeleteTag(context.Item)"/>
                         </div>
                     </CellTemplate>
@@ -53,20 +58,66 @@
     }
 </MudStack>
 
+@* Create Tag Dialog *@
+<MudDialog @bind-Visible="_createDialogVisible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">New Tag</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="_createName" Label="Name" Required="true" MaxLength="50"
+                      Class="mb-4" FullWidth="true"/>
+        <MudTextField @bind-Value="_createDescription" Label="Description (optional)" MaxLength="2000"
+                      Class="mb-4" FullWidth="true"/>
+        <MudText Typo="Typo.body2" Class="mb-2">Color</MudText>
+        <MudStack Row="true" Spacing="2">
+            @foreach (var color in Enum.GetValues<Color>())
+            {
+                var isSelected = _createColor == color;
+                <MudTooltip Text="@color.ToString()">
+                    <MudIconButton Size="Size.Small"
+                                   Icon="@(isSelected ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Circle)"
+                                   Color="@(color.ToMudColor())"
+                                   OnClick="() => _createColor = color"/>
+                </MudTooltip>
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _createDialogVisible = false">Cancel</MudButton>
+        <MudButton Color="MudBlazor.Color.Primary" OnClick="CreateTagAsync"
+                   Disabled="_savingTag || string.IsNullOrWhiteSpace(_createName)">Create</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@* Edit Tag Dialog *@
 <MudDialog @bind-Visible="_editDialogVisible" Options="_dialogOptions">
     <TitleContent>
         <MudText Typo="Typo.h6">Edit Tag: @_editingTag?.Name</MudText>
     </TitleContent>
     <DialogContent>
-        <MudTextField @bind-Value="_editTagDescription" Label="Description" MaxLength="2000"/>
+        <MudTextField @bind-Value="_editDescription" Label="Description" MaxLength="2000"
+                      Class="mb-4" FullWidth="true"/>
+        <MudText Typo="Typo.body2" Class="mb-2">Color</MudText>
+        <MudStack Row="true" Spacing="2">
+            @foreach (var color in Enum.GetValues<Color>())
+            {
+                var isSelected = _editColor == color;
+                <MudTooltip Text="@color.ToString()">
+                    <MudIconButton Size="Size.Small"
+                                   Icon="@(isSelected ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Circle)"
+                                   Color="@(color.ToMudColor())"
+                                   OnClick="() => _editColor = color"/>
+                </MudTooltip>
+            }
+        </MudStack>
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="() => _editDialogVisible = false">Cancel</MudButton>
-        <MudButton OnClick="SaveTagAsync" Color="Color.Primary" Disabled="_savingTag">Save
-        </MudButton>
+        <MudButton Color="MudBlazor.Color.Primary" OnClick="SaveTagAsync" Disabled="_savingTag">Save</MudButton>
     </DialogActions>
 </MudDialog>
 
+@* Delete Tag Dialog *@
 <MudDialog @bind-Visible="_deleteDialogVisible" Options="_dialogOptions">
     <TitleContent>
         <MudText Typo="Typo.h6">Delete Tag</MudText>
@@ -76,9 +127,7 @@
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="() => _deleteDialogVisible = false">Cancel</MudButton>
-        <MudButton OnClick="DeleteTagAsync" Color="Color.Error" Disabled="_deletingTagLoading">
-            Delete
-        </MudButton>
+        <MudButton OnClick="DeleteTagAsync" Color="MudBlazor.Color.Error" Disabled="_deletingTagLoading">Delete</MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -87,16 +136,25 @@
 
     private List<TagDto> _tags = new();
     private bool _tagsLoading;
-    private string _newTagName = "";
-    private string? _newTagDescription;
-    private bool _editDialogVisible;
-    private TagDto? _editingTag;
-    private string? _editTagDescription;
     private bool _savingTag;
-    private bool _deleteDialogVisible;
-    private TagDto? _deletingTag;
     private bool _deletingTagLoading;
     private readonly DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
+
+    // Create
+    private bool _createDialogVisible;
+    private string _createName = "";
+    private string? _createDescription;
+    private Color _createColor = Color.Blue;
+
+    // Edit
+    private bool _editDialogVisible;
+    private TagDto? _editingTag;
+    private string? _editDescription;
+    private Color _editColor = Color.Blue;
+
+    // Delete
+    private bool _deleteDialogVisible;
+    private TagDto? _deletingTag;
 
     protected override async Task OnInitializedAsync()
     {
@@ -114,20 +172,22 @@
         {
             Snackbar.Add(ex.Message, Severity.Error);
         }
-
         _tagsLoading = false;
         StateHasChanged();
     }
 
     private async Task CreateTagAsync()
     {
-        if (string.IsNullOrWhiteSpace(_newTagName)) return;
+        if (string.IsNullOrWhiteSpace(_createName)) return;
 
+        _savingTag = true;
         try
         {
-            await TagsService.Create(ProjectId, new CreateTagRequest(_newTagName.Trim(), _newTagDescription));
-            _newTagName = "";
-            _newTagDescription = "";
+            await TagsService.Create(ProjectId, new CreateTagRequest(_createName.Trim(), _createDescription, _createColor));
+            _createDialogVisible = false;
+            _createName = "";
+            _createDescription = "";
+            _createColor = Color.Blue;
             Snackbar.Add("Tag created", Severity.Success);
             await LoadTags();
         }
@@ -135,12 +195,17 @@
         {
             Snackbar.Add(ex.Message, Severity.Error);
         }
+        finally
+        {
+            _savingTag = false;
+        }
     }
 
     private void StartEditTag(TagDto tag)
     {
         _editingTag = tag;
-        _editTagDescription = tag.Description;
+        _editDescription = tag.Description;
+        _editColor = tag.Color;
         _editDialogVisible = true;
     }
 
@@ -151,7 +216,8 @@
         _savingTag = true;
         try
         {
-            await TagsService.Update(ProjectId, _editingTag.Name, new UpdateTagRequest(_editTagDescription));
+            await TagsService.Update(ProjectId, _editingTag.Name,
+                new UpdateTagRequest(_editDescription, _editColor));
             _editDialogVisible = false;
             Snackbar.Add("Tag updated", Severity.Success);
             await LoadTags();
@@ -193,5 +259,4 @@
             _deletingTagLoading = false;
         }
     }
-
 }

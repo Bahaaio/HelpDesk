@@ -1,3 +1,4 @@
+@using Workbench.ClientServices
 @using Workbench.Modules.Tags.Dtos
 @using Workbench.Modules.Tags.Services
 @inject ITagsService TagsService
@@ -10,6 +11,8 @@
     {
         <MudSelectItem Value="@tag.Name">
             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                <MudIcon Icon="@Icons.Material.Filled.Circle" Size="Size.Small"
+                         Color="@(tag.Color.ToMudColor())"/>
                 <MudText Typo="Typo.body2">@tag.Name</MudText>
                 @if (!string.IsNullOrEmpty(tag.Description))
                 {

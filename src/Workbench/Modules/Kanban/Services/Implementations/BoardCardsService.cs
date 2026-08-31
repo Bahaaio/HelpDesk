@@ -75,7 +75,84 @@ public class BoardCardsService : IBoardCardsService
         await _unitOfWork.SaveChangesAsync();
     }
 
-    public async Task Reorder(int projectId, int columnId, MoveCardRequest request)
+    public async Task<CardDto> Move(int projectId, int cardId, MoveCardRequest request)
+    {
+        await _projectsRepository.ExistsOrThrowAsync(projectId);
+        var board = await _boardsRepository.GetByProjectIdRaw(projectId);
+        await _authGuard.AuthorizeProjectLead(board);
+
+        var card = board.Columns
+                       .SelectMany(c => c.Cards)
+                       .FirstOrDefault(c => c.Id == cardId)
+                   ?? throw new NotFoundException($"Card {cardId} not found in project {projectId}");
+
+        var targetColumn = board.Columns.FirstOrDefault(c => c.Id == request.ColumnId)
+                           ?? throw new NotFoundException(
+                               $"Column {request.ColumnId} not found in project {projectId}");
+
+        var sourceColumn = board.Columns.First(c => c.Cards.Any(x => x.Id == cardId));
+
+        // Remove from source: reorder remaining cards with temp positions
+        var sourceCardIds = sourceColumn.Cards
+            .Where(c => c.Id != cardId)
+            .OrderBy(c => c.Position)
+            .Select(c => c.Id)
+            .ToList();
+
+        for (var i = 0; i < sourceCardIds.Count; i++)
+        {
+            var c = sourceColumn.Cards.First(x => x.Id == sourceCardIds[i]);
+            c.Position = TempPositionOffset + i + 1;
+        }
+
+        // Move card to target
+        card.ColumnId = request.ColumnId;
+        card.BoardId = targetColumn.BoardId;
+
+        // Build target order with card inserted at position
+        var targetCardIds = targetColumn.Cards
+            .OrderBy(c => c.Position)
+            .Select(c => c.Id)
+            .ToList();
+
+        var insertIndex = Math.Min(request.Position, targetCardIds.Count);
+        targetCardIds.Insert(insertIndex, cardId);
+
+        // Set target existing cards to temp positions
+        for (var i = 0; i < targetCardIds.Count; i++)
+        {
+            var c = targetColumn.Cards.FirstOrDefault(x => x.Id == targetCardIds[i]);
+            if (c is not null)
+                c.Position = TempPositionOffset + i + 1;
+            else if (targetCardIds[i] == cardId)
+                card.Position = TempPositionOffset + i + 1;
+        }
+
+        await _unitOfWork.SaveChangesAsync();
+
+        // Source final positions + target final positions in one save
+        for (var i = 0; i < sourceCardIds.Count; i++)
+        {
+            var c = sourceColumn.Cards.First(x => x.Id == sourceCardIds[i]);
+            c.Position = i + 1;
+        }
+
+        for (var i = 0; i < targetCardIds.Count; i++)
+        {
+            var c = targetColumn.Cards.FirstOrDefault(x => x.Id == targetCardIds[i]);
+            if (c is not null)
+                c.Position = i + 1;
+            else if (targetCardIds[i] == cardId)
+                card.Position = i + 1;
+        }
+
+        await _unitOfWork.SaveChangesAsync();
+
+        await _cardsRepository.LoadIssueAsync(card);
+        return card.ToDto();
+    }
+
+    public async Task Reorder(int projectId, int columnId, ReorderCardsRequest request)
     {
         await _projectsRepository.ExistsOrThrowAsync(projectId);
         var board = await _boardsRepository.GetByProjectIdRaw(projectId);

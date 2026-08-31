@@ -51,7 +51,7 @@
         }
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="() => Visible = false">Cancel</MudButton>
+        <MudButton OnClick="OnCancel">Cancel</MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -104,6 +104,12 @@
 
         _loading = false;
         StateHasChanged();
+    }
+
+    private async Task OnCancel()
+    {
+        Visible = false;
+        await VisibleChanged.InvokeAsync(false);
     }
 
     private async Task OnIssueSelected(int issueId)

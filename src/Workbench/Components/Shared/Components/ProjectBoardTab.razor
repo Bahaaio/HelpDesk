@@ -1,14 +1,15 @@
-@using Workbench.ClientServices
 @using Workbench.Modules.Issues.Enums
 @using Workbench.Modules.Kanban.Dtos
 @using Workbench.Modules.Kanban.Dtos.Requests
 @using Workbench.Modules.Kanban.Services
+@using Color = Workbench.Common.Enums.Color
 @rendermode InteractiveServer
 @inject IBoardsService BoardsService
 @inject IBoardColumnsService ColumnsService
 @inject IBoardCardsService CardsService
 @inject IProjectMembershipState ProjectMembership
 @inject ISnackbar Snackbar
+@inject IJSRuntime Js
 
 @if (_loading)
 {
@@ -26,7 +27,7 @@ else
         <MudSpacer/>
         @if (ProjectMembership.IsLead)
         {
-            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+            <MudButton Variant="Variant.Filled" Color="MudBlazor.Color.Primary"
                        StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddColumnDialog">
                 Add Column
             </MudButton>
@@ -34,85 +35,100 @@ else
     </MudStack>
 
     <MudScrollable Horizontal="true" Class="pa-4">
-        <MudStack Row="true" AlignItems="AlignItems.Start" Spacing="3">
+        <MudStack Row="true" AlignItems="AlignItems.Start" Spacing="3" Class="board-columns-row"
+                  @ondrop="OnRowDrop">
             @foreach (var column in _board.Columns.OrderBy(c => c.Position))
             {
-                <MudPaper Class="board-column" Elevation="2" Style="width: 300px; min-width: 300px;">
+                <MudPaper Class="board-column" Elevation="2"
+                          Style="width: 300px; min-width: 300px;"
+                          data-column-id="@column.Id"
+                          @ondrop="() => OnColumnDrop(column)">
                     <MudStack Class="pa-3" Spacing="2">
-                        <MudStack Row="true" AlignItems="AlignItems.Center">
+                        <MudStack Row="true" AlignItems="AlignItems.Center"
+                                  draggable="@(ProjectMembership.IsLead ? "true" : "false")"
+                                  Style="cursor: grab;"
+                                  @ondragstart="() => OnColumnDragStart(column)">
+                            <MudIcon Icon="@Icons.Material.Filled.DragIndicator" Size="Size.Small"
+                                     Class="mr-1"/>
                             <MudIcon Icon="@Icons.Material.Filled.Circle" Size="Size.Small"
                                      Color="@column.Color.ToMudColor()"/>
-                            <MudText Typo="Typo.subtitle1" Style="font-weight: 600;">@column.Name</MudText>
-                            <MudText Typo="Typo.body2" Color="Color.Default">
+                            <MudText Typo="Typo.subtitle1"
+                                     Style="font-weight: 600;">@column.Name</MudText>
+                            <MudText Typo="Typo.body2" Color="MudBlazor.Color.Default">
                                 @column.Cards.Count
                             </MudText>
                             <MudSpacer/>
                             @if (ProjectMembership.IsLead)
                             {
                                 <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small"
+                                               @ondragstart:stopPropagation
                                                OnClick="() => OpenAddCardDialog(column.Id)"/>
-                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                               Color="Color.Error"
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                               @ondragstart:stopPropagation
+                                               OnClick="() => OpenEditColumnDialog(column)"/>
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                               Size="Size.Small"
+                                               Color="MudBlazor.Color.Error"
+                                               @ondragstart:stopPropagation
                                                OnClick="() => ConfirmDeleteColumn(column)"/>
                             }
                         </MudStack>
 
                         @if (!string.IsNullOrEmpty(column.Description))
                         {
-                            <MudText Typo="Typo.body2" Color="Color.Secondary">@column.Description</MudText>
+                            <MudText Typo="Typo.body2"
+                                     Color="MudBlazor.Color.Secondary">@column.Description</MudText>
                         }
 
-                        <MudStack Spacing="2" Class="board-cards">
+                        <MudStack Spacing="1" Class="board-cards">
                             @foreach (var card in column.Cards.OrderBy(c => c.Position))
                             {
                                 <MudPaper Class="board-card pa-2" Elevation="1"
-                                          Style="cursor: grab;">
+                                          Style="cursor: grab;"
+                                          draggable="@(ProjectMembership.IsLead ? "true" : "false")"
+                                          @ondragstart="() => OnCardDragStart(card, column)">
                                     <MudStack Spacing="0">
                                         <MudStack Row="true" AlignItems="AlignItems.Center">
-                                            <MudLink Href="@($"/projects/{ProjectId}/issues/{card.IssueId}")">
-                                                <MudText Typo="Typo.body2" Style="font-weight: 500;">
+                                            <MudLink
+                                                Href="@($"/projects/{ProjectId}/issues/{card.IssueId}")"
+                                                @ondragstart:stopPropagation>
+                                                <MudText Typo="Typo.body2"
+                                                         Style="font-weight: 500;">
                                                     @card.IssueTitle
                                                 </MudText>
                                             </MudLink>
                                             <MudSpacer/>
                                             @if (ProjectMembership.IsLead)
                                             {
-                                                <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small"
-                                                               Color="Color.Error" Class="pa-0"
+                                                <MudIconButton Icon="@Icons.Material.Filled.Remove"
+                                                               Size="Size.Small"
+                                                               Color="MudBlazor.Color.Error" Class="pa-0"
+                                                               @ondragstart:stopPropagation
                                                                OnClick="() => DeleteCard(card)"/>
                                             }
                                         </MudStack>
-                                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                                            <MudText Typo="Typo.caption" Color="Color.Default">
+                                        <MudStack Row="true" AlignItems="AlignItems.Center"
+                                                  Spacing="1">
+                                            <MudText Typo="Typo.caption" Color="MudBlazor.Color.Default">
                                                 #@card.IssueId
                                             </MudText>
                                             @if (card.IssueStatus == Status.Open)
                                             {
-                                                <MudChip T="string" Size="Size.Small" Color="Color.Success">Open</MudChip>
+                                                <MudChip T="string" Size="Size.Small"
+                                                         Color="MudBlazor.Color.Success">Open
+                                                </MudChip>
                                             }
                                             else if (card.IssueStatus == Status.InProgress)
                                             {
-                                                <MudChip T="string" Size="Size.Small" Color="Color.Warning">In Progress</MudChip>
+                                                <MudChip T="string" Size="Size.Small"
+                                                         Color="MudBlazor.Color.Warning">In Progress
+                                                </MudChip>
                                             }
                                             else
                                             {
-                                                <MudChip T="string" Size="Size.Small" Color="Color.Default">Closed</MudChip>
-                                            }
-                                            @if (ProjectMembership.IsLead)
-                                            {
-                                                <MudSpacer/>
-                                                @if (column.Cards.IndexOf(card) > 0)
-                                                {
-                                                    <MudIconButton Icon="@Icons.Material.Filled.ArrowUpward"
-                                                                   Size="Size.Small" Class="pa-0"
-                                                                   OnClick="() => MoveCardUp(card, column)"/>
-                                                }
-                                                @if (column.Cards.IndexOf(card) < column.Cards.Count - 1)
-                                                {
-                                                    <MudIconButton Icon="@Icons.Material.Filled.ArrowDownward"
-                                                                   Size="Size.Small" Class="pa-0"
-                                                                   OnClick="() => MoveCardDown(card, column)"/>
-                                                }
+                                                <MudChip T="string" Size="Size.Small"
+                                                         Color="MudBlazor.Color.Default">Closed
+                                                </MudChip>
                                             }
                                         </MudStack>
                                     </MudStack>
@@ -126,7 +142,6 @@ else
     </MudScrollable>
 }
 
-@* Add Column Dialog *@
 <MudDialog @bind-Visible="_addColumnDialogVisible" Options="_dialogOptions">
     <TitleContent>
         <MudText Typo="Typo.h6">Add Column</MudText>
@@ -134,40 +149,61 @@ else
     <DialogContent>
         <MudTextField @bind-Value="_newColumnName" Label="Name" Required="true" MaxLength="100"
                       FullWidth="true" Class="mb-4"/>
-        <MudTextField @bind-Value="_newColumnDescription" Label="Description" Lines="2" MaxLength="512"
+        <MudTextField @bind-Value="_newColumnDescription" Label="Description" Lines="2"
+                      MaxLength="512"
                       FullWidth="true" Class="mb-4"/>
         <ColorPicker @bind-Value="_newColumnColor" Label="Color"/>
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="() => _addColumnDialogVisible = false">Cancel</MudButton>
-        <MudButton Color="Color.Primary" OnClick="AddColumn" Disabled="_saving">Add</MudButton>
+        <MudButton Color="MudBlazor.Color.Primary" OnClick="AddColumn" Disabled="_saving">Add
+        </MudButton>
     </DialogActions>
 </MudDialog>
 
-@* Add Card Dialog *@
+<MudDialog @bind-Visible="_editColumnDialogVisible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Edit Column</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="_editColumnName" Label="Name" Required="true" MaxLength="100"
+                      FullWidth="true" Class="mb-4"/>
+        <MudTextField @bind-Value="_editColumnDescription" Label="Description" Lines="2"
+                      MaxLength="512"
+                      FullWidth="true" Class="mb-4"/>
+        <ColorPicker @bind-Value="_editColumnColor" Label="Color"/>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _editColumnDialogVisible = false">Cancel</MudButton>
+        <MudButton Color="MudBlazor.Color.Primary" OnClick="SaveColumn" Disabled="_saving">Save
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
 <IssuePickerDialog ProjectId="ProjectId"
                    ExcludeIssueIds="@_boardIssueIds"
                    Title="Add Issue to Board"
                    @bind-Visible="_addCardDialogVisible"
                    IssueSelected="OnIssueSelected"/>
 
-@* Delete Column Confirmation *@
 <MudDialog @bind-Visible="_deleteColumnDialogVisible" Options="_dialogOptions">
     <TitleContent>
         <MudText Typo="Typo.h6">Delete Column</MudText>
     </TitleContent>
     <DialogContent>
-        <MudText>Are you sure you want to delete column <strong>@_columnToDelete?.Name</strong>?</MudText>
+        <MudText>Are you sure you want to delete column <strong>@_columnToDelete?.Name</strong>?
+        </MudText>
         @if (_columnToDelete?.Cards.Count > 0)
         {
-            <MudText Typo="Typo.body2" Color="Color.Error" Class="mt-2">
+            <MudText Typo="Typo.body2" Color="MudBlazor.Color.Error" Class="mt-2">
                 This column has @_columnToDelete.Cards.Count card(s) that will be removed.
             </MudText>
         }
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="() => _deleteColumnDialogVisible = false">Cancel</MudButton>
-        <MudButton Color="Color.Error" OnClick="DeleteColumn" Disabled="_saving">Delete</MudButton>
+        <MudButton Color="MudBlazor.Color.Error" OnClick="DeleteColumn" Disabled="_saving">Delete
+        </MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -183,11 +219,27 @@ else
 
     .board-card {
         border-radius: 6px;
-        transition: box-shadow 0.2s;
+        transition: box-shadow 0.15s, opacity 0.15s;
     }
 
     .board-card:hover {
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .drop-indicator {
+        height: 3px;
+        background: var(--mud-palette-primary);
+        border-radius: 2px;
+        margin: 2px 0;
+    }
+
+    .column-drop-indicator {
+        width: 3px;
+        background: var(--mud-palette-primary);
+        border-radius: 2px;
+        min-height: 60px;
+        align-self: stretch;
+        margin: 0 2px;
     }
 </style>
 
@@ -201,14 +253,24 @@ else
     private bool _addColumnDialogVisible;
     private string _newColumnName = "";
     private string? _newColumnDescription;
-    private Common.Enums.Color _newColumnColor = Common.Enums.Color.Blue;
+    private Color _newColumnColor = Color.Blue;
+
+    private bool _editColumnDialogVisible;
+    private int _editColumnId;
+    private string _editColumnName = "";
+    private string? _editColumnDescription;
+    private Color _editColumnColor = Color.Blue;
 
     private bool _addCardDialogVisible;
     private int _addCardColumnId;
-    private HashSet<int> _boardIssueIds => _board?.Columns.SelectMany(c => c.Cards).Select(c => c.IssueId).ToHashSet() ?? new();
+    private HashSet<int> _boardIssueIds => _board?.Columns.SelectMany(c => c.Cards).Select(c => c.IssueId).ToHashSet() ?? new HashSet<int>();
 
     private bool _deleteColumnDialogVisible;
     private ColumnDto? _columnToDelete;
+
+    private int? _draggedCardId;
+    private int? _draggedSourceColumnId;
+    private int? _draggedColumnId;
 
     private readonly DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
 
@@ -238,7 +300,7 @@ else
     {
         _newColumnName = "";
         _newColumnDescription = null;
-        _newColumnColor = Common.Enums.Color.Blue;
+        _newColumnColor = Color.Blue;
         _addColumnDialogVisible = true;
     }
 
@@ -262,6 +324,41 @@ else
         catch (Exception ex)
         {
             Snackbar.Add($"Failed to add column: {ex.Message}", Severity.Error);
+        }
+
+        _saving = false;
+        StateHasChanged();
+    }
+
+    private void OpenEditColumnDialog(ColumnDto column)
+    {
+        _editColumnId = column.Id;
+        _editColumnName = column.Name;
+        _editColumnDescription = column.Description;
+        _editColumnColor = column.Color;
+        _editColumnDialogVisible = true;
+    }
+
+    private async Task SaveColumn()
+    {
+        _saving = true;
+        StateHasChanged();
+
+        try
+        {
+            await ColumnsService.Update(ProjectId, _editColumnId, new UpdateColumnRequest
+            {
+                Name = _editColumnName,
+                Description = _editColumnDescription,
+                Color = _editColumnColor
+            });
+            _editColumnDialogVisible = false;
+            Snackbar.Add("Column updated", Severity.Success);
+            await LoadBoard();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to update column: {ex.Message}", Severity.Error);
         }
 
         _saving = false;
@@ -298,42 +395,123 @@ else
         StateHasChanged();
     }
 
-    private async Task MoveCardUp(CardDto card, ColumnDto column)
+    private void OnCardDragStart(CardDto card, ColumnDto column)
     {
-        var cardIds = column.Cards.OrderBy(c => c.Position).Select(c => c.Id).ToList();
-        var index = cardIds.IndexOf(card.Id);
-        if (index <= 0) return;
-
-        (cardIds[index], cardIds[index - 1]) = (cardIds[index - 1], cardIds[index]);
-
-        try
-        {
-            await CardsService.Reorder(ProjectId, column.Id, new MoveCardRequest { CardIds = cardIds });
-            await LoadBoard();
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Failed to reorder card: {ex.Message}", Severity.Error);
-        }
+        _draggedCardId = card.Id;
+        _draggedSourceColumnId = column.Id;
+        _draggedColumnId = null;
+        _ = Js.InvokeVoidAsync("DragDrop.setDragData", card.Id, column.Id);
     }
 
-    private async Task MoveCardDown(CardDto card, ColumnDto column)
+    private void OnColumnDragStart(ColumnDto column)
     {
-        var cardIds = column.Cards.OrderBy(c => c.Position).Select(c => c.Id).ToList();
-        var index = cardIds.IndexOf(card.Id);
-        if (index < 0 || index >= cardIds.Count - 1) return;
+        _draggedColumnId = column.Id;
+        _draggedCardId = null;
+        _draggedSourceColumnId = null;
+        _ = Js.InvokeVoidAsync("DragDrop.setColumnDragData", column.Id);
+    }
 
-        (cardIds[index], cardIds[index + 1]) = (cardIds[index + 1], cardIds[index]);
+    private async Task OnColumnDrop(ColumnDto targetColumn)
+    {
+        if (_board is null || _draggedColumnId is not null)
+            return;
+
+        if (_draggedCardId is null || _draggedSourceColumnId is null)
+        {
+            await Js.InvokeVoidAsync("DragDrop.clearDragData");
+            ResetDragState();
+            return;
+        }
+
+        var cardId = _draggedCardId.Value;
+        var sourceColumnId = _draggedSourceColumnId.Value;
+
+        var dropIndex = await Js.InvokeAsync<int>("DragDrop.getDropIndex", targetColumn.Id);
+        await Js.InvokeVoidAsync("DragDrop.clearDragData");
 
         try
         {
-            await CardsService.Reorder(ProjectId, column.Id, new MoveCardRequest { CardIds = cardIds });
+            if (sourceColumnId == targetColumn.Id)
+            {
+                var column = _board.Columns.First(c => c.Id == sourceColumnId);
+                var cardIds = column.Cards
+                    .Where(c => c.Id != cardId)
+                    .OrderBy(c => c.Position)
+                    .Select(c => c.Id)
+                    .ToList();
+
+                var insertAt = Math.Min(dropIndex, cardIds.Count);
+                cardIds.Insert(insertAt, cardId);
+
+                await CardsService.Reorder(ProjectId, targetColumn.Id, new ReorderCardsRequest { CardIds = cardIds });
+            }
+            else
+            {
+                await CardsService.Move(ProjectId, cardId, new MoveCardRequest
+                {
+                    ColumnId = targetColumn.Id,
+                    Position = dropIndex
+                });
+            }
+
             await LoadBoard();
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Failed to reorder card: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Failed to move card: {ex.Message}", Severity.Error);
         }
+
+        ResetDragState();
+    }
+
+    private async Task OnRowDrop()
+    {
+        if (_draggedColumnId is null || _board is null)
+        {
+            await Js.InvokeVoidAsync("DragDrop.clearDragData");
+            ResetDragState();
+            return;
+        }
+
+        var draggedId = _draggedColumnId.Value;
+
+        var dropIndex = await Js.InvokeAsync<int>("DragDrop.getColumnDropIndex", ".board-columns-row");
+        await Js.InvokeVoidAsync("DragDrop.clearDragData");
+
+        var columnIds = _board.Columns
+            .OrderBy(c => c.Position)
+            .Select(c => c.Id)
+            .ToList();
+
+        var fromIndex = columnIds.IndexOf(draggedId);
+        if (fromIndex < 0)
+        {
+            ResetDragState();
+            return;
+        }
+
+        columnIds.RemoveAt(fromIndex);
+        var insertAt = Math.Min(dropIndex, columnIds.Count);
+        columnIds.Insert(insertAt, draggedId);
+
+        try
+        {
+            await ColumnsService.Reorder(ProjectId, new MoveColumnRequest { ColumnIds = columnIds });
+            await LoadBoard();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to reorder column: {ex.Message}", Severity.Error);
+        }
+
+        ResetDragState();
+    }
+
+    private void ResetDragState()
+    {
+        _draggedCardId = null;
+        _draggedSourceColumnId = null;
+        _draggedColumnId = null;
     }
 
     private async Task DeleteCard(CardDto card)
@@ -378,4 +556,5 @@ else
         _saving = false;
         StateHasChanged();
     }
+
 }

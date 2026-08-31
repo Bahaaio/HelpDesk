@@ -6,6 +6,7 @@ namespace Workbench.Modules.Kanban.Services;
 public interface IBoardCardsService
 {
     Task<CardDto> Add(int projectId, CreateCardRequest request);
-    Task Reorder(int projectId, int columnId, MoveCardRequest request);
+    Task<CardDto> Move(int projectId, int cardId, MoveCardRequest request);
+    Task Reorder(int projectId, int columnId, ReorderCardsRequest request);
     Task Delete(int projectId, int cardId);
 }

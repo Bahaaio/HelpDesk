@@ -43,7 +43,8 @@ public class BoardCardsService : IBoardCardsService
             throw new ConflictException($"Issue {request.IssueId} is already on this board");
 
         var column = board.Columns.FirstOrDefault(c => c.Id == request.ColumnId)
-            ?? throw new NotFoundException($"Column {request.ColumnId} not found in project {projectId}");
+                     ?? throw new NotFoundException(
+                         $"Column {request.ColumnId} not found in project {projectId}");
 
         var maxPosition = column.Cards.Count > 0 ? column.Cards.Max(c => c.Position) : 0;
 
@@ -62,57 +63,34 @@ public class BoardCardsService : IBoardCardsService
         return card.ToDto();
     }
 
-    public async Task<CardDto> Move(int projectId, int cardId, MoveCardRequest request)
-    {
-        await _projectsRepository.ExistsOrThrowAsync(projectId);
-        var board = await _boardsRepository.GetByProjectIdRaw(projectId);
-        await _authGuard.AuthorizeProjectLead(board);
-
-        var card = board.Columns
-                       .SelectMany(c => c.Cards)
-                       .FirstOrDefault(c => c.Id == cardId)
-                   ?? throw new NotFoundException($"Card {cardId} not found in project {projectId}");
-
-        card.ColumnId = request.ColumnId;
-        card.Position = request.Position;
-
-        await _unitOfWork.SaveChangesAsync();
-
-        return card.ToDto();
-    }
-
     public async Task Delete(int projectId, int cardId)
     {
-        await _projectsRepository.ExistsOrThrowAsync(projectId);
-        var board = await _boardsRepository.GetByProjectIdRaw(projectId);
-        await _authGuard.AuthorizeProjectLead(board);
+        var project = await _projectsRepository.GetByIdAsync(projectId);
+        await _authGuard.AuthorizeProjectLead(project);
 
-        var card = board.Columns
-                       .SelectMany(c => c.Cards)
-                       .FirstOrDefault(c => c.Id == cardId)
-                   ?? throw new NotFoundException($"Card {cardId} not found in project {projectId}");
-
+        var card = await _cardsRepository.GetByIdAsync(cardId);
         _cardsRepository.Remove(card);
+
         await _unitOfWork.SaveChangesAsync();
     }
 
-    public async Task Reorder(int projectId, int columnId, List<int> cardIds)
+    public async Task Reorder(int projectId, int columnId, MoveCardRequest request)
     {
         await _projectsRepository.ExistsOrThrowAsync(projectId);
         var board = await _boardsRepository.GetByProjectIdRaw(projectId);
         await _authGuard.AuthorizeProjectLead(board);
 
         var column = board.Columns.FirstOrDefault(c => c.Id == columnId)
-                     ?? throw new NotFoundException($"Column {columnId} not found in project {projectId}");
+                     ?? throw new NotFoundException(
+                         $"Column {columnId} not found in project {projectId}");
 
+        var ids = request.CardIds;
         var cards = column.Cards.ToList();
 
-        // TODO: n+1 query, optimize this
-        for (var i = 0; i < cardIds.Count; i++)
+        for (var i = 0; i < ids.Count; i++)
         {
-            var card = cards.FirstOrDefault(c => c.Id == cardIds[i]);
-            if (card is not null)
-                card.Position = i + 1;
+            var card = cards.FirstOrDefault(c => c.Id == ids[i]);
+            card?.Position = i + 1;
         }
 
         await _unitOfWork.SaveChangesAsync();

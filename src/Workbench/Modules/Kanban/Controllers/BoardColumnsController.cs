@@ -24,7 +24,8 @@ public class BoardColumnsController : ControllerBase
     }
 
     [HttpPut("{columnId}")]
-    public async Task<ActionResult<ColumnDto>> Update(int projectId, int columnId, UpdateColumnRequest request) =>
+    public async Task<ActionResult<ColumnDto>> Update(int projectId, int columnId,
+        UpdateColumnRequest request) =>
         Ok(await _columnsService.Update(projectId, columnId, request));
 
     [HttpDelete("{columnId}")]
@@ -35,9 +36,9 @@ public class BoardColumnsController : ControllerBase
     }
 
     [HttpPut("reorder")]
-    public async Task<IActionResult> Reorder(int projectId, List<int> columnIds)
+    public async Task<IActionResult> Reorder(int projectId, MoveColumnRequest request)
     {
-        await _columnsService.Reorder(projectId, columnIds);
+        await _columnsService.Reorder(projectId, request);
         return NoContent();
     }
 }

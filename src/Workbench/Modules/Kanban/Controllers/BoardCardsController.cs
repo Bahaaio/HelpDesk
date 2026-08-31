@@ -23,11 +23,6 @@ public class BoardCardsController : ControllerBase
         return Created((string?)null, card);
     }
 
-    [HttpPut("{cardId}/move")]
-    public async Task<ActionResult<CardDto>> Move(int projectId, int cardId,
-        MoveCardRequest request) =>
-        Ok(await _cardsService.Move(projectId, cardId, request));
-
     [HttpDelete("{cardId}")]
     public async Task<IActionResult> Delete(int projectId, int cardId)
     {
@@ -36,9 +31,9 @@ public class BoardCardsController : ControllerBase
     }
 
     [HttpPut("columns/{columnId}/reorder")]
-    public async Task<IActionResult> Reorder(int projectId, int columnId, List<int> cardIds)
+    public async Task<IActionResult> Reorder(int projectId, int columnId, MoveCardRequest request)
     {
-        await _cardsService.Reorder(projectId, columnId, cardIds);
+        await _cardsService.Reorder(projectId, columnId, request);
         return NoContent();
     }
 }

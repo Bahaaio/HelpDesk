@@ -77,19 +77,19 @@ public class BoardColumnsService : IBoardColumnsService
         await _unitOfWork.SaveChangesAsync();
     }
 
-    public async Task Reorder(int projectId, List<int> columnIds)
+    public async Task Reorder(int projectId, MoveColumnRequest request)
     {
         await _projectsRepository.ExistsOrThrowAsync(projectId);
         var board = await _boardsRepository.GetByProjectIdRaw(projectId);
         await _authGuard.AuthorizeProjectLead(board);
 
+        var ids = request.ColumnIds;
         var columns = board.Columns.ToList();
 
-        for (var i = 0; i < columnIds.Count; i++)
+        for (var i = 0; i < ids.Count; i++)
         {
-            var column = columns.FirstOrDefault(c => c.Id == columnIds[i]);
-            if (column is not null)
-                column.Position = i + 1;
+            var column = columns.FirstOrDefault(c => c.Id == ids[i]);
+            column?.Position = i + 1;
         }
 
         await _unitOfWork.SaveChangesAsync();
@@ -102,7 +102,8 @@ public class BoardColumnsService : IBoardColumnsService
         await _authGuard.AuthorizeProjectLead(board);
 
         var column = board.Columns.FirstOrDefault(c => c.Id == columnId)
-            ?? throw new NotFoundException($"Column {columnId} not found in project {projectId}");
+                     ?? throw new NotFoundException(
+                         $"Column {columnId} not found in project {projectId}");
 
         return column;
     }

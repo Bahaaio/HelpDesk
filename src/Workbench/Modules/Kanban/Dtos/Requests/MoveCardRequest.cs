@@ -4,6 +4,5 @@ namespace Workbench.Modules.Kanban.Dtos.Requests;
 
 public record MoveCardRequest
 {
-    [Required] public int ColumnId { get; set; }
-    public int Position { get; set; }
+    [Required] public List<int> CardIds { get; set; }
 }

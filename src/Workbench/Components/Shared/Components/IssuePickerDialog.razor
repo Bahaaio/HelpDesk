@@ -76,10 +76,13 @@
                 i.Title.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
                 i.Id.ToString() == _searchText.TrimStart('#'));
 
+    private bool _wasVisible;
+
     protected override async Task OnParametersSetAsync()
     {
-        if (Visible && _availableIssues.Count == 0)
+        if (Visible && !_wasVisible)
             await LoadIssues();
+        _wasVisible = Visible;
     }
 
     private async Task LoadIssues()

@@ -65,14 +65,23 @@ else
                         <MudStack Spacing="2" Class="board-cards">
                             @foreach (var card in column.Cards.OrderBy(c => c.Position))
                             {
-                                <MudPaper Class="board-card pa-3" Elevation="1"
+                                <MudPaper Class="board-card pa-2" Elevation="1"
                                           Style="cursor: grab;">
-                                    <MudStack Spacing="1">
-                                        <MudLink Href="@($"/projects/{ProjectId}/issues/{card.IssueId}")">
-                                            <MudText Typo="Typo.body2" Style="font-weight: 500;">
-                                                @card.IssueTitle
-                                            </MudText>
-                                        </MudLink>
+                                    <MudStack Spacing="0">
+                                        <MudStack Row="true" AlignItems="AlignItems.Center">
+                                            <MudLink Href="@($"/projects/{ProjectId}/issues/{card.IssueId}")">
+                                                <MudText Typo="Typo.body2" Style="font-weight: 500;">
+                                                    @card.IssueTitle
+                                                </MudText>
+                                            </MudLink>
+                                            <MudSpacer/>
+                                            @if (ProjectMembership.IsLead)
+                                            {
+                                                <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small"
+                                                               Color="Color.Error" Class="pa-0"
+                                                               OnClick="() => DeleteCard(card)"/>
+                                            }
+                                        </MudStack>
                                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
                                             <MudText Typo="Typo.caption" Color="Color.Default">
                                                 #@card.IssueId
@@ -89,27 +98,23 @@ else
                                             {
                                                 <MudChip T="string" Size="Size.Small" Color="Color.Default">Closed</MudChip>
                                             }
-                                        </MudStack>
-                                        @if (ProjectMembership.IsLead)
-                                        {
-                                            <MudStack Row="true" Spacing="0" Justify="Justify.FlexEnd">
+                                            @if (ProjectMembership.IsLead)
+                                            {
+                                                <MudSpacer/>
                                                 @if (column.Cards.IndexOf(card) > 0)
                                                 {
                                                     <MudIconButton Icon="@Icons.Material.Filled.ArrowUpward"
-                                                                   Size="Size.Small"
+                                                                   Size="Size.Small" Class="pa-0"
                                                                    OnClick="() => MoveCardUp(card, column)"/>
                                                 }
                                                 @if (column.Cards.IndexOf(card) < column.Cards.Count - 1)
                                                 {
                                                     <MudIconButton Icon="@Icons.Material.Filled.ArrowDownward"
-                                                                   Size="Size.Small"
+                                                                   Size="Size.Small" Class="pa-0"
                                                                    OnClick="() => MoveCardDown(card, column)"/>
                                                 }
-                                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
-                                                               Color="Color.Error"
-                                                               OnClick="() => DeleteCard(card)"/>
-                                            </MudStack>
-                                        }
+                                            }
+                                        </MudStack>
                                     </MudStack>
                                 </MudPaper>
                             }

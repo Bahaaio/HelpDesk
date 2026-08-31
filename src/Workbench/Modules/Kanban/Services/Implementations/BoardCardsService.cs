@@ -13,6 +13,7 @@ namespace Workbench.Modules.Kanban.Services.Implementations;
 
 public class BoardCardsService : IBoardCardsService
 {
+    private const int TempPositionOffset = 1000;
     private readonly IAuthorizationGuard _authGuard;
     private readonly IBoardsRepository _boardsRepository;
     private readonly IBoardCardsRepository _cardsRepository;
@@ -85,11 +86,20 @@ public class BoardCardsService : IBoardCardsService
                          $"Column {columnId} not found in project {projectId}");
 
         var ids = request.CardIds;
-        var cards = column.Cards.ToList();
 
+        // set the positions to a high number to avoid conflicts
         for (var i = 0; i < ids.Count; i++)
         {
-            var card = cards.FirstOrDefault(c => c.Id == ids[i]);
+            var card = column.Cards.FirstOrDefault(c => c.Id == ids[i]);
+            card?.Position = TempPositionOffset + i + 1;
+        }
+
+        await _unitOfWork.SaveChangesAsync();
+
+        // reorder again to set the correct positions
+        for (var i = 0; i < ids.Count; i++)
+        {
+            var card = column.Cards.FirstOrDefault(c => c.Id == ids[i]);
             card?.Position = i + 1;
         }
 

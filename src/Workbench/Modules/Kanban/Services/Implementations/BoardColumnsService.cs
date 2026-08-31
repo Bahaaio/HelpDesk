@@ -13,6 +13,7 @@ namespace Workbench.Modules.Kanban.Services.Implementations;
 
 public class BoardColumnsService : IBoardColumnsService
 {
+    private const int TempPositionOffset = 1000;
     private readonly IAuthorizationGuard _authGuard;
     private readonly IBoardsRepository _boardsRepository;
     private readonly IBoardColumnsRepository _columnsRepository;
@@ -84,11 +85,20 @@ public class BoardColumnsService : IBoardColumnsService
         await _authGuard.AuthorizeProjectLead(board);
 
         var ids = request.ColumnIds;
-        var columns = board.Columns.ToList();
 
+        // set temporary positions to avoid unique constraint violations
         for (var i = 0; i < ids.Count; i++)
         {
-            var column = columns.FirstOrDefault(c => c.Id == ids[i]);
+            var column = board.Columns.FirstOrDefault(c => c.Id == ids[i]);
+            column?.Position = TempPositionOffset + i + 1;
+        }
+
+        await _unitOfWork.SaveChangesAsync();
+
+        // reorder again to set the correct positions
+        for (var i = 0; i < ids.Count; i++)
+        {
+            var column = board.Columns.FirstOrDefault(c => c.Id == ids[i]);
             column?.Position = i + 1;
         }
 

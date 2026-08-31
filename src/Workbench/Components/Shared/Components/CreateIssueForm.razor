@@ -1,0 +1,121 @@
+@using Workbench.ClientServices
+@using Workbench.Modules.Issues.Dtos.Requests
+@using Workbench.Modules.Issues.Options
+@using Workbench.Modules.Issues.Services
+@rendermode InteractiveServer
+@inject IIssuesService IssuesService
+@inject IIssueTagsService IssueTagsService
+@inject IIssueAttachmentsClient AttachmentsClient
+@inject IOptions<IssueAttachmentOptions> IssueAttachmentOptions
+@inject ISnackbar Snackbar
+
+<MudStack>
+    <MudTextField @bind-Value="_title" Label="Title" Required="true" MaxLength="200"
+                  FullWidth="true"/>
+
+    <MudTextField @bind-Value="_description" Label="Description" Lines="3" MaxLength="2000"
+                  FullWidth="true"/>
+
+    <TagSelect ProjectId="ProjectId" Label="Tags"
+               SelectedValues="_selectedTags" SelectedValuesChanged="v => _selectedTags = v.ToList()"/>
+
+    <MudFileUpload @bind-Files="Files" AppendMultipleFiles
+                   Accept="@string.Join(',', IssueAttachmentOptions.Value.AllowedExtensions)">
+        <CustomContent Context="fileUpload">
+            <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.AttachFile"
+                       OnClick="@fileUpload.OpenFilePickerAsync" Size="Size.Small">
+                Attach Files
+            </MudButton>
+        </CustomContent>
+    </MudFileUpload>
+
+    @if (_files is { Count: > 0 })
+    {
+        <MudText Typo="Typo.caption">@_files.Count file(s) selected</MudText>
+    }
+
+    <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
+        <MudButton Color="Color.Primary" OnClick="CreateAsync"
+                   Disabled="_loading || string.IsNullOrWhiteSpace(_title)">
+            @if (_loading)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2"/>
+            }
+            Create
+        </MudButton>
+    </MudStack>
+</MudStack>
+
+@code {
+    [Parameter] public int ProjectId { get; set; }
+    [Parameter] public string? InitialTitle { get; set; }
+    [Parameter] public EventCallback<int> IssueCreated { get; set; }
+
+    private string _title = "";
+    private string? _description;
+    private bool _loading;
+    private List<string> _selectedTags = new();
+    private IReadOnlyList<IBrowserFile>? _files;
+
+    private IReadOnlyList<IBrowserFile>? Files
+    {
+        get => _files;
+        set => _files = value;
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (InitialTitle is not null && string.IsNullOrWhiteSpace(_title))
+            _title = InitialTitle;
+    }
+
+    private async Task CreateAsync()
+    {
+        _loading = true;
+        StateHasChanged();
+
+        try
+        {
+            var issue = await IssuesService.Create(ProjectId, new CreateIssueRequest
+            {
+                Title = _title,
+                Description = _description
+            });
+
+            if (_selectedTags.Count > 0)
+            {
+                try { await IssueTagsService.UpdateTags(issue.Id, _selectedTags); }
+                catch { }
+            }
+
+            if (_files is { Count: > 0 })
+            {
+                foreach (var file in _files)
+                {
+                    try { await AttachmentsClient.Add(issue.Id, file); }
+                    catch { }
+                }
+            }
+
+            Snackbar.Add("Issue created", Severity.Success);
+            await IssueCreated.InvokeAsync(issue.Id);
+            Reset();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+
+        _loading = false;
+        StateHasChanged();
+    }
+
+    public void Reset()
+    {
+        _title = "";
+        _description = null;
+        _selectedTags = new();
+        _files = null;
+        StateHasChanged();
+    }
+}

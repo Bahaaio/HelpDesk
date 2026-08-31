@@ -10,48 +10,70 @@
         <MudText Typo="Typo.h6">@(Title ?? "Select Issue")</MudText>
     </TitleContent>
     <DialogContent>
-        @if (_loading)
+        @if (_creating)
+        {
+            <CreateIssueForm ProjectId="ProjectId" InitialTitle="_searchText"
+                             IssueCreated="OnNewIssueCreated"/>
+        }
+        else if (_loading)
         {
             <MudProgressCircular Indeterminate="true" Class="d-flex justify-center ma-4"/>
-        }
-        else if (_availableIssues.Count == 0)
-        {
-            <MudText Typo="Typo.body2" Color="Color.Default">No available issues.</MudText>
         }
         else
         {
             <MudTextField @bind-Value="_searchText" Placeholder="Search issues..."
                           Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
                           FullWidth="true" Immediate="true" Class="mb-2"/>
-            <MudList T="IssueDto" Dense="true">
-                @foreach (var issue in FilteredIssues)
-                {
-                    <MudListItem Value="issue" OnClick="() => OnIssueSelected(issue.Id)">
-                        <MudStack Row="true" AlignItems="AlignItems.Center">
-                            <MudText Typo="Typo.body2">
-                                <span style="opacity: 0.5;">#@issue.Id</span> @issue.Title
-                            </MudText>
-                            <MudSpacer/>
-                            @if (issue.Status == Status.Open)
-                            {
-                                <MudChip T="string" Size="Size.Small" Color="Color.Success">Open</MudChip>
-                            }
-                            else if (issue.Status == Status.InProgress)
-                            {
-                                <MudChip T="string" Size="Size.Small" Color="Color.Warning">In Progress</MudChip>
-                            }
-                            else
-                            {
-                                <MudChip T="string" Size="Size.Small" Color="Color.Default">Closed</MudChip>
-                            }
-                        </MudStack>
-                    </MudListItem>
-                }
-            </MudList>
+
+            @if (FilteredIssues.Any())
+            {
+                <MudList T="IssueDto" Dense="true">
+                    @foreach (var issue in FilteredIssues)
+                    {
+                        <MudListItem Value="issue" OnClick="() => OnIssueSelected(issue.Id)">
+                            <MudStack Row="true" AlignItems="AlignItems.Center">
+                                <MudText Typo="Typo.body2">
+                                    <span style="opacity: 0.5;">#@issue.Id</span> @issue.Title
+                                </MudText>
+                                <MudSpacer/>
+                                @if (issue.Status == Status.Open)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Success">Open</MudChip>
+                                }
+                                else if (issue.Status == Status.InProgress)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Warning">In Progress</MudChip>
+                                }
+                                else
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Default">Closed</MudChip>
+                                }
+                            </MudStack>
+                        </MudListItem>
+                    }
+                </MudList>
+            }
+            else if (!string.IsNullOrWhiteSpace(_searchText))
+            {
+                <MudText Typo="Typo.body2" Color="Color.Default" Class="mb-2">No issues match "@_searchText".</MudText>
+            }
+            else
+            {
+                <MudText Typo="Typo.body2" Color="Color.Default" Class="mb-2">No available issues.</MudText>
+            }
+
+            <MudDivider Class="my-2"/>
+            <MudButton StartIcon="@Icons.Material.Filled.Add" Size="Size.Small" OnClick="StartCreate"
+                       FullWidth="true">
+                Create new issue
+            </MudButton>
         }
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="OnCancel">Cancel</MudButton>
+        @if (!_creating)
+        {
+            <MudButton OnClick="OnCancel">Cancel</MudButton>
+        }
     </DialogActions>
 </MudDialog>
 
@@ -66,6 +88,8 @@
     private bool _loading;
     private string _searchText = "";
     private List<IssueDto> _availableIssues = new();
+
+    private bool _creating;
 
     private readonly DialogOptions DialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
 
@@ -106,6 +130,17 @@
         StateHasChanged();
     }
 
+    private void StartCreate()
+    {
+        _creating = true;
+    }
+
+    private async Task OnNewIssueCreated(int issueId)
+    {
+        _creating = false;
+        await OnIssueSelected(issueId);
+    }
+
     private async Task OnCancel()
     {
         Visible = false;
@@ -114,6 +149,7 @@
 
     private async Task OnIssueSelected(int issueId)
     {
+        _creating = false;
         Visible = false;
         _availableIssues = new();
         await VisibleChanged.InvokeAsync(false);

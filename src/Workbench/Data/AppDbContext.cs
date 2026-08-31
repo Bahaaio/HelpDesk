@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using Workbench.Modules.Attachments.Models;
 using Workbench.Modules.Auth.Models;
 using Workbench.Modules.Comments.Models;
-using Workbench.Modules.Invites.Models;
 using Workbench.Modules.Issues.Models;
 using Workbench.Modules.Issues.Votes.Models;
 using Workbench.Modules.Kanban.Models;
 using Workbench.Modules.Milestones.Models;
+using Workbench.Modules.Projects.Invites.Models;
 using Workbench.Modules.Projects.Memberships.Models;
 using Workbench.Modules.Projects.Models;
 using Workbench.Modules.Tags.Models;
@@ -27,7 +27,7 @@ public class AppDbContext(DbContextOptions options)
     public DbSet<Comment> Comments { get; set; }
     public DbSet<Vote> Votes { get; set; }
     public DbSet<Tag> Tags { get; set; }
-    public DbSet<InviteCode> InviteCodes { get; set; }
+    public DbSet<ProjectInvite> ProjectInvites { get; set; }
     public DbSet<IssueStatusChange> IssueStatusChanges { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

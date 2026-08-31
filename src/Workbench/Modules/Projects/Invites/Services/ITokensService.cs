@@ -1,4 +1,4 @@
-namespace Workbench.Modules.Invites.Services;
+namespace Workbench.Modules.Projects.Invites.Services;
 
 /// <summary>
 ///     Generates cryptographically secure random tokens.

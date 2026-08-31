@@ -54,7 +54,7 @@ namespace Workbench.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "InviteCodes",
+                name: "ProjectInvites",
                 columns: table => new
                 {
                     Code = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
@@ -714,7 +714,7 @@ namespace Workbench.Data.Migrations
                 name: "BoardCard");
 
             migrationBuilder.DropTable(
-                name: "InviteCodes");
+                name: "ProjectInvites");
 
             migrationBuilder.DropTable(
                 name: "IssueStatusChanges");

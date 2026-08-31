@@ -1,3 +1,4 @@
+using Workbench.Modules.Projects.Invites;
 using Workbench.Modules.Projects.Memberships;
 using Workbench.Modules.Projects.Repositories;
 using Workbench.Modules.Projects.Repositories.Implementations;
@@ -16,6 +17,7 @@ public static class DependencyInjection
             services.AddScoped<IProjectsRepository, ProjectsRepository>();
 
             services.AddProjectMembershipsModule();
+            services.AddProjectInvitesModule();
         }
     }
 }

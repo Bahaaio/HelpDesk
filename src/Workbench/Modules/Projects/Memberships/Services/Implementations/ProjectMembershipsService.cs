@@ -29,6 +29,10 @@ public class ProjectMembershipsService : IProjectMembershipsService
     public Task<List<ProjectMembershipDto>> GetProjectMemberships(int projectId) =>
         _projectMembershipsRepository.GetMembershipsByProjectId(projectId);
 
+    public async Task<bool> IsMember(int projectId, int userId) =>
+        await _projectMembershipsRepository
+            .GetMembershipByProjectIdAndUserId(projectId, userId) is not null;
+
     public async Task AddMember(int projectId, int userId, ProjectMemberRole role)
     {
         _projectMembershipsRepository.Add(new ProjectMembership
@@ -37,6 +41,7 @@ public class ProjectMembershipsService : IProjectMembershipsService
             UserId = userId,
             Role = role
         });
+
         await _unitOfWork.SaveChangesAsync();
     }
 }

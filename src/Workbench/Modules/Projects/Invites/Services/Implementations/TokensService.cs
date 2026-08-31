@@ -1,6 +1,6 @@
 using System.Security.Cryptography;
 
-namespace Workbench.Modules.Invites.Services.Implementations;
+namespace Workbench.Modules.Projects.Invites.Services.Implementations;
 
 public class TokensService : ITokensService
 {

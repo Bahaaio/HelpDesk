@@ -6,7 +6,6 @@ using Workbench.Modules.Attachments;
 using Workbench.Modules.Auth;
 using Workbench.Modules.Authorization;
 using Workbench.Modules.Comments;
-using Workbench.Modules.Invites;
 using Workbench.Modules.Issues;
 using Workbench.Modules.Kanban;
 using Workbench.Modules.Milestones;
@@ -38,7 +37,6 @@ public static class ServiceExtensions
             services.AddAuthenticationModule();
             services.AddAuthorizationModule();
             services.AddUsersModule();
-            services.AddInvitesModule();
             services.AddTagsModule();
             services.AddIssuesModule();
             services.AddCommentsModule();

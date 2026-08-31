@@ -1,8 +1,8 @@
 @page "/invite"
-@using Workbench.Modules.Invites.Dtos.Requests
-@using Workbench.Modules.Invites.Services
+@using Workbench.Modules.Projects.Invites.Dtos.Requests
+@using Workbench.Modules.Projects.Invites.Services
 @rendermode InteractiveServer
-@inject IInvitesService InvitesService
+@inject IProjectInvitesService ProjectInvitesService
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
 
@@ -67,7 +67,7 @@
         _error = null;
         try
         {
-            var invite = await InvitesService.CreateInvite(new CreateInviteRequest(_validDays));
+            var invite = await ProjectInvitesService.Create(new CreateInviteRequest(_validDays));
             var baseUrl = Navigation.BaseUri.TrimEnd('/');
             _inviteUrl = $"{baseUrl}/register?code={invite.Code}";
             _expiresAt = invite.ExpiresAt;

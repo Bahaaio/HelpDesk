@@ -1,13 +1,19 @@
 name: CI
 
+permissions:
+  contents: read
+  actions: read
+  checks: write
+  pull-requests: write
+
 on:
   push:
     branches: [main]
     paths:
-      - '**/*.cs'
-      - '**/*.csproj'
-      - '**/*.sln'
-      - '.github/workflows/ci.yml'
+      - "**/*.cs"
+      - "**/*.csproj"
+      - "**/*.sln"
+      - ".github/workflows/ci.yml"
   pull_request:
     branches: [main]
 
@@ -29,5 +35,12 @@ jobs:
         run: dotnet build --no-restore --configuration Release
 
       - name: Test
-        run: dotnet test --no-build --configuration Release --verbosity normal
+        run: dotnet test --no-build --configuration Release --logger "trx;LogFileName=test-results.trx"
 
+      - name: Publish test results
+        uses: dorny/test-reporter@v3
+        if: success() || failure()
+        with:
+          name: Test Results
+          path: "**/TestResults/*.trx"
+          reporter: dotnet-trx

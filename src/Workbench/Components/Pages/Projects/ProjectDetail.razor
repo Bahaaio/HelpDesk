@@ -51,12 +51,16 @@
                 <ProjectOverview Project="_project" Members="_members"/>
             </MudTabPanel>
 
-            <MudTabPanel Text="Issues" Icon="@Icons.Material.Filled.BugReport">
-                <ProjectIssuesTab ProjectId="ProjectId"/>
+            <MudTabPanel Text="Board" Icon="@Icons.Material.Filled.ViewKanban">
+                <ProjectBoardTab ProjectId="ProjectId"/>
             </MudTabPanel>
 
             <MudTabPanel Text="Milestones" Icon="@Icons.Material.Filled.Flag">
                 <MilestoneList ProjectId="ProjectId" IsLead="ProjectMembership.IsLead"/>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Issues" Icon="@Icons.Material.Filled.BugReport">
+                <ProjectIssuesTab ProjectId="ProjectId"/>
             </MudTabPanel>
 
             @if (ProjectMembership.IsMember)
@@ -158,9 +162,10 @@
 
         _activeTab = tab.ToLowerInvariant() switch
         {
-            "issues" => 1,
+            "board" => 1,
             "milestones" => 2,
-            "tags" => ProjectMembership.IsMember ? 3 : 2,
+            "issues" => 3,
+            "tags" => ProjectMembership.IsMember ? 4 : 3,
             _ => 0
         };
         _initialTabSet = true;
@@ -172,9 +177,10 @@
         if (Navigation == null) return;
         var tab = index switch
         {
-            1 => "issues",
+            1 => "board",
             2 => "milestones",
-            3 => "tags",
+            3 => "issues",
+            4 => "tags",
             _ => "overview"
         };
         Navigation.NavigateTo($"/projects/{ProjectId}?tab={tab}", replace: true);

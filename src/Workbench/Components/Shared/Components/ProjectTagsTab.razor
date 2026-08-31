@@ -63,19 +63,7 @@
         <MudTextField @bind-Value="_createDescription" Label="Description (optional)"
                       MaxLength="2000"
                       Class="mb-4" FullWidth="true"/>
-        <MudText Typo="Typo.body2" Class="mb-2">Color</MudText>
-        <MudStack Row="true" Spacing="2">
-            @foreach (var color in Enum.GetValues<Color>())
-            {
-                var isSelected = _createColor == color;
-                <MudTooltip Text="@color.ToString()">
-                    <MudIconButton Size="Size.Small"
-                                   Icon="@(isSelected ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Circle)"
-                                   Color="@(color.ToMudColor())"
-                                   OnClick="() => _createColor = color"/>
-                </MudTooltip>
-            }
-        </MudStack>
+        <ColorPicker @bind-Value="_createColor" Label="Color"/>
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="() => _createDialogVisible = false">Cancel</MudButton>
@@ -93,19 +81,7 @@
     <DialogContent>
         <MudTextField @bind-Value="_editDescription" Label="Description" MaxLength="2000"
                       Class="mb-4" FullWidth="true"/>
-        <MudText Typo="Typo.body2" Class="mb-2">Color</MudText>
-        <MudStack Row="true" Spacing="2">
-            @foreach (var color in Enum.GetValues<Color>())
-            {
-                var isSelected = _editColor == color;
-                <MudTooltip Text="@color.ToString()">
-                    <MudIconButton Size="Size.Small"
-                                   Icon="@(isSelected ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Circle)"
-                                   Color="@(color.ToMudColor())"
-                                   OnClick="() => _editColor = color"/>
-                </MudTooltip>
-            }
-        </MudStack>
+        <ColorPicker @bind-Value="_editColor" Label="Color"/>
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="() => _editDialogVisible = false">Cancel</MudButton>

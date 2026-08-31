@@ -1,0 +1,113 @@
+@using Workbench.Modules.Issues.Dtos
+@using Workbench.Modules.Issues.Enums
+@using Workbench.Modules.Issues.Services
+
+@rendermode InteractiveServer
+@inject IIssuesService IssuesService
+
+<MudDialog @bind-Visible="Visible" Options="DialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(Title ?? "Select Issue")</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (_loading)
+        {
+            <MudProgressCircular Indeterminate="true" Class="d-flex justify-center ma-4"/>
+        }
+        else if (_availableIssues.Count == 0)
+        {
+            <MudText Typo="Typo.body2" Color="Color.Default">No available issues.</MudText>
+        }
+        else
+        {
+            <MudTextField @bind-Value="_searchText" Placeholder="Search issues..."
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                          FullWidth="true" Immediate="true" Class="mb-2"/>
+            <MudList T="IssueDto" Dense="true">
+                @foreach (var issue in FilteredIssues)
+                {
+                    <MudListItem Value="issue" OnClick="() => OnIssueSelected(issue.Id)">
+                        <MudStack Row="true" AlignItems="AlignItems.Center">
+                            <MudText Typo="Typo.body2">
+                                <span style="opacity: 0.5;">#@issue.Id</span> @issue.Title
+                            </MudText>
+                            <MudSpacer/>
+                            @if (issue.Status == Status.Open)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Success">Open</MudChip>
+                            }
+                            else if (issue.Status == Status.InProgress)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Warning">In Progress</MudChip>
+                            }
+                            else
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Default">Closed</MudChip>
+                            }
+                        </MudStack>
+                    </MudListItem>
+                }
+            </MudList>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Visible = false">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter] public int ProjectId { get; set; }
+    [Parameter] public HashSet<int> ExcludeIssueIds { get; set; } = new();
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public EventCallback<int> IssueSelected { get; set; }
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
+
+    private bool _loading;
+    private string _searchText = "";
+    private List<IssueDto> _availableIssues = new();
+
+    private readonly DialogOptions DialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
+
+    private IEnumerable<IssueDto> FilteredIssues =>
+        string.IsNullOrWhiteSpace(_searchText)
+            ? _availableIssues
+            : _availableIssues.Where(i =>
+                i.Title.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
+                i.Id.ToString() == _searchText.TrimStart('#'));
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Visible && _availableIssues.Count == 0)
+            await LoadIssues();
+    }
+
+    private async Task LoadIssues()
+    {
+        _loading = true;
+        _searchText = "";
+        StateHasChanged();
+
+        try
+        {
+            var allIssues = await IssuesService.GetAll(ProjectId,
+                new Modules.Issues.Dtos.Requests.IssueQuery(null, null, null, null));
+            _availableIssues = allIssues.Where(i => !ExcludeIssueIds.Contains(i.Id)).ToList();
+        }
+        catch
+        {
+            _availableIssues = new();
+        }
+
+        _loading = false;
+        StateHasChanged();
+    }
+
+    private async Task OnIssueSelected(int issueId)
+    {
+        Visible = false;
+        _availableIssues = new();
+        await VisibleChanged.InvokeAsync(false);
+        await IssueSelected.InvokeAsync(issueId);
+    }
+}

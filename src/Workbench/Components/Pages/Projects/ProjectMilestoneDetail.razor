@@ -2,7 +2,6 @@
 @using Workbench.ClientServices
 @using Workbench.Components.Shared.Components
 @using Workbench.Modules.Issues.Dtos
-@using Workbench.Modules.Issues.Dtos.Requests
 @using Workbench.Modules.Issues.Enums
 @using Workbench.Modules.Issues.Services
 @using Workbench.Modules.Milestones.Dtos
@@ -10,7 +9,6 @@
 @using Workbench.Modules.Projects.Services
 @inject IMilestonesService MilestonesService
 @inject IMilestoneIssuesService MilestoneIssuesService
-@inject IIssuesService IssuesService
 @inject IProjectsService ProjectsService
 @inject IProjectMembershipState ProjectMembership
 @inject IAuthState AuthState
@@ -139,49 +137,11 @@
     }
 </MudContainer>
 
-@* Add Issue Dialog *@
-<MudDialog @bind-Visible="_addIssueDialogVisible" Options="_dialogOptions">
-    <TitleContent>
-        <MudText Typo="Typo.h6">Add Issue to Milestone</MudText>
-    </TitleContent>
-    <DialogContent>
-        @if (_availableIssues.Count == 0)
-        {
-            <MudText Typo="Typo.body2" Color="Color.Default">No available issues to add.</MudText>
-        }
-        else
-        {
-            <MudList T="IssueDto" Dense="true">
-                @foreach (var issue in _availableIssues)
-                {
-                    <MudListItem Value="issue" OnClick="() => AddIssueAsync(issue.Id)">
-                        <MudStack Row="true" AlignItems="AlignItems.Center">
-                            <MudText Typo="Typo.body2">
-                                <span style="opacity: 0.5;">#@issue.Id</span> @issue.Title
-                            </MudText>
-                            <MudSpacer/>
-                            @if (issue.Status == Status.Open)
-                            {
-                                <MudChip T="string" Size="Size.Small" Color="Color.Success">Open</MudChip>
-                            }
-                            else if (issue.Status == Status.InProgress)
-                            {
-                                <MudChip T="string" Size="Size.Small" Color="Color.Warning">In Progress</MudChip>
-                            }
-                            else
-                            {
-                                <MudChip T="string" Size="Size.Small" Color="Color.Default">Closed</MudChip>
-                            }
-                        </MudStack>
-                    </MudListItem>
-                }
-            </MudList>
-        }
-    </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="() => _addIssueDialogVisible = false">Cancel</MudButton>
-    </DialogActions>
-</MudDialog>
+<IssuePickerDialog ProjectId="ProjectId"
+                   ExcludeIssueIds="@(_issues.Select(i => i.Id).ToHashSet())"
+                   Title="Add Issue to Milestone"
+                   @bind-Visible="_addIssueDialogVisible"
+                   IssueSelected="AddIssueAsync"/>
 
 @code {
     [Parameter] public int ProjectId { get; set; }
@@ -192,9 +152,6 @@
     private bool _loading = true;
 
     private bool _addIssueDialogVisible;
-    private List<IssueDto> _availableIssues = new();
-
-    private readonly DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
 
     protected override async Task OnInitializedAsync()
     {
@@ -227,26 +184,9 @@
         StateHasChanged();
     }
 
-    private async Task LoadAvailableIssues()
+    private void OpenAddIssueDialog()
     {
-        try
-        {
-            var allIssues = await IssuesService.GetAll(ProjectId,
-                new Modules.Issues.Dtos.Requests.IssueQuery(null, null, null, null));
-            var issueIdsInMilestone = new HashSet<int>(_issues.Select(i => i.Id));
-            _availableIssues = allIssues.Where(i => !issueIdsInMilestone.Contains(i.Id)).ToList();
-        }
-        catch
-        {
-            _availableIssues = new();
-        }
-    }
-
-    private async Task OpenAddIssueDialog()
-    {
-        await LoadAvailableIssues();
         _addIssueDialogVisible = true;
-        StateHasChanged();
     }
 
     private async Task AddIssueAsync(int issueId)
@@ -254,7 +194,6 @@
         try
         {
             await MilestoneIssuesService.AddIssue(ProjectId, MilestoneId, issueId);
-            _addIssueDialogVisible = false;
             Snackbar.Add("Issue added to milestone", Severity.Success);
             await LoadMilestoneData();
         }

@@ -1,0 +1,21 @@
+@using Color = Workbench.Common.Enums.Color
+
+<MudText Typo="Typo.body2" Class="mb-2">@Label</MudText>
+<MudStack Row="true" Spacing="2">
+    @foreach (var color in Enum.GetValues<Color>())
+    {
+        var isSelected = Value == color;
+        <MudTooltip Text="@color.ToString()">
+            <MudIconButton Size="Size.Small"
+                           Icon="@(isSelected ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Circle)"
+                           Color="@(color.ToMudColor())"
+                           OnClick="() => ValueChanged.InvokeAsync(color)"/>
+        </MudTooltip>
+    }
+</MudStack>
+
+@code {
+    [Parameter] public Color Value { get; set; }
+    [Parameter] public EventCallback<Color> ValueChanged { get; set; }
+    [Parameter] public string Label { get; set; } = "Color";
+}

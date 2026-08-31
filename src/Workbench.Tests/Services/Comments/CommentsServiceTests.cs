@@ -1,246 +1,173 @@
+using Microsoft.Extensions.Logging;
+using Moq;
 using Workbench.Common.Exceptions;
-using Workbench.Data;
+using Workbench.Data.Persistence;
 using Workbench.Modules.Auth.Models;
 using Workbench.Modules.Auth.Services;
 using Workbench.Modules.Authorization.Requirements;
 using Workbench.Modules.Authorization.Services;
+using Workbench.Modules.Comments.Dtos;
 using Workbench.Modules.Comments.Dtos.Requests;
 using Workbench.Modules.Comments.Models;
+using Workbench.Modules.Comments.Repositories;
 using Workbench.Modules.Comments.Services.Implementations;
-using Workbench.Modules.Issues.Models;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using Moq;
+using Workbench.Modules.Issues.Repositories;
 
 namespace Workbench.Tests.Services.Comments;
 
-public class CommentsServiceTests : IDisposable
+public class CommentsServiceTests
 {
     private const int CurrentUserId = 123;
-    private const int DefaultIssueId = 1; // Added a constant for the default issue
+    private const string CurrentUsername = "test";
+    private const int DefaultIssueId = 1;
 
-    private readonly Mock<IAuthorizationGuard> _authGuardMock;
-    private readonly SqliteConnection _connection;
-    private readonly AppDbContext _db;
+    private readonly Mock<IAuthorizationGuard> _authGuard;
+    private readonly Mock<ICommentsRepository> _commentsRepo;
+    private readonly Mock<IIssuesRepository> _issuesRepo;
     private readonly CommentsService _service;
+    private readonly Mock<IUnitOfWork> _unitOfWork;
 
     public CommentsServiceTests()
     {
-        // 1. Set up SQLite In-Memory Database
-        _connection = new SqliteConnection("DataSource=:memory:");
-        _connection.Open();
-
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseSqlite(_connection)
-            .Options;
-
-        _db = new AppDbContext(options);
-        _db.Database.EnsureCreated();
-
-        // 2. Setup Mocks
         var userMock = new Mock<ICurrentUser>();
         userMock.Setup(u => u.Id).Returns(CurrentUserId);
+        userMock.Setup(u => u.UserName).Returns(CurrentUsername);
 
-        var loggerMock = new Mock<ILogger<CommentsService>>();
-        _authGuardMock = new Mock<IAuthorizationGuard>();
+        _authGuard = new Mock<IAuthorizationGuard>();
+        _commentsRepo = new Mock<ICommentsRepository>();
+        _unitOfWork = new Mock<IUnitOfWork>();
+        _issuesRepo = new Mock<IIssuesRepository>();
 
-        _service =
-            new CommentsService(_db, userMock.Object, loggerMock.Object, _authGuardMock.Object);
-
-        // 3. Seed Base Data that is used by almost all tests
-        _db.Users.Add(new ApplicationUser
-            { Id = CurrentUserId, UserName = "test", Email = "a@b.com" });
-
-        _db.Issues.Add(
-            new Issue { Id = DefaultIssueId, Title = "new", AuthorId = CurrentUserId });
-
-        _db.SaveChanges();
+        _service = new CommentsService(
+            userMock.Object,
+            Mock.Of<ILogger<CommentsService>>(),
+            _authGuard.Object,
+            _commentsRepo.Object,
+            _unitOfWork.Object,
+            _issuesRepo.Object);
     }
 
-    public void Dispose()
-    {
-        _db.Database.EnsureDeleted();
-        _db.Dispose();
-        _connection.Close();
-        _connection.Dispose();
-    }
+    private static Comment MakeComment(int id, int authorId = CurrentUserId,
+        string content = "content") =>
+        new()
+        {
+            Id = id,
+            IssueId = DefaultIssueId,
+            AuthorId = authorId,
+            Content = content,
+            Author = new ApplicationUser { Id = authorId, UserName = "user" }
+        };
 
     [Fact]
-    public async Task GetAll_ReturnsOrderedComments_WhenIssueExists()
+    public async Task GetAll_ReturnsCommentsFromRepository()
     {
-        // Arrange (Issue is already seeded in constructor)
-        _db.Comments.AddRange(
-            new Comment
-            {
-                Id = 1, IssueId = DefaultIssueId, Content = "Oldest",
-                CreatedAt = DateTime.UtcNow.AddMinutes(-10), AuthorId = CurrentUserId
-            },
-            new Comment
-            {
-                Id = 2, IssueId = DefaultIssueId, Content = "Newest", CreatedAt = DateTime.UtcNow,
-                AuthorId = CurrentUserId
-            }
-        );
-        await _db.SaveChangesAsync();
+        var expected = new List<CommentDto>
+        {
+            new(1, "First", DateTime.UtcNow, CurrentUsername, []),
+            new(2, "Second", DateTime.UtcNow, CurrentUsername, [])
+        };
 
-        // Act
+        _commentsRepo
+            .Setup(r => r.GetAllByIssueIdAsync(DefaultIssueId))
+            .ReturnsAsync(expected);
+
         var result = await _service.GetAll(DefaultIssueId);
 
-        // Assert
-        Assert.NotNull(result);
-        Assert.Equal(2, result.Count);
-        Assert.Equal("Newest", result.First().Content);
+        Assert.Equal(expected, result);
     }
 
     [Fact]
-    public async Task GetAll_ThrowsNotFoundException_WhenIssueDoesNotExist()
+    public async Task Create_SavesCommentWithCorrectFields()
     {
-        // Arrange
-        const int nonExistentIssueId = 999;
+        Comment? captured = null;
+        _commentsRepo
+            .Setup(r => r.Add(It.IsAny<Comment>()))
+            .Callback<Comment>(c => captured = c)
+            .Returns((Comment c) => c);
 
-        // Act & Assert
-        await Assert.ThrowsAsync<NotFoundException>(() => _service.GetAll(nonExistentIssueId));
+        var result = await _service.Create(DefaultIssueId, new CreateCommentRequest("hello"));
+
+        Assert.NotNull(captured);
+        Assert.Equal(DefaultIssueId, captured.IssueId);
+        Assert.Equal(CurrentUserId, captured.AuthorId);
+        Assert.Equal("hello", captured.Content);
+
+        Assert.Equal("hello", result.Content);
+        Assert.Equal(CurrentUsername, result.AuthorUsername);
+
+        _unitOfWork.Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 
     [Fact]
-    public async Task Create_AddsCommentAndReturnsDto_WhenIssueExists()
+    public async Task Create_DoesNotSave_WhenIssueDoesNotExist()
     {
-        // Arrange
-        var request = new CreateCommentRequest("Test comment content");
+        _issuesRepo
+            .Setup(r => r.ExistsOrThrowAsync(999))
+            .ThrowsAsync(new NotFoundException("Issue 999 not found"));
 
-        // Act
-        var result = await _service.Create(DefaultIssueId, request);
+        await Assert.ThrowsAsync<NotFoundException>(
+            () => _service.Create(999, new CreateCommentRequest("content")));
 
-        // Assert
-        Assert.NotNull(result);
-        Assert.Equal(request.Content, result.Content);
-
-        var savedComment =
-            await _db.Comments.FirstOrDefaultAsync(c => c.IssueId == DefaultIssueId);
-        Assert.NotNull(savedComment);
-        Assert.Equal(request.Content, savedComment.Content);
-        Assert.Equal(CurrentUserId, savedComment.AuthorId);
+        _commentsRepo.Verify(r => r.Add(It.IsAny<Comment>()), Times.Never);
+        _unitOfWork.Verify(u => u.SaveChangesAsync(), Times.Never);
     }
 
     [Fact]
-    public async Task Update_ChangesContentAndReturnsDto_WhenAuthorized()
+    public async Task Update_SavesNewContent()
     {
-        // Arrange
-        const int commentId = 1;
-        var comment = new Comment
-        {
-            Id = commentId, IssueId = DefaultIssueId, AuthorId = CurrentUserId,
-            Content = "original"
-        };
-        _db.Comments.Add(comment);
-        await _db.SaveChangesAsync();
+        var comment = MakeComment(1, content: "original");
+        _commentsRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(comment);
 
-        _authGuardMock
-            .Setup(g => g.Authorize(comment, It.IsAny<OwnerOrTechnicianRequirement>()))
-            .Returns(Task.CompletedTask);
+        var result = await _service.Update(1, new UpdateCommentRequest("updated"));
 
-        var request = new UpdateCommentRequest("updated content");
-
-        // Act
-        var result = await _service.Update(commentId, request);
-
-        // Assert
-        Assert.NotNull(result);
-        Assert.Equal(request.Content, result.Content);
-
-        var savedComment = await _db.Comments.FindAsync(commentId);
-        Assert.NotNull(savedComment);
-        Assert.Equal(request.Content, savedComment!.Content);
+        Assert.Equal("updated", comment.Content);
+        Assert.Equal("updated", result.Content);
+        _unitOfWork.Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 
     [Fact]
-    public async Task Update_ThrowsException_WhenUnauthorized()
+    public async Task Update_DoesNotSave_WhenUnauthorized()
     {
-        // Arrange
-        const int commentId = 1;
-        const int secondUserId = 2;
+        var comment = MakeComment(1, 999, "protected");
+        _commentsRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(comment);
 
-        _db.Users.Add(new ApplicationUser
-            { Id = secondUserId, UserName = "test2", Email = "b@b.com" });
+        _authGuard
+            .Setup(g => g.Authorize(comment, It.IsAny<OwnerOrTeamMemberRequirement>()))
+            .ThrowsAsync(new UnauthorizedAccessException("Not authorized"));
 
-        var comment = new Comment
-        {
-            Id = commentId, IssueId = DefaultIssueId, AuthorId = secondUserId, Content = "hello"
-        };
-        _db.Comments.Add(comment);
-        await _db.SaveChangesAsync();
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(
+            () => _service.Update(1, new UpdateCommentRequest("hijacked")));
 
-        _authGuardMock
-            .Setup(g => g.Authorize(comment, It.IsAny<OwnerOrTechnicianRequirement>()))
-            .ThrowsAsync(new UnauthorizedAccessException("User is not authorized."));
-
-        // Act & Assert
-        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
-            _service.Update(commentId, new UpdateCommentRequest("hijacked")));
-
-        var unchangedComment = await _db.Comments.FindAsync(commentId);
-        Assert.NotNull(unchangedComment);
-        Assert.Equal("hello", unchangedComment!.Content);
+        Assert.Equal("protected", comment.Content);
+        _unitOfWork.Verify(u => u.SaveChangesAsync(), Times.Never);
     }
 
     [Fact]
-    public async Task Delete_RemovesComment_WhenAuthorized()
+    public async Task Delete_RemovesAndSaves()
     {
-        // Arrange
-        const int commentId = 1;
-        var comment = new Comment
-        {
-            Id = commentId, IssueId = DefaultIssueId, AuthorId = CurrentUserId,
-            Content = "comment"
-        };
-        _db.Comments.Add(comment);
-        await _db.SaveChangesAsync();
+        var comment = MakeComment(1, content: "bye");
+        _commentsRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(comment);
 
-        _authGuardMock
-            .Setup(g => g.Authorize(comment, It.IsAny<OwnerOrTechnicianRequirement>()))
-            .Returns(Task.CompletedTask);
+        await _service.Delete(1);
 
-        // Act
-        await _service.Delete(commentId);
-
-        // Assert
-        var deletedComment = await _db.Comments.FindAsync(commentId);
-        Assert.Null(deletedComment);
-
-        _authGuardMock.Verify(g =>
-                g.Authorize(It.IsAny<Comment>(), It.IsAny<IAuthorizationRequirement>()),
-            Times.Once);
+        _commentsRepo.Verify(r => r.Remove(comment), Times.Once);
+        _unitOfWork.Verify(u => u.SaveChangesAsync(), Times.Once);
     }
 
     [Fact]
-    public async Task Delete_ThrowsException_WhenUnauthorized()
+    public async Task Delete_DoesNotRemove_WhenUnauthorized()
     {
-        // Arrange
-        const int commentId = 1;
-        const int secondUserId = 2;
+        var comment = MakeComment(1, 999, "protected");
+        _commentsRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(comment);
 
-        // Add the second user and their comment (Issue is already seeded)
-        _db.Users.Add(new ApplicationUser
-            { Id = secondUserId, UserName = "test2", Email = "b@b.com" });
+        _authGuard
+            .Setup(g => g.Authorize(comment, It.IsAny<OwnerOrTeamMemberRequirement>()))
+            .ThrowsAsync(new UnauthorizedAccessException("Not authorized"));
 
-        var comment = new Comment
-        {
-            Id = commentId, IssueId = DefaultIssueId, AuthorId = secondUserId, Content = "hello"
-        };
-        _db.Comments.Add(comment);
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(
+            () => _service.Delete(1));
 
-        await _db.SaveChangesAsync();
-
-        _authGuardMock
-            .Setup(g => g.Authorize(comment, It.IsAny<OwnerOrTechnicianRequirement>()))
-            .ThrowsAsync(new UnauthorizedAccessException("User is not authorized."));
-
-        // Act & Assert
-        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => _service.Delete(commentId));
-
-        var stillExistingComment = await _db.Comments.FindAsync(commentId);
-        Assert.NotNull(stillExistingComment);
+        _commentsRepo.Verify(r => r.Remove(It.IsAny<Comment>()), Times.Never);
+        _unitOfWork.Verify(u => u.SaveChangesAsync(), Times.Never);
     }
 }

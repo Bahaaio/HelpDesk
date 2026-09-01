@@ -12,7 +12,7 @@
     <DialogContent>
         @if (_creating)
         {
-            <CreateIssueForm ProjectId="ProjectId" InitialTitle="_searchText"
+                <CreateIssueForm ProjectId="ProjectId" InitialTitle="@_searchText"
                              IssueCreated="OnNewIssueCreated"/>
         }
         else if (_loading)

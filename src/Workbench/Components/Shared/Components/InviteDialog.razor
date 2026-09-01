@@ -1,0 +1,182 @@
+@using Workbench.Modules.Projects.Invites.Dtos
+@using Workbench.Modules.Projects.Invites.Dtos.Requests
+@using Workbench.Modules.Projects.Invites.Services
+@inject IProjectInvitesService InvitesService
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+
+<MudDialog @bind-Visible="Visible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Invite Member</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTabs ActivePanelIndex="_inviteTab" ApplyEffectsToContainer="true"
+                 ActivePanelIndexChanged="OnInviteTabChanged">
+            <MudTabPanel Text="New Invite" Icon="@Icons.Material.Filled.AddLink">
+                @if (_lastInviteUrl is not null)
+                {
+                    <MudText Typo="Typo.subtitle2" Class="mb-1 mt-2">Invite Link</MudText>
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-1">
+                        <MudTextField Value="_lastInviteUrl" ReadOnly="true" Variant="Variant.Outlined"
+                                      Adornment="Adornment.End" Class="flex-grow-1" Margin="Margin.Dense"/>
+                        <MudTooltip Text="Copy to clipboard">
+                            <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" Color="Color.Primary"
+                                           Size="Size.Small" OnClick="CopyToClipboard"/>
+                        </MudTooltip>
+                    </MudStack>
+                    <MudText Typo="Typo.caption" Color="Color.Default" Class="mb-3">
+                        Expires: @_lastInviteExpires?.ToString("MMM dd, yyyy HH:mm")
+                    </MudText>
+
+                    <MudText Typo="Typo.subtitle2" Class="mb-1">QR Code</MudText>
+                    <div id="invite-qrcode" class="d-flex justify-center mb-3"></div>
+                }
+                else
+                {
+                    <MudNumericField @bind-Value="_validDays" Label="Valid for (days)" Min="1" Max="30"
+                                     Margin="Margin.Dense" Class="mt-2 mb-3"/>
+
+                    <MudButton OnClick="GenerateInvite" Color="Color.Primary" Variant="Variant.Filled"
+                               Disabled="_generating" FullWidth="true">
+                        @if (_generating)
+                        {
+                            <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2"/>
+                        }
+                        Generate Invite Link
+                    </MudButton>
+                }
+            </MudTabPanel>
+
+            <MudTabPanel Text="Active Invites" Icon="@Icons.Material.Filled.Link">
+                @if (_activeInvites.Count > 0)
+                {
+                    <MudList T="InviteDto" Dense="true" Class="mt-2">
+                        @foreach (var invite in _activeInvites)
+                        {
+                            <MudListItem Value="invite">
+                                <MudStack Row="true" AlignItems="AlignItems.Center">
+                                    <MudIcon Icon="@Icons.Material.Filled.Link" Size="Size.Small" Class="mr-2"/>
+                                    <MudText Typo="Typo.body2" Class="flex-grow-1">
+                                        @invite.Code[..Math.Min(12, invite.Code.Length)]...
+                                    </MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Default" Class="mr-2">
+                                        @invite.ExpiresAt.ToString("MMM dd")
+                                    </MudText>
+                                    <MudTooltip Text="Revoke">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                                       Color="Color.Error"
+                                                       OnClick="() => RevokeInvite(invite.Code)"/>
+                                    </MudTooltip>
+                                </MudStack>
+                            </MudListItem>
+                        }
+                    </MudList>
+                }
+                else
+                {
+                    <MudText Typo="Typo.body2" Color="Color.Default" Class="mt-4 text-center">
+                        No active invites.
+                    </MudText>
+                }
+            </MudTabPanel>
+        </MudTabs>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => Visible = false">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter] public int ProjectId { get; set; }
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
+
+    private readonly DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
+
+    private bool _generating;
+    private int _inviteTab;
+    private int _validDays = 7;
+    private string? _lastInviteUrl;
+    private DateTime? _lastInviteExpires;
+    private List<InviteDto> _activeInvites = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Visible)
+        {
+            _lastInviteUrl = null;
+            _lastInviteExpires = null;
+            _validDays = 7;
+            _inviteTab = 0;
+            await LoadActiveInvites();
+        }
+    }
+
+    private async Task OnInviteTabChanged(int index)
+    {
+        _inviteTab = index;
+        if (index == 1)
+            await LoadActiveInvites();
+    }
+
+    private async Task LoadActiveInvites()
+    {
+        try
+        {
+            _activeInvites = await InvitesService.GetActive(ProjectId);
+        }
+        catch
+        {
+            _activeInvites = new();
+        }
+    }
+
+    private async Task GenerateInvite()
+    {
+        _generating = true;
+        StateHasChanged();
+
+        try
+        {
+            var invite = await InvitesService.Create(new CreateInviteRequest(ProjectId, _validDays));
+            var baseUrl = Navigation.BaseUri.TrimEnd('/');
+            _lastInviteUrl = $"{baseUrl}/projects/{ProjectId}/join?code={invite.Code}";
+            _lastInviteExpires = invite.ExpiresAt;
+            await LoadActiveInvites();
+            StateHasChanged();
+            await Task.Delay(50);
+            await JS.InvokeVoidAsync("generateQRCode", "invite-qrcode", _lastInviteUrl);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to create invite: {ex.Message}", Severity.Error);
+        }
+
+        _generating = false;
+    }
+
+    private async Task RevokeInvite(string code)
+    {
+        try
+        {
+            await InvitesService.Revoke(code);
+            await LoadActiveInvites();
+            Snackbar.Add("Invite revoked", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to revoke invite: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task CopyToClipboard()
+    {
+        if (_lastInviteUrl is not null)
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", _lastInviteUrl);
+            Snackbar.Add("Copied to clipboard", Severity.Success);
+        }
+    }
+
+    [Inject] private ISnackbar Snackbar { get; set; } = default!;
+}

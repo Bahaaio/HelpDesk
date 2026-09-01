@@ -48,7 +48,7 @@
 
         <MudTabs @bind-ActivePanelIndex="_activeTab" ApplyEffectsToContainer="true" Class="mt-2">
             <MudTabPanel Text="Overview" Icon="@Icons.Material.Filled.Info">
-                <ProjectOverview Project="_project" Members="_members"/>
+                <ProjectOverview Project="_project" Members="_members" IsLead="ProjectMembership.IsLead"/>
             </MudTabPanel>
 
             <MudTabPanel Text="Board" Icon="@Icons.Material.Filled.ViewKanban">

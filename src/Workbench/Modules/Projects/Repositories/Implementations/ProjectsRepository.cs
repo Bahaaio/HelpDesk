@@ -28,7 +28,7 @@ public class ProjectsRepository : Repository<Project, int>, IProjectsRepository
 
     public Task<List<ProjectDto>> GetAllByUserIdAsync(int userId) =>
         DbSet
-            .Where(p => p.OwnerId == userId)
+            .Where(p => p.OwnerId == userId || p.Members.Any(m => m.UserId == userId))
             .Select(ProjectMapper.ToDtoExpression)
             .ToListAsync();
 

@@ -51,9 +51,13 @@ else
 
         <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Docked" Elevation="2">
             <MudNavMenu>
-                <MudNavLink Href="/projects" Icon="@Icons.Material.Filled.Folder"
+                <MudNavLink Href="/projects" Icon="@Icons.Material.Filled.FolderOpen"
                             Match="NavLinkMatch.Prefix">
-                    Projects
+                    All Projects
+                </MudNavLink>
+                <MudNavLink Href="/projects/mine" Icon="@Icons.Material.Filled.Folder"
+                            Match="NavLinkMatch.Prefix">
+                    My Projects
                 </MudNavLink>
                 <MudNavLink Href="/issues/mine" Icon="@Icons.Material.Filled.Person"
                             Match="NavLinkMatch.Prefix">

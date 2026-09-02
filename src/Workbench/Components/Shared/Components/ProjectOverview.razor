@@ -68,14 +68,14 @@
                             {
                                 <MudTooltip Text="Promote to Lead">
                                     <MudIconButton Icon="@Icons.Material.Filled.ArrowUpward" Size="Size.Small"
-                                                   OnClick="() => UpdateRole(member, ProjectMemberRole.Lead)"/>
+                                                   OnClick="() => ShowPromoteDialog(member)"/>
                                 </MudTooltip>
                             }
                             else
                             {
                                 <MudTooltip Text="Demote to Member">
                                     <MudIconButton Icon="@Icons.Material.Filled.ArrowDownward" Size="Size.Small"
-                                                   OnClick="() => UpdateRole(member, ProjectMemberRole.Member)"/>
+                                                   OnClick="() => ShowDemoteDialog(member)"/>
                                 </MudTooltip>
                             }
                             @if (member.Role != ProjectMemberRole.Lead)
@@ -83,7 +83,7 @@
                                 <MudTooltip Text="Remove member">
                                     <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
                                                    Color="Color.Error"
-                                                   OnClick="() => RemoveMember(member)"/>
+                                                   OnClick="() => ShowRemoveDialog(member)"/>
                                 </MudTooltip>
                             }
                         }
@@ -101,16 +101,97 @@
 
 <InviteDialog ProjectId="Project.Id" @bind-Visible="_inviteDialogVisible"/>
 
+<MudDialog @bind-Visible="_promoteDialogVisible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Promote to Lead</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText>Promote <strong>@_targetMember?.Username</strong> to Lead?</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _promoteDialogVisible = false">Cancel</MudButton>
+        <MudButton OnClick="ConfirmPromote" Color="Color.Primary">Promote</MudButton>
+    </DialogActions>
+</MudDialog>
+
+<MudDialog @bind-Visible="_demoteDialogVisible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Demote to Member</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText>Demote <strong>@_targetMember?.Username</strong> to Member?</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _demoteDialogVisible = false">Cancel</MudButton>
+        <MudButton OnClick="ConfirmDemote" Color="Color.Primary">Demote</MudButton>
+    </DialogActions>
+</MudDialog>
+
+<MudDialog @bind-Visible="_removeDialogVisible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Remove Member</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText>Remove <strong>@_targetMember?.Username</strong> from this project? They will be unassigned from all open issues.</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _removeDialogVisible = false">Cancel</MudButton>
+        <MudButton OnClick="ConfirmRemove" Color="Color.Error">Remove</MudButton>
+    </DialogActions>
+</MudDialog>
+
 @code {
     [Parameter] public ProjectDto Project { get; set; } = default!;
     [Parameter] public List<ProjectMembershipDto> Members { get; set; } = new();
     [Parameter] public bool IsLead { get; set; }
 
+    private readonly DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Small };
     private bool _inviteDialogVisible;
+    private ProjectMembershipDto? _targetMember;
+
+    private bool _promoteDialogVisible;
+    private bool _demoteDialogVisible;
+    private bool _removeDialogVisible;
 
     protected override void OnInitialized()
     {
         AuthState.Check();
+    }
+
+    private void ShowPromoteDialog(ProjectMembershipDto member)
+    {
+        _targetMember = member;
+        _promoteDialogVisible = true;
+    }
+
+    private void ShowDemoteDialog(ProjectMembershipDto member)
+    {
+        _targetMember = member;
+        _demoteDialogVisible = true;
+    }
+
+    private void ShowRemoveDialog(ProjectMembershipDto member)
+    {
+        _targetMember = member;
+        _removeDialogVisible = true;
+    }
+
+    private async Task ConfirmPromote()
+    {
+        _promoteDialogVisible = false;
+        await UpdateRole(_targetMember!, ProjectMemberRole.Lead);
+    }
+
+    private async Task ConfirmDemote()
+    {
+        _demoteDialogVisible = false;
+        await UpdateRole(_targetMember!, ProjectMemberRole.Member);
+    }
+
+    private async Task ConfirmRemove()
+    {
+        _removeDialogVisible = false;
+        await RemoveMember(_targetMember!);
     }
 
     private async Task UpdateRole(ProjectMembershipDto member, ProjectMemberRole newRole)

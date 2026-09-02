@@ -6,6 +6,7 @@ using Workbench.Modules.Authorization.Services;
 using Workbench.Modules.Issues.Dtos;
 using Workbench.Modules.Issues.Dtos.Requests;
 using Workbench.Modules.Issues.Enums;
+using Workbench.Modules.Issues.Models;
 using Workbench.Modules.Issues.Repositories;
 using Workbench.Modules.Projects.Memberships.Services;
 
@@ -35,16 +36,10 @@ public class IssueAssignmentsService : IIssueAssignmentsService
         var issue = await _issuesRepository.GetByIdAsync(issueId);
         await _authGuard.AuthorizeProjectMember(issue);
 
-        if (issue.Status == Status.Closed)
-            throw new ConflictException("Issue is already closed");
+        ValidateClosedIssue(issue);
 
         if (issue.AssignedToId is not null)
             throw new ConflictException("Issue is already assigned to a user");
-
-        var membership =
-            await _membershipsService.FindCurrentUserProjectMembership(issue.ProjectId);
-        if (membership is null)
-            throw new ForbiddenException("Current user is not a member of the project");
 
         issue.AssignedToId = _user.Id;
         await _unitOfWork.SaveChangesAsync();
@@ -55,8 +50,7 @@ public class IssueAssignmentsService : IIssueAssignmentsService
         var issue = await _issuesRepository.GetByIdAsync(issueId);
         await _authGuard.AuthorizeAssignedOrProjectLead(issue);
 
-        if (issue.Status == Status.Closed)
-            throw new ConflictException("Issue is already closed");
+        ValidateClosedIssue(issue);
 
         if (issue.AssignedToId != _user.Id)
             throw new ForbiddenException("Issue is not assigned to the current user");
@@ -70,8 +64,7 @@ public class IssueAssignmentsService : IIssueAssignmentsService
         var issue = await _issuesRepository.GetByIdAsync(issueId);
         await _authGuard.AuthorizeAssignedOrProjectLead(issue);
 
-        if (issue.Status == Status.Closed)
-            throw new ConflictException("Issue is already closed");
+        ValidateClosedIssue(issue);
 
         var membership = await _membershipsService.GetProjectMembership(issue.ProjectId, userName);
         issue.AssignedToId = membership.UserId;
@@ -84,8 +77,7 @@ public class IssueAssignmentsService : IIssueAssignmentsService
         var issue = await _issuesRepository.GetByIdAsync(issueId);
         await _authGuard.AuthorizeAssignedOrProjectLead(issue);
 
-        if (issue.Status == Status.Closed)
-            throw new ConflictException("Issue is already closed");
+        ValidateClosedIssue(issue);
 
         issue.AssignedToId = null;
         await _unitOfWork.SaveChangesAsync();
@@ -93,4 +85,10 @@ public class IssueAssignmentsService : IIssueAssignmentsService
 
     public Task<List<IssueDto>> GetCurrentUserAssignedIssues(IssueQuery issueQuery) =>
         _issuesRepository.GetAllAssignedToUserAsync(_user.Id, issueQuery);
+
+    private static void ValidateClosedIssue(Issue issue)
+    {
+        if (issue.Status == Status.Closed)
+            throw new ConflictException("Issue is already closed");
+    }
 }

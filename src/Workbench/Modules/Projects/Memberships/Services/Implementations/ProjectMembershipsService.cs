@@ -3,6 +3,7 @@ using Workbench.Data.Persistence;
 using Workbench.Modules.Auth.Services;
 using Workbench.Modules.Authorization.Extensions;
 using Workbench.Modules.Authorization.Services;
+using Workbench.Modules.Issues.Repositories;
 using Workbench.Modules.Projects.Enums;
 using Workbench.Modules.Projects.Memberships.Dtos;
 using Workbench.Modules.Projects.Memberships.Mappers;
@@ -15,6 +16,7 @@ namespace Workbench.Modules.Projects.Memberships.Services.Implementations;
 public class ProjectMembershipsService : IProjectMembershipsService
 {
     private readonly IAuthorizationGuard _authGuard;
+    private readonly IIssuesRepository _issuesRepository;
     private readonly IProjectMembershipsRepository _projectMembershipsRepository;
     private readonly IProjectsRepository _projectsRepository;
     private readonly IUnitOfWork _unitOfWork;
@@ -22,13 +24,14 @@ public class ProjectMembershipsService : IProjectMembershipsService
 
     public ProjectMembershipsService(IProjectMembershipsRepository projectMembershipsRepository,
         IUnitOfWork unitOfWork, ICurrentUser user, IProjectsRepository projectsRepository,
-        IAuthorizationGuard authGuard)
+        IAuthorizationGuard authGuard, IIssuesRepository issuesRepository)
     {
         _projectMembershipsRepository = projectMembershipsRepository;
         _unitOfWork = unitOfWork;
         _user = user;
         _projectsRepository = projectsRepository;
         _authGuard = authGuard;
+        _issuesRepository = issuesRepository;
     }
 
     public async Task<ProjectMembershipDto?> GetCurrentUserProjectMembership(int projectId) =>
@@ -89,6 +92,8 @@ public class ProjectMembershipsService : IProjectMembershipsService
 
         if (membership.Role == ProjectMemberRole.Lead)
             throw new BadRequestException("Cannot remove a lead. Demote them first.");
+
+        await _issuesRepository.UnassignFromAllAsync(projectId, membership.UserId);
 
         _projectMembershipsRepository.Remove(membership);
         await _unitOfWork.SaveChangesAsync();

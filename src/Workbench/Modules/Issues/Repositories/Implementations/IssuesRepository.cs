@@ -4,6 +4,7 @@ using Workbench.Data;
 using Workbench.Data.Persistence.Implementations;
 using Workbench.Modules.Issues.Dtos;
 using Workbench.Modules.Issues.Dtos.Requests;
+using Workbench.Modules.Issues.Enums;
 using Workbench.Modules.Issues.Extensions;
 using Workbench.Modules.Issues.Mappers;
 using Workbench.Modules.Issues.Models;
@@ -74,6 +75,17 @@ public class IssuesRepository : Repository<Issue, int>, IIssuesRepository
 
     public Task LoadAuthorAsync(Issue issue) =>
         _context.Entry(issue).Reference(i => i.Author).LoadAsync();
+
+    public async Task UnassignFromAllAsync(int projectId, int userId)
+    {
+        await DbSet
+            .Where(i =>
+                i.ProjectId == projectId &&
+                i.AssignedToId == userId &&
+                i.Status != Status.Closed)
+            .ExecuteUpdateAsync(s =>
+                s.SetProperty(i => i.AssignedToId, (int?)null));
+    }
 
     public Task<IssueDto?> FindDtoByIdAsync(int id) =>
         DbSet

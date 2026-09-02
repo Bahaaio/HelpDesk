@@ -36,4 +36,9 @@ public interface IIssuesRepository : IRepository<Issue, int>
     ///     Used after insert to satisfy DTO mapping without a full re-fetch.
     /// </summary>
     Task LoadAuthorAsync(Issue issue);
+
+    /// <summary>
+    ///     Unassigns <paramref name="userId" /> from all non-closed issues in <paramref name="projectId" />.
+    /// </summary>
+    Task UnassignFromAllAsync(int projectId, int userId);
 }

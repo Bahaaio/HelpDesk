@@ -7,6 +7,7 @@
 @inject IProjectMembershipsService MembershipsService
 @inject IAuthState AuthState
 @inject ISnackbar Snackbar
+@inject NavigationManager Navigation
 
 <MudStack Class="pa-4">
     @if (!string.IsNullOrEmpty(Project.Description))
@@ -37,6 +38,16 @@
             <MudTooltip Text="Invite member">
                 <MudIconButton Icon="@Icons.Material.Filled.PersonAdd" Size="Size.Small"
                                OnClick="() => _inviteDialogVisible = true"/>
+            </MudTooltip>
+        }
+        @if (ProjectMembership.IsMember && !ProjectMembership.IsOwner)
+        {
+            <MudTooltip Text="Leave project">
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error"
+                           StartIcon="@Icons.Material.Filled.Logout"
+                           OnClick="() => _leaveDialogVisible = true">
+                    Leave
+                </MudButton>
             </MudTooltip>
         }
         <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">
@@ -140,6 +151,19 @@
     </DialogActions>
 </MudDialog>
 
+<MudDialog @bind-Visible="_leaveDialogVisible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Leave Project</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText>Are you sure you want to leave <strong>@Project.Name</strong>? You will be unassigned from all open issues.</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _leaveDialogVisible = false">Cancel</MudButton>
+        <MudButton OnClick="ConfirmLeave" Color="Color.Error">Leave</MudButton>
+    </DialogActions>
+</MudDialog>
+
 @code {
     [Parameter] public ProjectDto Project { get; set; } = default!;
     [Parameter] public List<ProjectMembershipDto> Members { get; set; } = new();
@@ -152,6 +176,7 @@
     private bool _promoteDialogVisible;
     private bool _demoteDialogVisible;
     private bool _removeDialogVisible;
+    private bool _leaveDialogVisible;
 
     protected override void OnInitialized()
     {
@@ -192,6 +217,21 @@
     {
         _removeDialogVisible = false;
         await RemoveMember(_targetMember!);
+    }
+
+    private async Task ConfirmLeave()
+    {
+        _leaveDialogVisible = false;
+        try
+        {
+            await MembershipsService.LeaveProject(Project.Id);
+            Snackbar.Add("You left the project", Severity.Success);
+            Navigation.NavigateTo("/projects");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
     }
 
     private async Task UpdateRole(ProjectMembershipDto member, ProjectMemberRole newRole)

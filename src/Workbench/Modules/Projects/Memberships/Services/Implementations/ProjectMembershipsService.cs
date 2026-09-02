@@ -9,6 +9,7 @@ using Workbench.Modules.Projects.Memberships.Dtos;
 using Workbench.Modules.Projects.Memberships.Mappers;
 using Workbench.Modules.Projects.Memberships.Models;
 using Workbench.Modules.Projects.Memberships.Repositories;
+using Workbench.Modules.Projects.Models;
 using Workbench.Modules.Projects.Repositories;
 
 namespace Workbench.Modules.Projects.Memberships.Services.Implementations;
@@ -91,15 +92,36 @@ public class ProjectMembershipsService : IProjectMembershipsService
         if (membership.UserId == _user.Id)
             throw new BadRequestException("Cannot remove yourself");
 
+        await RemoveMembership(project, membership);
+    }
+
+    public async Task LeaveProject(int projectId)
+    {
+        var project = await _projectsRepository.GetByIdAsync(projectId);
+
+        var membership = await _projectMembershipsRepository
+            .FindMembershipByProjectIdAndUserId(projectId, _user.Id);
+
+        if (membership is null)
+            throw new BadRequestException("You are not a member of this project");
+
+        await RemoveMembership(project, membership);
+    }
+
+    /// <summary>
+    ///     Removes a membership from a project and unassigns the user from all issues in that project.
+    /// </summary>
+    /// <param name="project">The project from which the membership is being removed.</param>
+    /// <param name="membership">The membership to be removed.</param>
+    /// <exception cref="BadRequestException">Thrown if the membership belongs to the project owner.</exception>
+    private async Task RemoveMembership(Project project, ProjectMembership membership)
+    {
         if (membership.UserId == project.OwnerId)
             throw new BadRequestException("Cannot remove the project owner");
 
-        if (membership.Role == ProjectMemberRole.Lead)
-            throw new BadRequestException("Cannot remove a lead. Demote them first.");
-
-        await _issuesRepository.UnassignFromAllAsync(projectId, membership.UserId);
-
+        await _issuesRepository.UnassignFromAllAsync(project.Id, membership.UserId);
         _projectMembershipsRepository.Remove(membership);
+
         await _unitOfWork.SaveChangesAsync();
     }
 }

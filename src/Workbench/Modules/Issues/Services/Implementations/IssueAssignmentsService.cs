@@ -62,7 +62,7 @@ public class IssueAssignmentsService : IIssueAssignmentsService
     public async Task AssignUser(int issueId, string userName)
     {
         var issue = await _issuesRepository.GetByIdAsync(issueId);
-        await _authGuard.AuthorizeAssignedOrProjectLead(issue);
+        await _authGuard.AuthorizeProjectLead(issue);
 
         ValidateClosedIssue(issue);
 
@@ -75,7 +75,7 @@ public class IssueAssignmentsService : IIssueAssignmentsService
     public async Task UnassignUser(int issueId)
     {
         var issue = await _issuesRepository.GetByIdAsync(issueId);
-        await _authGuard.AuthorizeAssignedOrProjectLead(issue);
+        await _authGuard.AuthorizeProjectLead(issue);
 
         ValidateClosedIssue(issue);
 

@@ -40,4 +40,11 @@ public class MembersController : ControllerBase
         await _membershipsService.RemoveMember(projectId, username);
         return NoContent();
     }
+
+    [HttpDelete("me")]
+    public async Task<ActionResult> LeaveProject(int projectId)
+    {
+        await _membershipsService.LeaveProject(projectId);
+        return NoContent();
+    }
 }

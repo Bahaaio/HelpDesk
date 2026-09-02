@@ -12,4 +12,5 @@ public interface IProjectMembershipsService
     Task AddMember(int projectId, int userId, ProjectMemberRole role);
     Task UpdateRole(int projectId, string username, ProjectMemberRole role);
     Task RemoveMember(int projectId, string username);
+    Task LeaveProject(int projectId);
 }

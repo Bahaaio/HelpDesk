@@ -13,6 +13,8 @@
 @using Workbench.Modules.Issues.Votes.Dtos.Requests
 @using Workbench.Modules.Issues.Votes.Services
 @using Workbench.Modules.Projects.Dtos
+@using Workbench.Modules.Projects.Memberships.Dtos
+@using Workbench.Modules.Projects.Memberships.Services
 @using Workbench.Modules.Projects.Services
 @rendermode InteractiveServer
 @inject IIssuesService IssuesService
@@ -26,6 +28,7 @@
 @inject IOptions<CommentAttachmentOptions> CommentAttachmentOptions
 @inject IOptions<IssueAttachmentOptions> IssueAttachmentOptions
 @inject IIssueAssignmentsService IssueAssignmentsService
+@inject IProjectMembershipsService MembershipsService
 @inject IAuthState AuthState
 @inject IProjectMembershipState ProjectMembership
 @inject ISnackbar Snackbar
@@ -184,7 +187,13 @@ else
                 }
                 else
                 {
-                    @if (ProjectMembership.IsMember && _issue.Status != Status.Closed)
+                    @if (ProjectMembership.IsLead && _issue.Status != Status.Closed)
+                    {
+                        <MemberSelect Members="_projectMembers" DefaultUsername="@AuthState.Username"
+                                      Disabled="_assigning" OnAssignUser="AssignUserAsync"
+                                      OnAssignSelf="AssignAsync"/>
+                    }
+                    else if (ProjectMembership.IsMember && _issue.Status != Status.Closed)
                     {
                         <MudButton Variant="Variant.Outlined" Size="Size.Small"
                                    Color="Color.Primary"
@@ -571,6 +580,7 @@ else
     private bool _canDelete;
     private bool _isAssignedToCurrentUser;
     private bool _assigning;
+    private List<ProjectMembershipDto> _projectMembers = new();
 
     private bool _editDialogOpen;
     private string _editTitle = "";
@@ -598,6 +608,11 @@ else
             _project = await ProjectsService.GetById(ProjectId);
             await ProjectMembership.Load(ProjectId);
             ProjectMembership.SetOwner(AuthState.Username == _project.OwnerUsername);
+
+            if (ProjectMembership.IsLead)
+            {
+                _projectMembers = await MembershipsService.GetProjectMemberships(ProjectId);
+            }
 
             try
             {
@@ -835,12 +850,38 @@ else
         }
     }
 
+    private async Task AssignUserAsync(string username)
+    {
+        _assigning = true;
+        try
+        {
+            await IssueAssignmentsService.AssignUser(Id, username);
+            var refreshed = await IssuesService.GetById(ProjectId, Id);
+            _issue = refreshed;
+            _attachments = _issue.Attachments;
+            _isAssignedToCurrentUser = _issue?.AssignedToUsername == AuthState.Username;
+            Snackbar.Add($"Issue assigned to {username}", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _assigning = false;
+        }
+    }
+
     private async Task UnassignAsync()
     {
         _assigning = true;
         try
         {
-            await IssueAssignmentsService.UnassignCurrentUser(Id);
+            if (ProjectMembership.IsLead)
+                await IssueAssignmentsService.UnassignUser(Id);
+            else
+                await IssueAssignmentsService.UnassignCurrentUser(Id);
+
             var refreshed = await IssuesService.GetById(ProjectId, Id);
             _issue = refreshed;
             _attachments = _issue.Attachments;

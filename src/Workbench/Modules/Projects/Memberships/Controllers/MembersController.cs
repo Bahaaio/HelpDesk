@@ -19,7 +19,7 @@ public class MembersController : ControllerBase
     [HttpGet("me")]
     public async Task<ActionResult<ProjectMembershipDto>> GetCurrentUserMembership(int projectId)
     {
-        var membership = await _membershipsService.GetCurrentUserProjectMembership(projectId);
+        var membership = await _membershipsService.FindCurrentUserProjectMembership(projectId);
         return membership is not null ? Ok(membership) : NoContent();
     }
 

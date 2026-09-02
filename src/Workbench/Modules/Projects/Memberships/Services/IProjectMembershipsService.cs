@@ -5,7 +5,8 @@ namespace Workbench.Modules.Projects.Memberships.Services;
 
 public interface IProjectMembershipsService
 {
-    Task<ProjectMembershipDto?> GetCurrentUserProjectMembership(int projectId);
+    Task<ProjectMembershipDto?> FindCurrentUserProjectMembership(int projectId);
+    public Task<ProjectMembershipDto> GetProjectMembership(int projectId, string username);
     Task<List<ProjectMembershipDto>> GetProjectMemberships(int projectId);
     Task<bool> IsMember(int projectId, int userId);
     Task AddMember(int projectId, int userId, ProjectMemberRole role);

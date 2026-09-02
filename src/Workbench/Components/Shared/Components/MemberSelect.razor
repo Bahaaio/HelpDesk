@@ -1,0 +1,64 @@
+@using Workbench.Modules.Projects.Memberships.Dtos
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Class="gap-2">
+    <MudSelect T="string" @bind-Value="_selectedUsername" Label="Select member"
+               Dense="true" Style="min-width: 180px;" Disabled="Disabled">
+        @foreach (var member in Members)
+        {
+            <MudSelectItem Value="member.Username">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                    <MudAvatar Size="Size.Small" Color="Color.Primary"
+                               Style="width: 20px; height: 20px; font-size: 0.65rem;">
+                        @(member.Username[..1].ToUpper())
+                    </MudAvatar>
+                    @member.Username
+                </MudStack>
+            </MudSelectItem>
+        }
+    </MudSelect>
+    <MudButton Variant="Variant.Outlined" Size="Size.Small"
+               Color="Color.Primary"
+               OnClick="AssignSelected" Disabled="Disabled || string.IsNullOrEmpty(_selectedUsername)"
+               StartIcon="@Icons.Material.Filled.PersonAdd">
+        Assign
+    </MudButton>
+    <MudDivider Vertical="true" FlexItem="true" Class="mx-1"/>
+    <MudButton Variant="Variant.Outlined" Size="Size.Small"
+               Color="Color.Primary"
+               OnClick="AssignSelf" Disabled="Disabled"
+               StartIcon="@Icons.Material.Filled.Person">
+        Self
+    </MudButton>
+</MudStack>
+
+@code {
+    [Parameter] public List<ProjectMembershipDto> Members { get; set; } = new();
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public string? DefaultUsername { get; set; }
+    [Parameter] public EventCallback<string> OnAssignUser { get; set; }
+    [Parameter] public EventCallback OnAssignSelf { get; set; }
+
+    private string? _selectedUsername;
+
+    protected override void OnInitialized()
+    {
+        _selectedUsername = DefaultUsername;
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (_selectedUsername is null && DefaultUsername is not null)
+            _selectedUsername = DefaultUsername;
+    }
+
+    private async Task AssignSelected()
+    {
+        if (!string.IsNullOrEmpty(_selectedUsername))
+            await OnAssignUser.InvokeAsync(_selectedUsername);
+    }
+
+    private async Task AssignSelf()
+    {
+        await OnAssignSelf.InvokeAsync();
+    }
+}

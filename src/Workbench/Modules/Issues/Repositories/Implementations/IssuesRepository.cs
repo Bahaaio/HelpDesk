@@ -86,11 +86,4 @@ public class IssuesRepository : Repository<Issue, int>, IIssuesRepository
             .ExecuteUpdateAsync(s =>
                 s.SetProperty(i => i.AssignedToId, (int?)null));
     }
-
-    public Task<IssueDto?> FindDtoByIdAsync(int id) =>
-        DbSet
-            .AsNoTracking()
-            .Where(i => i.Id == id)
-            .Select(IssueMapper.ToDtoExpression)
-            .SingleOrDefaultAsync();
 }

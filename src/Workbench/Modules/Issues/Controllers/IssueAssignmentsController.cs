@@ -27,4 +27,18 @@ public class IssueAssignmentsController : ControllerBase
         await _issueAssignmentsService.UnassignCurrentUser(issueId);
         return NoContent();
     }
+
+    [HttpPost("{username}")]
+    public async Task<ActionResult> AssignUser(int issueId, string username)
+    {
+        await _issueAssignmentsService.AssignUser(issueId, username);
+        return NoContent();
+    }
+
+    [HttpDelete("all")]
+    public async Task<ActionResult> UnassignUser(int issueId)
+    {
+        await _issueAssignmentsService.UnassignUser(issueId);
+        return NoContent();
+    }
 }

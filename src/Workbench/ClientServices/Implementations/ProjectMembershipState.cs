@@ -20,7 +20,7 @@ public class ProjectMembershipState : IProjectMembershipState
 
     public async Task Load(int projectId)
     {
-        var membership = await _membershipsService.GetCurrentUserProjectMembership(projectId);
+        var membership = await _membershipsService.FindCurrentUserProjectMembership(projectId);
         IsMember = membership is not null;
         IsLead = membership?.Role == ProjectMemberRole.Lead;
         Role = membership?.Role;

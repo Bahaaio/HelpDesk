@@ -34,10 +34,14 @@ public class ProjectMembershipsService : IProjectMembershipsService
         _issuesRepository = issuesRepository;
     }
 
-    public async Task<ProjectMembershipDto?> GetCurrentUserProjectMembership(int projectId) =>
+    public async Task<ProjectMembershipDto?> FindCurrentUserProjectMembership(int projectId) =>
         (await _projectMembershipsRepository
             .FindMembershipByProjectIdAndUserId(projectId, _user.Id))
         ?.ToDto();
+
+    public async Task<ProjectMembershipDto> GetProjectMembership(int projectId, string username) =>
+        (await _projectMembershipsRepository.GetByProjectIdAndUsernameAsync(projectId, username))
+        .ToDto();
 
     public Task<List<ProjectMembershipDto>> GetProjectMemberships(int projectId) =>
         _projectMembershipsRepository.GetMembershipsByProjectId(projectId);

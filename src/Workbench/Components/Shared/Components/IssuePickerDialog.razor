@@ -13,7 +13,7 @@
         @if (_creating)
         {
                 <CreateIssueForm ProjectId="ProjectId" InitialTitle="@_searchText"
-                             IssueCreated="OnNewIssueCreated"/>
+                             IssueCreated="OnNewIssueCreated" OnCancel="CancelCreate"/>
         }
         else if (_loading)
         {
@@ -70,10 +70,7 @@
         }
     </DialogContent>
     <DialogActions>
-        @if (!_creating)
-        {
-            <MudButton OnClick="OnCancel">Cancel</MudButton>
-        }
+        <MudButton OnClick="OnCancel">Cancel</MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -133,6 +130,11 @@
     private void StartCreate()
     {
         _creating = true;
+    }
+
+    private void CancelCreate()
+    {
+        _creating = false;
     }
 
     private async Task OnNewIssueCreated(int issueId)

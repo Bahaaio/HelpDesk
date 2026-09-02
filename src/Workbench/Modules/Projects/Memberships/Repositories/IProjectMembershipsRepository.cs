@@ -5,7 +5,8 @@ namespace Workbench.Modules.Projects.Memberships.Repositories;
 
 public interface IProjectMembershipsRepository
 {
-    Task<ProjectMembership?> GetMembershipByProjectIdAndUserId(int projectId, int userId);
+    Task<ProjectMembership?> FindMembershipByProjectIdAndUserId(int projectId, int userId);
+    Task<ProjectMembership> GetByProjectIdAndUsernameAsync(int projectId, string username);
     Task<List<ProjectMembershipDto>> GetMembershipsByProjectId(int projectId);
     void Add(ProjectMembership membership);
     void Remove(ProjectMembership membership);

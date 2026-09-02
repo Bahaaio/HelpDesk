@@ -9,4 +9,6 @@ public interface IProjectMembershipsService
     Task<List<ProjectMembershipDto>> GetProjectMemberships(int projectId);
     Task<bool> IsMember(int projectId, int userId);
     Task AddMember(int projectId, int userId, ProjectMemberRole role);
+    Task UpdateRole(int projectId, string username, ProjectMemberRole role);
+    Task RemoveMember(int projectId, string username);
 }

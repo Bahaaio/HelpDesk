@@ -3,18 +3,18 @@ using Workbench.Modules.Auth.Services;
 using Workbench.Modules.Authorization.Models;
 using Workbench.Modules.Authorization.Requirements;
 using Workbench.Modules.Projects.Enums;
-using Workbench.Modules.Projects.Memberships.Services;
+using Workbench.Modules.Projects.Memberships.Repositories;
 
 namespace Workbench.Modules.Authorization.Handlers;
 
 public class OwnerOrLeadHandler : AuthorizationHandler<OwnerOrLeadRequirement, IBelongsToProject>
 {
-    private readonly IProjectMembershipsService _membershipsService;
+    private readonly IProjectMembershipsRepository _membershipsRepository;
     private readonly ICurrentUser _user;
 
-    public OwnerOrLeadHandler(IProjectMembershipsService membershipsService, ICurrentUser user)
+    public OwnerOrLeadHandler(IProjectMembershipsRepository membershipsRepository, ICurrentUser user)
     {
-        _membershipsService = membershipsService;
+        _membershipsRepository = membershipsRepository;
         _user = user;
     }
 
@@ -29,8 +29,8 @@ public class OwnerOrLeadHandler : AuthorizationHandler<OwnerOrLeadRequirement, I
             return;
         }
 
-        var membership = await _membershipsService
-            .GetCurrentUserProjectMembership(resource.ProjectId);
+        var membership = await _membershipsRepository
+            .FindMembershipByProjectIdAndUserId(resource.ProjectId, _user.Id);
 
         if (membership?.Role == ProjectMemberRole.Lead)
             context.Succeed(requirement);

@@ -35,6 +35,10 @@
     }
 
     <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
+        @if (OnCancel.HasDelegate)
+        {
+            <MudButton OnClick="OnCancel">Cancel</MudButton>
+        }
         <MudButton Color="Color.Primary" OnClick="CreateAsync"
                    Disabled="_loading || string.IsNullOrWhiteSpace(_title)">
             @if (_loading)
@@ -50,6 +54,7 @@
     [Parameter] public int ProjectId { get; set; }
     [Parameter] public string? InitialTitle { get; set; }
     [Parameter] public EventCallback<int> IssueCreated { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
 
     private string _title = "";
     private string? _description;

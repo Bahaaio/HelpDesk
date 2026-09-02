@@ -1,7 +1,12 @@
+@using Workbench.ClientServices
 @using Workbench.Modules.Projects.Dtos
 @using Workbench.Modules.Projects.Enums
 @using Workbench.Modules.Projects.Memberships.Dtos
+@using Workbench.Modules.Projects.Memberships.Services
 @inject IProjectMembershipState ProjectMembership
+@inject IProjectMembershipsService MembershipsService
+@inject IAuthState AuthState
+@inject ISnackbar Snackbar
 
 <MudStack Class="pa-4">
     @if (!string.IsNullOrEmpty(Project.Description))
@@ -48,6 +53,8 @@
         <MudList T="ProjectMembershipDto" Dense="true">
             @foreach (var member in Members)
             {
+                var isCurrentUser = member.Username == AuthState.Username;
+                var isOwner = member.Username == Project.OwnerUsername;
                 <MudListItem Value="member">
                     <MudStack Row="true" AlignItems="AlignItems.Center">
                         <MudAvatar Size="Size.Small" Color="Color.Primary">
@@ -55,6 +62,31 @@
                         </MudAvatar>
                         <MudText Typo="Typo.body2">@member.Username</MudText>
                         <MudSpacer/>
+                        @if (IsLead && !isCurrentUser && !isOwner)
+                        {
+                            if (member.Role == ProjectMemberRole.Member)
+                            {
+                                <MudTooltip Text="Promote to Lead">
+                                    <MudIconButton Icon="@Icons.Material.Filled.ArrowUpward" Size="Size.Small"
+                                                   OnClick="() => UpdateRole(member, ProjectMemberRole.Lead)"/>
+                                </MudTooltip>
+                            }
+                            else
+                            {
+                                <MudTooltip Text="Demote to Member">
+                                    <MudIconButton Icon="@Icons.Material.Filled.ArrowDownward" Size="Size.Small"
+                                                   OnClick="() => UpdateRole(member, ProjectMemberRole.Member)"/>
+                                </MudTooltip>
+                            }
+                            @if (member.Role != ProjectMemberRole.Lead)
+                            {
+                                <MudTooltip Text="Remove member">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
+                                                   Color="Color.Error"
+                                                   OnClick="() => RemoveMember(member)"/>
+                                </MudTooltip>
+                            }
+                        }
                         <MudChip T="string" Size="Size.Small"
                                  Color="@(member.Role == ProjectMemberRole.Lead ? Color.Primary : Color.Default)"
                                  Variant="Variant.Outlined">
@@ -75,4 +107,39 @@
     [Parameter] public bool IsLead { get; set; }
 
     private bool _inviteDialogVisible;
+
+    protected override void OnInitialized()
+    {
+        AuthState.Check();
+    }
+
+    private async Task UpdateRole(ProjectMembershipDto member, ProjectMemberRole newRole)
+    {
+        try
+        {
+            await MembershipsService.UpdateRole(Project.Id, member.Username, newRole);
+            var index = Members.FindIndex(m => m.Username == member.Username);
+            if (index >= 0)
+                Members[index] = new ProjectMembershipDto(member.UserId, member.Username, newRole);
+            Snackbar.Add($"{member.Username} is now {newRole}", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task RemoveMember(ProjectMembershipDto member)
+    {
+        try
+        {
+            await MembershipsService.RemoveMember(Project.Id, member.Username);
+            Members.RemoveAll(m => m.Username == member.Username);
+            Snackbar.Add($"{member.Username} removed from project", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
 }

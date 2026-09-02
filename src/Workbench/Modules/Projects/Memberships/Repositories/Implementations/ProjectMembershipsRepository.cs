@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Workbench.Common.Exceptions;
 using Workbench.Data;
 using Workbench.Modules.Projects.Memberships.Dtos;
 using Workbench.Modules.Projects.Memberships.Mappers;
@@ -15,10 +16,17 @@ public class ProjectMembershipsRepository : IProjectMembershipsRepository
         _dbSet = dbContext.Set<ProjectMembership>();
     }
 
-    public Task<ProjectMembership?> GetMembershipByProjectIdAndUserId(int projectId, int userId) =>
+    public Task<ProjectMembership?> FindMembershipByProjectIdAndUserId(int projectId, int userId) =>
         _dbSet
             .Include(pm => pm.User)
             .SingleOrDefaultAsync(pm => pm.ProjectId == projectId && pm.UserId == userId);
+
+    public async Task<ProjectMembership> GetByProjectIdAndUsernameAsync(int projectId,
+        string username) =>
+        await _dbSet
+            .Include(pm => pm.User)
+            .SingleOrDefaultAsync(pm => pm.ProjectId == projectId && pm.User.UserName == username)
+        ?? throw new NotFoundException($"Member '{username}' not found in project");
 
     public Task<List<ProjectMembershipDto>> GetMembershipsByProjectId(int projectId) =>
         _dbSet

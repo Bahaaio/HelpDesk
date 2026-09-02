@@ -2,21 +2,21 @@ using Microsoft.AspNetCore.Authorization;
 using Workbench.Modules.Auth.Services;
 using Workbench.Modules.Authorization.Models;
 using Workbench.Modules.Authorization.Requirements;
-using Workbench.Modules.Projects.Memberships.Services;
+using Workbench.Modules.Projects.Memberships.Repositories;
 
 namespace Workbench.Modules.Authorization.Handlers;
 
 public class OwnerOrTeamMemberHandler :
     AuthorizationHandler<OwnerOrTeamMemberRequirement, IBelongsToProject>
 {
-    private readonly IProjectMembershipsService _membershipsService;
+    private readonly IProjectMembershipsRepository _membershipsRepository;
     private readonly ICurrentUser _user;
 
     public OwnerOrTeamMemberHandler(ICurrentUser user,
-        IProjectMembershipsService membershipsService)
+        IProjectMembershipsRepository membershipsRepository)
     {
         _user = user;
-        _membershipsService = membershipsService;
+        _membershipsRepository = membershipsRepository;
     }
 
     protected override async Task HandleRequirementAsync(
@@ -30,8 +30,8 @@ public class OwnerOrTeamMemberHandler :
             return;
         }
 
-        var membership = await _membershipsService
-            .GetCurrentUserProjectMembership(resource.ProjectId);
+        var membership = await _membershipsRepository
+            .FindMembershipByProjectIdAndUserId(resource.ProjectId, _user.Id);
 
         if (membership is not null)
             context.Succeed(requirement);

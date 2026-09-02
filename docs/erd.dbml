@@ -5,15 +5,101 @@ Table User {
   PasswordHash varchar
 }
 
+Table Project {
+  Id int [pk, increment]
+  Name varchar(100)
+  Description varchar(500)
+  CreatedAt datetime
+
+  OwnerId int [ref: > User.Id]
+}
+
+Table ProjectMembership {
+  ProjectId int [ref: > Project.Id]
+  UserId int [ref: > User.Id]
+  Role varchar // 'Lead' | 'Member'
+
+  indexes {
+    (ProjectId, UserId) [pk]
+  }
+}
+
+Table ProjectInvite {
+  Code varchar(64) [pk]
+  CreatedAt datetime
+  ExpiresAt datetime
+
+  ProjectId int [ref: > Project.Id]
+  CreatedById int [ref: > User.Id]
+
+  indexes {
+    ProjectId [note: 'active invites by project']
+    CreatedById
+  }
+}
+
+Table Board {
+  Id int [pk, increment]
+  Name varchar(255)
+
+  ProjectId int [ref: > Project.Id, unique]
+}
+
+Table BoardColumn {
+  Id int [pk, increment]
+  Name varchar(255)
+  Description varchar(512)
+  Position int
+  Color varchar // enum Color
+
+  BoardId int [ref: > Board.Id]
+
+  indexes {
+    (BoardId, Position) [unique]
+  }
+}
+
+Table BoardCard {
+  Id int [pk, increment]
+  Position int
+  BoardId int [ref: > Board.Id]
+  ColumnId int [ref: > BoardColumn.Id]
+  IssueId int [ref: > Issue.Id]
+
+  indexes {
+    (ColumnId, Position) [unique]
+    (BoardId, IssueId) [unique]
+  }
+}
+
 Table Issue {
   Id int [pk, increment]
   Title varchar(120)
   Description varchar(2000)
-  Status varchar // 'Open' | 'Closed'
+  Status varchar // 'Open' | 'InProgress' | 'Closed'
   CreatedAt datetime
 
+  ProjectId int [ref: > Project.Id]
   AuthorId int [ref: > User.Id]
-  AssigneeId int [ref: > User.Id, note: 'nullable']
+  AssignedToId int [ref: > User.Id, note: 'nullable']
+
+  indexes {
+    AssignedToId
+  }
+}
+
+Table IssueStatusChange {
+  Id int [pk, increment]
+  FromStatus varchar
+  ToStatus varchar
+  ChangedAt datetime
+
+  IssueId int [ref: > Issue.Id]
+  ChangedByUserId int [ref: > User.Id]
+
+  indexes {
+    IssueId
+  }
 }
 
 Table Comment {
@@ -54,8 +140,15 @@ Table CommentAttachment {
 
 Table Tag {
   Id int [pk, increment]
-  Name varchar(50) [unique]
+  Name varchar(50)
   Description varchar(2000)
+  Color varchar // enum Color
+
+  ProjectId int [ref: > Project.Id]
+
+  indexes {
+    (ProjectId, Name) [unique]
+  }
 }
 
 Table IssueTag {
@@ -78,18 +171,20 @@ Table Vote {
   }
 }
 
-Table IssueStatusChange {
+Table Milestone {
   Id int [pk, increment]
-  FromStatus varchar
-  ToStatus varchar
-  ChangedAt datetime
+  Name varchar(255)
+  Description varchar(1000)
+  DueDate datetime [note: 'nullable']
 
-  IssueId int [ref: > Issue.Id]
-  ChangedByUserId int [ref: > User.Id]
+  ProjectId int [ref: > Project.Id]
 }
 
-Table InviteCode {
-  Code varchar(64) [pk]
-  CreatedAt datetime
-  ExpiresAt datetime
+Table MilestoneItem {
+  MilestoneId int [ref: > Milestone.Id]
+  IssueId int [ref: > Issue.Id]
+
+  indexes {
+    (MilestoneId, IssueId) [pk]
+  }
 }

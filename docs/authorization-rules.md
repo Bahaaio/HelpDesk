@@ -26,7 +26,8 @@ This document describes who can perform each operation in Workbench.
 | -------------------------- | ---------------------- |
 | View project members       | Any authenticated user |
 | Add member to project      | Owner                  |
-| Remove member from project | Owner                  |
+| Remove member from project | Lead                   |
+| Leave project              | Any member (not owner) |
 
 ## Issues
 
@@ -44,6 +45,8 @@ This document describes who can perform each operation in Workbench.
 | --------------------------- | ----------------------------- |
 | Self-assign to an issue     | Project member                |
 | Unassign self from an issue | Assigned user OR project Lead |
+| Assign user to an issue     | project Lead                  |
+| Unassign user from an issue | project Lead                  |
 
 ## Issue Tags
 
@@ -92,11 +95,11 @@ This document describes who can perform each operation in Workbench.
 
 ## Milestones
 
-| Operation               | Who Can Do It    |
-| ----------------------- | ---------------- |
-| View milestones         | Any authenticated user |
-| Create milestone        | Project Lead     |
-| Update milestone        | Project Lead     |
-| Delete milestone        | Project Lead     |
-| Add issue to milestone  | Project Lead     |
-| Remove issue from milestone | Project Lead  |
+| Operation                   | Who Can Do It          |
+| --------------------------- | ---------------------- |
+| View milestones             | Any authenticated user |
+| Create milestone            | Project Lead           |
+| Update milestone            | Project Lead           |
+| Delete milestone            | Project Lead           |
+| Add issue to milestone      | Project Lead           |
+| Remove issue from milestone | Project Lead           |
